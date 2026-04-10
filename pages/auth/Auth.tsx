@@ -126,14 +126,19 @@ const Auth = () => {
         // For RECRUITER or other roles, go directly to dashboard
         navigate('/dashboard')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in failed:', error)
-      const errorMessage =
-        error instanceof Error && (error as any).response?.data?.message
-          ? (error as any).response.data.message
-          : error instanceof Error
-            ? error.message
-            : 'Sign in failed. Please try again.'
+      const resData = error?.response?.data
+      const apiMsg = resData?.error || resData?.message
+      let errorMessage = 'Sign in failed. Please try again.'
+
+      if (error?.code === 'ERR_NETWORK') {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection.'
+      } else if (apiMsg) {
+        // Show specific API error (e.g. "Invalid email or password")
+        errorMessage = apiMsg
+      }
+
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -203,14 +208,19 @@ const Auth = () => {
       await authService.register(userData)
       toast.success('Your account has been created successfully!')
       setActiveTab('signin')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign up failed:', error)
-      const errorMessage =
-        error instanceof Error && (error as any).response?.data?.message
-          ? (error as any).response.data.message
-          : error instanceof Error
-            ? error.message
-            : 'Failed to create account. Please try again.'
+      const resData = error?.response?.data
+      const apiMsg = resData?.error || resData?.message
+      let errorMessage = 'Failed to create account. Please try again.'
+
+      if (error?.code === 'ERR_NETWORK') {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection.'
+      } else if (apiMsg) {
+        // Show specific API error (e.g. "User already exists with this email or mobile")
+        errorMessage = apiMsg
+      }
+
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
