@@ -130,16 +130,18 @@ const Auth = () => {
       console.error('Sign in failed:', error)
       const resData = error?.response?.data
       const apiMsg = resData?.error || resData?.message
-      let errorMessage = 'Sign in failed. Please try again.'
 
       if (error?.code === 'ERR_NETWORK') {
-        errorMessage = 'Unable to connect to the server. Please check your internet connection.'
+        toast.error('Unable to connect to the server. Please check your internet connection.')
       } else if (apiMsg) {
-        // Show specific API error (e.g. "Invalid email or password")
-        errorMessage = apiMsg
+        const msg = apiMsg.toLowerCase()
+        if (msg.includes('email') || msg.includes('password') || msg.includes('invalid') || msg.includes('credential')) {
+          setErrors({ email: ' ', password: apiMsg })
+        }
+        toast.error(apiMsg)
+      } else {
+        toast.error('Sign in failed. Please try again.')
       }
-
-      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -212,16 +214,22 @@ const Auth = () => {
       console.error('Sign up failed:', error)
       const resData = error?.response?.data
       const apiMsg = resData?.error || resData?.message
-      let errorMessage = 'Failed to create account. Please try again.'
 
       if (error?.code === 'ERR_NETWORK') {
-        errorMessage = 'Unable to connect to the server. Please check your internet connection.'
+        toast.error('Unable to connect to the server. Please check your internet connection.')
       } else if (apiMsg) {
-        // Show specific API error (e.g. "User already exists with this email or mobile")
-        errorMessage = apiMsg
+        const msg = apiMsg.toLowerCase()
+        const fieldErrors: Record<string, string> = {}
+        if (msg.includes('email')) fieldErrors.email = apiMsg
+        if (msg.includes('mobile') || msg.includes('phone')) fieldErrors.mobile = apiMsg
+        if (msg.includes('password')) fieldErrors.password = apiMsg
+        if (msg.includes('first name') || msg.includes('firstname')) fieldErrors.firstName = apiMsg
+        if (msg.includes('last name') || msg.includes('lastname')) fieldErrors.lastName = apiMsg
+        if (Object.keys(fieldErrors).length > 0) setErrors(prev => ({ ...prev, ...fieldErrors }))
+        toast.error(apiMsg)
+      } else {
+        toast.error('Failed to create account. Please try again.')
       }
-
-      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -291,48 +299,30 @@ const Auth = () => {
               <TabsContent value='signin'>
                 <form onSubmit={handleSignIn} className='space-y-4'>
                   <div className='space-y-2'>
-                    <div className='flex justify-between items-center'>
-                      {' '}
-                      <Label htmlFor='signin-email' className='text-white/90'>
-                        {' '}
-                        Email{' '}
-                      </Label>{' '}
-                      {errors.email && (
-                        <span className='text-xs text-red-400'>
-                          {errors.email}
-                        </span>
-                      )}{' '}
-                    </div>
+                    <Label htmlFor='signin-email' className='text-white/90'>Email</Label>
                     <Input
                       id='signin-email'
                       placeholder='Enter your email'
                       value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.email ? 'border-red-500' : ''
-                        }`}
+                      onChange={e => { setEmail(e.target.value); if (errors.email) setErrors(prev => ({ ...prev, email: '', password: '' })) }}
+                      className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.email ? 'border-red-500' : ''}`}
                     />
+                    {errors.email && errors.email.trim() && (
+                      <p className='text-xs text-red-400'>{errors.email}</p>
+                    )}
                   </div>
 
                   <div className='space-y-2'>
-                    <div className='flex justify-between items-center'>
-                      <Label
-                        htmlFor='signin-password'
-                        className='text-white/90'>
-                        Password
-                      </Label>
-                      {errors.password && (
-                        <span className='text-xs text-red-400'>
-                          {errors.password}
-                        </span>
-                      )}{' '}
-                    </div>
+                    <Label htmlFor='signin-password' className='text-white/90'>
+                      Password
+                    </Label>
                     <div className='relative'>
                       <Input
                         id='signin-password'
                         type={showPassword ? 'text' : 'password'}
                         placeholder='Enter your password'
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
+                        onChange={e => { setPassword(e.target.value); if (errors.password) setErrors(prev => ({ ...prev, password: '', email: '' })) }}
                         className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10 ${errors.password ? 'border-red-500' : ''
                           }`}
                       />
@@ -349,6 +339,9 @@ const Auth = () => {
                         )}
                       </Button>
                     </div>
+                    {errors.password && errors.password.trim() && (
+                      <p className='text-xs text-red-400 mt-1'>{errors.password}</p>
+                    )}
                   </div>
 
                   <Button
@@ -430,26 +423,15 @@ const Auth = () => {
 
                       {/* Email Field */}
                       <div className='space-y-2 md:col-span-2'>
-                        <div className='flex justify-between items-center'>
-                          <Label
-                            htmlFor='signup-email'
-                            className='text-white/90'>
-                            Email
-                          </Label>
-                          {errors.email && (
-                            <span className='text-xs text-red-400'>
-                              {errors.email}
-                            </span>
-                          )}
-                        </div>
+                        <Label htmlFor='signup-email' className='text-white/90'>Email</Label>
                         <Input
                           id='signup-email'
                           placeholder='Enter your email'
                           value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.email ? 'border-red-500' : ''
-                            }`}
+                          onChange={e => { setEmail(e.target.value); if (errors.email) setErrors(prev => ({ ...prev, email: '' })) }}
+                          className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.email ? 'border-red-500' : ''}`}
                         />
+                        {errors.email && <p className='text-xs text-red-400'>{errors.email}</p>}
                       </div>
                     </div>
 
@@ -486,26 +468,15 @@ const Auth = () => {
 
                     {/* Mobile Field */}
                     <div className='space-y-2'>
-                      <div className='flex justify-between items-center'>
-                        <Label
-                          htmlFor='signup-mobile'
-                          className='text-white/90'>
-                          Mobile
-                        </Label>
-                        {errors.mobile && (
-                          <span className='text-xs text-red-400'>
-                            {errors.mobile}
-                          </span>
-                        )}
-                      </div>
+                      <Label htmlFor='signup-mobile' className='text-white/90'>Mobile</Label>
                       <Input
                         id='signup-mobile'
                         placeholder='Enter your mobile number'
                         value={mobile}
-                        onChange={e => setMobile(e.target.value)}
-                        className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.mobile ? 'border-red-500' : ''
-                          }`}
+                        onChange={e => { setMobile(e.target.value); if (errors.mobile) setErrors(prev => ({ ...prev, mobile: '' })) }}
+                        className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.mobile ? 'border-red-500' : ''}`}
                       />
+                      {errors.mobile && <p className='text-xs text-red-400'>{errors.mobile}</p>}
                     </div>
 
                     {/* Password Field - Full Width */}
