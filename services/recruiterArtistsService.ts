@@ -11,6 +11,7 @@ export interface ArtistSuggestionDto {
   location?: string
   bio?: string
   profilePhoto?: string
+  coverPhotoUrl?: string
   matchScore?: number
   matchReasons?: string[]
   skills?: string[]
@@ -19,20 +20,46 @@ export interface ArtistSuggestionDto {
   experienceYears?: number
   experienceLevel?: string
   portfolioItems?: string[]
+  portfolioUrls?: string[]
   achievements?: string[]
   certifications?: string[]
+  comfortableAreas?: string[]
+  travelCities?: string[]
   availability?: string
   preferredJobType?: string
-  expectedSalaryMin?: number
-  expectedSalaryMax?: number
+  expectedSalaryMin?: number | null
+  expectedSalaryMax?: number | null
   currency?: string
   workLocation?: string
-
   workSchedule?: string
-
   profileCompletionPercentage?: number
   isVerified?: boolean
+  verificationStatus?: string
+  isPremium?: boolean
   recruiterId?: number
+  phone?: string
+  website?: string
+  socialLinks?: string[]
+  contactPreference?: string
+  videoUrl?: string
+  hourlyRate?: number | null
+  gender?: string
+  maritalStatus?: string | null
+  dateOfBirth?: string
+  weight?: number | null
+  height?: number | null
+  hairColor?: string | null
+  hairLength?: string | null
+  eyeColor?: string | null
+  complexion?: string | null
+  hasTattoo?: boolean
+  hasMole?: boolean
+  shoeSize?: string | null
+  hasPassport?: boolean
+  lastActive?: string
+  totalApplications?: number
+  totalHires?: number
+  projectsWorked?: string[]
 }
 
 export interface AudienceMetricsDto {
@@ -70,20 +97,63 @@ export interface PagedArtistsResult {
   size: number
 }
 
+const na = (val: string | null | undefined): string | undefined =>
+  val && val !== 'N/A' ? val : undefined
+
 const toArtist = (dto: ArtistSuggestionDto): Artist => ({
   id: dto.artistId,
   name: dto.artistName,
   avatarUrl: dto.profilePhoto && dto.profilePhoto !== 'N/A' ? dto.profilePhoto : 'https://picsum.photos/seed/artist/300/300',
-  bio: dto.bio && dto.bio !== 'N/A' ? dto.bio : '',
+  coverPhotoUrl: na(dto.coverPhotoUrl),
+  bio: na(dto.bio) || '',
   skills: Array.isArray(dto.skills) ? dto.skills : [],
   email: dto.artistEmail,
-  portfolioUrl: (dto.portfolioItems && dto.portfolioItems.length > 0) ? dto.portfolioItems[0] : undefined,
+  phone: na(dto.phone),
+  website: na(dto.website),
+  socialLinks: Array.isArray(dto.socialLinks) && dto.socialLinks.length > 0 ? dto.socialLinks : undefined,
+  contactPreference: na(dto.contactPreference),
+  portfolioUrl: (dto.portfolioUrls && dto.portfolioUrls.length > 0)
+    ? dto.portfolioUrls[0]
+    : (dto.portfolioItems && dto.portfolioItems.length > 0) ? dto.portfolioItems[0] : undefined,
+  videoUrl: na(dto.videoUrl),
   profileCompletionPercentage: dto.profileCompletionPercentage,
   category: dto.artistCategory || dto.artistType || 'Artist',
-  location: dto.location || dto.workLocation || 'Unknown',
+  location: na(dto.location) || na(dto.workLocation) || 'Unknown',
   experienceYears: dto.experienceYears,
+  experienceLevel: na(dto.experienceLevel),
   recruiterId: dto.recruiterId,
   isVerified: dto.isVerified,
+  verificationStatus: dto.verificationStatus,
+  isPremium: dto.isPremium,
+  genres: Array.isArray(dto.genres) ? dto.genres : [],
+  languages: Array.isArray(dto.languages) ? dto.languages : [],
+  achievements: Array.isArray(dto.achievements) ? dto.achievements : [],
+  certifications: Array.isArray(dto.certifications) ? dto.certifications : [],
+  comfortableAreas: Array.isArray(dto.comfortableAreas) ? dto.comfortableAreas : [],
+  travelCities: Array.isArray(dto.travelCities) ? dto.travelCities : [],
+  availability: na(dto.availability),
+  preferredJobType: na(dto.preferredJobType),
+  expectedSalaryMin: dto.expectedSalaryMin ?? undefined,
+  expectedSalaryMax: dto.expectedSalaryMax ?? undefined,
+  currency: na(dto.currency),
+  workSchedule: na(dto.workSchedule),
+  hourlyRate: dto.hourlyRate ?? undefined,
+  gender: dto.gender,
+  maritalStatus: dto.maritalStatus ?? undefined,
+  dateOfBirth: dto.dateOfBirth,
+  weight: dto.weight ?? undefined,
+  height: dto.height ?? undefined,
+  hairColor: na(dto.hairColor),
+  hairLength: na(dto.hairLength),
+  eyeColor: na(dto.eyeColor),
+  complexion: na(dto.complexion),
+  hasTattoo: dto.hasTattoo,
+  hasMole: dto.hasMole,
+  shoeSize: na(dto.shoeSize),
+  hasPassport: dto.hasPassport,
+  lastActive: dto.lastActive,
+  totalApplications: dto.totalApplications,
+  totalHires: dto.totalHires,
 })
 
 export async function browseArtists(params: BrowseArtistsParams): Promise<PagedArtistsResult> {

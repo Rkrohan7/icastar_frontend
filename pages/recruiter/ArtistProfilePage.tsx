@@ -5,6 +5,8 @@ import {
   MailIcon,
   LinkIcon,
   BriefcaseIcon,
+  MapPinIcon,
+  CheckCircleIcon,
 } from '../../components/icons/IconComponents'
 import { ProfileCompletionBar } from '../../components/ProfileCompletionBar'
 import { HireRequestModal } from '../../components/HireRequestModal'
@@ -466,53 +468,322 @@ export const ArtistProfilePage = () => {
           <AudienceMetrics artistId={artist.id} />
         ) : (
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
-            <div className='lg:col-span-2 space-y-8'>
-              <Card>
-                <div className='flex items-start space-x-6'>
-                  <img
-                    className='h-28 w-28 rounded-full object-cover ring-4 ring-white'
-                    src={artist.avatarUrl}
-                    alt={artist.name}
-                  />
-                  <div className='pt-2'>
-                    <h3 className='text-2xl font-bold text-gray-900'>
-                      {artist.name}
-                    </h3>
-                    <p className='text-md text-gray-600 leading-relaxed mt-2'>
-                      {artist.bio || 'No biography provided.'}
-                    </p>
-                    <div className='mt-2 w-full max-w-md'>
-                      <ProfileCompletionBar percentage={artist.profileCompletionPercentage || 0} />
+            {/* ── LEFT COLUMN ── */}
+            <div className='lg:col-span-2 space-y-6'>
+
+              {/* Hero Card */}
+              <Card className='overflow-hidden !p-0'>
+                {/* Cover photo banner */}
+                {artist.coverPhotoUrl ? (
+                  <img src={artist.coverPhotoUrl} alt='Cover' className='w-full h-40 object-cover' />
+                ) : (
+                  <div className='w-full h-40 bg-gradient-to-r from-primary/20 to-primary/5' />
+                )}
+                <div className='px-6 pb-6'>
+                  <div className='flex items-end gap-4 -mt-12 mb-4'>
+                    <img
+                      className='h-24 w-24 rounded-full object-cover ring-4 ring-white shrink-0'
+                      src={artist.avatarUrl}
+                      alt={artist.name}
+                    />
+                    <div className='pb-1'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <h3 className='text-2xl font-bold text-gray-900'>{artist.name}</h3>
+                        {artist.isVerified && (
+                          <span className='inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full'>
+                            <CheckCircleIcon className='h-3.5 w-3.5' /> Verified
+                          </span>
+                        )}
+                        {artist.isPremium && (
+                          <span className='px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 rounded-full'>Premium</span>
+                        )}
+                      </div>
+                      <p className='text-sm text-primary font-medium mt-0.5'>{artist.category}</p>
                     </div>
                   </div>
+                  <p className='text-sm text-gray-600 leading-relaxed'>
+                    {artist.bio || 'No biography provided.'}
+                  </p>
+                  <div className='mt-3 max-w-md'>
+                    <ProfileCompletionBar percentage={artist.profileCompletionPercentage || 0} />
+                  </div>
                 </div>
               </Card>
 
+              {/* Skills */}
               <Card>
-                <h4 className='text-lg font-semibold text-gray-800 mb-4'>
-                  Skills
-                </h4>
-                <div className='flex flex-wrap gap-2'>
-                  {artist.skills.map(skill => (
-                    <span
-                      key={skill}
-                      className='px-3 py-1.5 text-sm font-medium bg-primary-light text-primary rounded-full'>
-                      {skill}
-                    </span>
-                  ))}
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Skills</h4>
+                {artist.skills.length > 0 ? (
+                  <div className='flex flex-wrap gap-2'>
+                    {artist.skills.map(skill => (
+                      <span key={skill} className='px-3 py-1.5 text-sm font-medium bg-primary-light text-primary rounded-full'>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className='text-sm text-gray-500'>No skills listed.</p>
+                )}
+              </Card>
+
+              {/* Overview */}
+              <Card>
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Overview</h4>
+                <div className='grid grid-cols-2 sm:grid-cols-3 gap-y-5 gap-x-4 text-sm'>
+                  {artist.location && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Location</p>
+                      <p className='font-medium text-gray-800'>{artist.location}</p>
+                    </div>
+                  )}
+                  {(artist.experienceYears != null || artist.experienceLevel) && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Experience</p>
+                      <p className='font-medium text-gray-800'>
+                        {artist.experienceYears != null ? `${artist.experienceYears} yrs` : ''}
+                        {artist.experienceYears != null && artist.experienceLevel ? ' · ' : ''}
+                        {artist.experienceLevel || ''}
+                      </p>
+                    </div>
+                  )}
+                  {artist.gender && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Gender</p>
+                      <p className='font-medium text-gray-800 capitalize'>{artist.gender.toLowerCase()}</p>
+                    </div>
+                  )}
+                  {artist.dateOfBirth && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Date of Birth</p>
+                      <p className='font-medium text-gray-800'>{artist.dateOfBirth}</p>
+                    </div>
+                  )}
+                  {artist.maritalStatus && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Marital Status</p>
+                      <p className='font-medium text-gray-800 capitalize'>{artist.maritalStatus.toLowerCase()}</p>
+                    </div>
+                  )}
+                  {artist.availability && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Availability</p>
+                      <p className='font-medium text-gray-800'>{artist.availability}</p>
+                    </div>
+                  )}
+                  {artist.preferredJobType && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Preferred Job Type</p>
+                      <p className='font-medium text-gray-800'>{artist.preferredJobType}</p>
+                    </div>
+                  )}
+                  {artist.workSchedule && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Work Schedule</p>
+                      <p className='font-medium text-gray-800'>{artist.workSchedule}</p>
+                    </div>
+                  )}
+                  {artist.hourlyRate != null && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Hourly Rate</p>
+                      <p className='font-medium text-gray-800'>{artist.currency || ''} {artist.hourlyRate.toLocaleString()}/hr</p>
+                    </div>
+                  )}
+                  {(artist.expectedSalaryMin != null || artist.expectedSalaryMax != null) && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Expected Salary</p>
+                      <p className='font-medium text-gray-800'>
+                        {artist.currency || ''}{' '}
+                        {artist.expectedSalaryMin != null ? artist.expectedSalaryMin.toLocaleString() : ''}
+                        {artist.expectedSalaryMin != null && artist.expectedSalaryMax != null ? ' – ' : ''}
+                        {artist.expectedSalaryMax != null ? artist.expectedSalaryMax.toLocaleString() : ''}
+                      </p>
+                    </div>
+                  )}
+                  {artist.lastActive && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Last Active</p>
+                      <p className='font-medium text-gray-800'>{new Date(artist.lastActive).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  {artist.hasPassport !== undefined && (
+                    <div>
+                      <p className='text-xs text-gray-500 mb-0.5'>Passport</p>
+                      <p className='font-medium text-gray-800'>{artist.hasPassport ? 'Yes' : 'No'}</p>
+                    </div>
+                  )}
                 </div>
               </Card>
+
+              {/* Languages */}
+              {artist.languages && artist.languages.length > 0 && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Languages</h4>
+                  <div className='flex flex-wrap gap-2'>
+                    {artist.languages.map(lang => (
+                      <span key={lang} className='px-3 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 rounded-full'>
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Genres */}
+              {artist.genres && artist.genres.length > 0 && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Genres</h4>
+                  <div className='flex flex-wrap gap-2'>
+                    {artist.genres.map(genre => (
+                      <span key={genre} className='px-3 py-1.5 text-sm font-medium bg-amber-50 text-amber-700 rounded-full'>
+                        {genre}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Comfortable Areas */}
+              {artist.comfortableAreas && artist.comfortableAreas.length > 0 && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Comfortable Areas</h4>
+                  <div className='flex flex-wrap gap-2'>
+                    {artist.comfortableAreas.map(area => (
+                      <span key={area} className='px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700 rounded-full'>
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Travel Cities */}
+              {artist.travelCities && artist.travelCities.length > 0 && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Willing to Travel</h4>
+                  <div className='flex flex-wrap gap-2'>
+                    {artist.travelCities.map(city => (
+                      <span key={city} className='px-3 py-1.5 text-sm font-medium bg-purple-50 text-purple-700 rounded-full'>
+                        {city}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Physical Attributes */}
+              {(artist.height != null || artist.weight != null || artist.hairColor || artist.eyeColor || artist.complexion || artist.shoeSize) && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Physical Attributes</h4>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-4 text-sm'>
+                    {artist.height != null && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Height</p>
+                        <p className='font-medium text-gray-800'>{artist.height} ft</p>
+                      </div>
+                    )}
+                    {artist.weight != null && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Weight</p>
+                        <p className='font-medium text-gray-800'>{artist.weight} kg</p>
+                      </div>
+                    )}
+                    {artist.hairColor && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Hair Color</p>
+                        <p className='font-medium text-gray-800'>{artist.hairColor}</p>
+                      </div>
+                    )}
+                    {artist.hairLength && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Hair Length</p>
+                        <p className='font-medium text-gray-800'>{artist.hairLength}</p>
+                      </div>
+                    )}
+                    {artist.eyeColor && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Eye Color</p>
+                        <p className='font-medium text-gray-800'>{artist.eyeColor}</p>
+                      </div>
+                    )}
+                    {artist.complexion && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Complexion</p>
+                        <p className='font-medium text-gray-800'>{artist.complexion}</p>
+                      </div>
+                    )}
+                    {artist.shoeSize && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Shoe Size</p>
+                        <p className='font-medium text-gray-800'>{artist.shoeSize}</p>
+                      </div>
+                    )}
+                    {artist.hasTattoo !== undefined && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Tattoo</p>
+                        <p className='font-medium text-gray-800'>{artist.hasTattoo ? 'Yes' : 'No'}</p>
+                      </div>
+                    )}
+                    {artist.hasMole !== undefined && (
+                      <div>
+                        <p className='text-xs text-gray-500 mb-0.5'>Mole</p>
+                        <p className='font-medium text-gray-800'>{artist.hasMole ? 'Yes' : 'No'}</p>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
+
+              {/* Achievements */}
+              {artist.achievements && artist.achievements.length > 0 && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Achievements</h4>
+                  <ul className='space-y-2'>
+                    {artist.achievements.map((achievement, i) => (
+                      <li key={i} className='flex items-start gap-2 text-sm text-gray-700'>
+                        <CheckCircleIcon className='h-4 w-4 text-green-500 mt-0.5 shrink-0' />
+                        {achievement}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Certifications */}
+              {artist.certifications && artist.certifications.length > 0 && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Certifications</h4>
+                  <ul className='space-y-2'>
+                    {artist.certifications.map((cert, i) => (
+                      <li key={i} className='flex items-start gap-2 text-sm text-gray-700'>
+                        <CheckCircleIcon className='h-4 w-4 text-primary mt-0.5 shrink-0' />
+                        {cert}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Video */}
+              {artist.videoUrl && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Video</h4>
+                  <video
+                    src={artist.videoUrl}
+                    controls
+                    className='w-full rounded-lg max-h-72 bg-black'
+                  />
+                </Card>
+              )}
             </div>
 
-            <div className='lg:col-span-1 space-y-8'>
+            {/* ── RIGHT COLUMN ── */}
+            <div className='lg:col-span-1 space-y-6'>
+
+              {/* Actions */}
               <Card>
-                <h4 className='text-lg font-semibold text-gray-800 mb-4'>
-                  Actions
-                </h4>
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Actions</h4>
                 {checkingPendingRequest ? (
-                  <div className='w-full py-2.5 text-center text-sm text-gray-500'>
-                    Checking status...
-                  </div>
+                  <div className='w-full py-2.5 text-center text-sm text-gray-500'>Checking status...</div>
                 ) : hasPendingRequest ? (
                   <div className='w-full py-2.5 px-4 bg-amber-50 border border-amber-200 rounded-lg text-center'>
                     <div className='flex items-center justify-center gap-2'>
@@ -532,35 +803,72 @@ export const ArtistProfilePage = () => {
                   </button>
                 )}
               </Card>
+
+              {/* Contact & Links */}
               <Card>
-                <h4 className='text-lg font-semibold text-gray-800 mb-4'>
-                  Contact & Links
-                </h4>
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Contact & Links</h4>
                 <ul className='space-y-3 text-sm'>
                   {artist.email && (
-                    <li className='flex items-center'>
-                      <MailIcon className='h-5 w-5 text-gray-400 mr-3' />
-                      <a
-                        href={`mailto:${artist.email}`}
-                        className='text-primary hover:underline'>
-                        {artist.email}
+                    <li className='flex items-center gap-3'>
+                      <MailIcon className='h-4 w-4 text-gray-400 shrink-0' />
+                      <a href={`mailto:${artist.email}`} className='text-primary hover:underline truncate'>{artist.email}</a>
+                    </li>
+                  )}
+                  {artist.phone && (
+                    <li className='flex items-center gap-3'>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                      <a href={`tel:${artist.phone}`} className='text-primary hover:underline'>{artist.phone}</a>
+                    </li>
+                  )}
+                  {artist.website && (
+                    <li className='flex items-center gap-3'>
+                      <LinkIcon className='h-4 w-4 text-gray-400 shrink-0' />
+                      <a href={artist.website} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline truncate'>
+                        {artist.website.replace(/^https?:\/\//, '')}
                       </a>
                     </li>
                   )}
                   {artist.portfolioUrl && (
-                    <li className='flex items-center'>
-                      <LinkIcon className='h-5 w-5 text-gray-400 mr-3' />
-                      <a
-                        href={artist.portfolioUrl}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='text-primary hover:underline truncate'>
-                        {artist.portfolioUrl.replace(/^https?:\/\//, '')}
+                    <li className='flex items-center gap-3'>
+                      <LinkIcon className='h-4 w-4 text-gray-400 shrink-0' />
+                      <a href={artist.portfolioUrl} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline truncate'>
+                        Portfolio
                       </a>
                     </li>
                   )}
+                  {artist.socialLinks && artist.socialLinks.map((link, i) => (
+                    <li key={i} className='flex items-center gap-3'>
+                      <LinkIcon className='h-4 w-4 text-gray-400 shrink-0' />
+                      <a href={link} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline truncate'>
+                        {link.replace(/^https?:\/\//, '')}
+                      </a>
+                    </li>
+                  ))}
                 </ul>
               </Card>
+
+              {/* Stats */}
+              {(artist.totalApplications !== undefined || artist.totalHires !== undefined) && (
+                <Card>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Stats</h4>
+                  <div className='space-y-3 text-sm'>
+                    {artist.totalApplications !== undefined && (
+                      <div className='flex justify-between'>
+                        <span className='text-gray-500'>Total Applications</span>
+                        <span className='font-semibold text-gray-800'>{artist.totalApplications}</span>
+                      </div>
+                    )}
+                    {artist.totalHires !== undefined && (
+                      <div className='flex justify-between'>
+                        <span className='text-gray-500'>Total Hires</span>
+                        <span className='font-semibold text-gray-800'>{artist.totalHires}</span>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
             </div>
           </div>
         )}

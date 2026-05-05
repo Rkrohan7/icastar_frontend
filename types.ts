@@ -61,16 +61,54 @@ export interface Artist {
   id: number
   name: string
   avatarUrl: string
+  coverPhotoUrl?: string
   bio: string
   skills: string[]
   email?: string
+  phone?: string
+  website?: string
+  socialLinks?: string[]
+  contactPreference?: string
   portfolioUrl?: string
+  videoUrl?: string
   profileCompletionPercentage?: number
   category?: string
   location?: string
   experienceYears?: number
+  experienceLevel?: string
   isVerified?: boolean
-  recruiterId?: number // ID of the recruiter who created this artist
+  verificationStatus?: string
+  isPremium?: boolean
+  recruiterId?: number
+  genres?: string[]
+  languages?: string[]
+  achievements?: string[]
+  certifications?: string[]
+  comfortableAreas?: string[]
+  travelCities?: string[]
+  availability?: string
+  preferredJobType?: string
+  expectedSalaryMin?: number
+  expectedSalaryMax?: number
+  currency?: string
+  workSchedule?: string
+  hourlyRate?: number
+  gender?: string
+  maritalStatus?: string
+  dateOfBirth?: string
+  weight?: number
+  height?: number
+  hairColor?: string
+  hairLength?: string
+  eyeColor?: string
+  complexion?: string
+  hasTattoo?: boolean
+  hasMole?: boolean
+  shoeSize?: string
+  hasPassport?: boolean
+  lastActive?: string
+  totalApplications?: number
+  totalHires?: number
 }
 
 export interface SuggestedArtist extends Artist {
