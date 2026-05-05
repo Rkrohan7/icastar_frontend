@@ -86,6 +86,7 @@ const Profile: React.FC = () => {
   const [faceVerifyStatus, setFaceVerifyStatus] = useState<'idle' | 'captured' | 'uploading' | 'submitted'>('idle')
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [localFaceVerified, setLocalFaceVerified] = useState(false)
+  const [skillInput, setSkillInput] = useState('')
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -823,6 +824,29 @@ const Profile: React.FC = () => {
 
   const currentProfile = isEditing ? editedProfile : profile
 
+  const parseSkillsArray = (skills?: string): string[] => {
+    if (!skills) return []
+    try {
+      const parsed = JSON.parse(skills)
+      if (Array.isArray(parsed)) return parsed.flatMap(s => String(s).trim()).filter(Boolean)
+    } catch {}
+    return skills.split(',').map(s => s.trim()).filter(Boolean)
+  }
+
+  const handleAddSkill = (skill: string) => {
+    const trimmed = skill.trim()
+    if (!trimmed) return
+    const existing = parseSkillsArray(currentProfile?.skills)
+    if (existing.map(s => s.toLowerCase()).includes(trimmed.toLowerCase())) return
+    handleInputChange('skills', [...existing, trimmed].join(', '))
+    setSkillInput('')
+  }
+
+  const handleRemoveSkill = (skill: string) => {
+    const updated = parseSkillsArray(currentProfile?.skills).filter(s => s !== skill).join(', ')
+    handleInputChange('skills', updated)
+  }
+
   // Calculate profile completion percentage
   const calculateProfileCompletion = () => {
     // Helper to check if a value is filled (handles strings, numbers, and arrays)
@@ -1307,15 +1331,51 @@ const Profile: React.FC = () => {
                 <div>
                   <label className='text-sm font-medium text-gray-700 block mb-1'>Skills</label>
                   {isEditing ? (
-                    <input
-                      type='text'
-                      value={currentProfile?.skills || ''}
-                      onChange={(e) => handleInputChange('skills', e.target.value)}
-                      placeholder="Acting, Singing, Dancing"
-                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
-                    />
+                    <div className='space-y-2'>
+                      <div className='flex flex-wrap gap-2 min-h-[44px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-amber-500 focus-within:border-transparent'>
+                        {parseSkillsArray(currentProfile?.skills).map(skill => (
+                          <span key={skill} className='inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-700 font-medium'>
+                            {skill}
+                            <button
+                              type='button'
+                              onClick={() => handleRemoveSkill(skill)}
+                              className='text-amber-500 hover:text-red-600 font-bold leading-none ml-0.5'>
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                        <input
+                          type='text'
+                          value={skillInput}
+                          onChange={e => setSkillInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ',') {
+                              e.preventDefault()
+                              handleAddSkill(skillInput)
+                            }
+                            if (e.key === 'Backspace' && !skillInput) {
+                              const skills = parseSkillsArray(currentProfile?.skills)
+                              if (skills.length > 0) handleRemoveSkill(skills[skills.length - 1])
+                            }
+                          }}
+                          onBlur={() => { if (skillInput.trim()) handleAddSkill(skillInput) }}
+                          placeholder={parseSkillsArray(currentProfile?.skills).length === 0 ? 'Type skill & press Enter' : 'Add more...'}
+                          className='flex-1 min-w-[120px] outline-none text-sm text-gray-700 bg-transparent py-1'
+                        />
+                      </div>
+                      <p className='text-xs text-gray-400'>Enter किंवा comma दाबा skill add करायला</p>
+                    </div>
                   ) : (
-                    <p className='text-gray-600'>{currentProfile?.skills || '-'}</p>
+                    <div className='flex flex-wrap gap-2'>
+                      {parseSkillsArray(currentProfile?.skills).length > 0
+                        ? parseSkillsArray(currentProfile?.skills).map(skill => (
+                            <span key={skill} className='inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-700 font-medium'>
+                              {skill}
+                            </span>
+                          ))
+                        : <span className='text-gray-500'>-</span>
+                      }
+                    </div>
                   )}
                 </div>
                 <div>
