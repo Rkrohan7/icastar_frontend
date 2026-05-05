@@ -242,19 +242,20 @@ const Jobs: React.FC = () => {
         })
 
         const mapped = items.map(j => {
-          let skills: string[] = []
-          if (Array.isArray(j.skillsRequired)) {
-            skills = j.skillsRequired
-          } else if (typeof j.skillsRequired === 'string') {
-            try {
-              // Try JSON parse first
-              const parsed = JSON.parse(j.skillsRequired)
-              if (Array.isArray(parsed)) skills = parsed
-              else skills = (j.skillsRequired as string).split(',').map(s => s.trim())
-            } catch {
-              skills = (j.skillsRequired as string).split(',').map(s => s.trim())
+          const parseSkills = (val: any): string[] => {
+            if (!val) return []
+            if (typeof val === 'string') {
+              try {
+                const p = JSON.parse(val)
+                if (Array.isArray(p)) return p.flatMap((s: any) => parseSkills(s))
+                if (typeof p === 'string') return parseSkills(p)
+              } catch {}
+              return val.split(',').map((s: string) => s.trim()).filter(Boolean)
             }
+            if (Array.isArray(val)) return val.flatMap((s: any) => parseSkills(s))
+            return [String(val).trim()].filter(Boolean)
           }
+          const skills = parseSkills(j.skillsRequired)
 
           return {
             id: j.id,

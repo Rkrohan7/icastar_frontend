@@ -132,7 +132,23 @@ export const artistService = {
       videoUrl: responseData.videoUrl,
       faceVerification: responseData.faceVerificationUrl ?? responseData.faceVerification,
       danceVideo: responseData.danceShowreelUrl ?? responseData.danceVideo,
-      portfolioUrls: responseData.portfolioUrls,
+      portfolioUrls: (() => {
+        const raw = responseData.portfolioUrls ?? responseData.portfolioItems ?? responseData.portfolioUrl
+        if (!raw) return []
+        if (typeof raw === 'string') {
+          try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [raw] } catch { return [raw] }
+        }
+        if (Array.isArray(raw)) {
+          return raw.flatMap((item: any): string[] => {
+            if (typeof item === 'string') {
+              try { const p = JSON.parse(item); return Array.isArray(p) ? p.map(String) : [item] } catch { return [item] }
+            }
+            if (Array.isArray(item)) return item.map(String)
+            return item ? [String(item)] : []
+          }).filter(Boolean)
+        }
+        return []
+      })(),
       isVerifiedBadge: responseData.isVerifiedBadge,
       isProfileComplete: responseData.isProfileComplete,
       isOnboardingComplete: responseData.isOnboardingComplete,

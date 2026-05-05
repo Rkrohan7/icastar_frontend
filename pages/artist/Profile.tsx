@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Icon from '@/components/Icon'
 import artistService from '@/services/artistService'
+import artistDashboardService from '@/services/artistDashboardService'
 import uploadService from '@/services/uploadService'
 import { ImageUpload, DocumentUpload, VideoUpload } from '@/components/FileUpload'
 
@@ -88,6 +89,7 @@ const Profile: React.FC = () => {
   const [localFaceVerified, setLocalFaceVerified] = useState(false)
   const [skillInput, setSkillInput] = useState('')
   const [areaInput, setAreaInput] = useState('')
+  const [apiCompletionPercentage, setApiCompletionPercentage] = useState<number | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const parseSkillsArray = (val?: string): string[] => {
@@ -101,7 +103,7 @@ const Profile: React.FC = () => {
         if (Array.isArray(p)) return p.flatMap(x => unwrap(String(x), depth + 1)).filter(Boolean)
         if (typeof p === 'string') return unwrap(p, depth + 1)
         return [String(p).trim()].filter(Boolean)
-      } catch {}
+      } catch { }
       if (t.startsWith('[')) {
         const hits = [...t.matchAll(/"((?:[^"\\]|\\.)*)"/g)]
         if (hits.length > 0)
@@ -190,13 +192,7 @@ const Profile: React.FC = () => {
         maritalStatus: data.maritalStatus,
         comfortableAreas: Array.isArray(data.comfortableAreas) ? data.comfortableAreas.join(', ') : data.comfortableAreas,
         travelCities: Array.isArray(data.travelCities) ? data.travelCities.join(', ') : data.travelCities,
-        portfolioUrls: (() => {
-          try {
-            const pu = data.portfolioUrls
-            if (typeof pu === 'string') return JSON.parse(pu)
-            return Array.isArray(pu) ? pu : []
-          } catch { return [] }
-        })(),
+        portfolioUrls: Array.isArray(data.portfolioUrls) ? data.portfolioUrls : [],
         videoUrl: data.videoUrl,
         projectsWorked: (() => {
           try {
@@ -213,6 +209,13 @@ const Profile: React.FC = () => {
         dynamicFields: data.dynamicFields ?? [],
       }
       setProfile(normalized)
+
+      try {
+        const completion = await artistDashboardService.getProfileCompletion()
+        if (completion?.completionPercentage != null) {
+          setApiCompletionPercentage(completion.completionPercentage)
+        }
+      } catch { }
     } catch (error) {
       console.error('Error fetching profile:', error)
       setProfile(null)
@@ -404,7 +407,8 @@ const Profile: React.FC = () => {
         skills: parseSkillsArray(editedProfile.skills),
         comfortableAreas: parseSkillsArray(editedProfile.comfortableAreas),
         travelCities: parseSkillsArray(editedProfile.travelCities),
-        portfolioUrls: editedProfile.portfolioUrls ?? [],
+        portfolioUrls: (editedProfile.portfolioUrls ?? []).filter((url: string) => url.trim() !== ''),
+        portfolioItems: (editedProfile.portfolioUrls ?? []).filter((url: string) => url.trim() !== ''),
         videoUrl: editedProfile.videoUrl,
         projectsWorked: editedProfile.projectsWorked ?? [],
         hourlyRate: editedProfile.hourlyRate,
@@ -958,7 +962,9 @@ const Profile: React.FC = () => {
 
     const filledCount = fieldsWithStatus.filter(f => f.isFilled).length
     const missingFields = fieldsWithStatus.filter(f => !f.isFilled).map(f => f.label)
-    const percentage = Math.round((filledCount / fieldsList.length) * 100)
+    const percentage = apiCompletionPercentage != null
+      ? apiCompletionPercentage
+      : Math.round((filledCount / fieldsList.length) * 100)
 
     return {
       percentage,
@@ -1400,10 +1406,10 @@ const Profile: React.FC = () => {
                     <div className='flex flex-wrap gap-2'>
                       {parseSkillsArray(currentProfile?.skills).length > 0
                         ? parseSkillsArray(currentProfile?.skills).map(skill => (
-                            <span key={skill} className='inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-700 font-medium'>
-                              {skill}
-                            </span>
-                          ))
+                          <span key={skill} className='inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-700 font-medium'>
+                            {skill}
+                          </span>
+                        ))
                         : <span className='text-gray-500'>-</span>
                       }
                     </div>
@@ -1698,10 +1704,10 @@ const Profile: React.FC = () => {
                     <div className='flex flex-wrap gap-2'>
                       {parseSkillsArray(currentProfile?.comfortableAreas).length > 0
                         ? parseSkillsArray(currentProfile?.comfortableAreas).map(area => (
-                            <span key={area} className='inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 font-medium'>
-                              {area}
-                            </span>
-                          ))
+                          <span key={area} className='inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 font-medium'>
+                            {area}
+                          </span>
+                        ))
                         : <span className='text-gray-500'>-</span>
                       }
                     </div>
@@ -1723,8 +1729,8 @@ const Profile: React.FC = () => {
                     <div className='flex flex-wrap gap-2'>
                       {parseSkillsArray(currentProfile?.travelCities).length > 0
                         ? parseSkillsArray(currentProfile?.travelCities).map(city => (
-                            <span key={city} className='bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full'>{city}</span>
-                          ))
+                          <span key={city} className='bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full'>{city}</span>
+                        ))
                         : <span className='text-gray-600'>-</span>
                       }
                     </div>
@@ -1783,10 +1789,10 @@ const Profile: React.FC = () => {
                       href={url}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='flex items-center gap-2 text-amber-600 hover:underline text-sm truncate'
+                      className='flex items-center gap-2 p-3 border border-amber-200 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors'
                     >
-                      <Icon name='ExternalLink' size={14} />
-                      {url}
+                      <Icon name='ExternalLink' size={14} className='text-amber-600 flex-shrink-0' />
+                      <span className='text-amber-700 text-sm font-medium truncate'>{url}</span>
                     </a>
                   ))}
                 </div>
@@ -1838,25 +1844,10 @@ const Profile: React.FC = () => {
             </div>
 
             {/* Documents Section */}
-            <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Documents</h3>
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between p-3 border border-gray-200 rounded-lg'>
-                  <div className='flex items-center gap-3'>
-                    <div className='p-2 bg-gray-100 rounded-lg text-gray-600'>
-                      <Icon name='FileText' size={20} />
-                    </div>
-                    <div>
-                      <p className='text-sm font-medium text-gray-900'>ID Proof</p>
-                      <p className='text-xs text-gray-500'>Uploaded on 15 Aug 2023</p>
-                    </div>
-                  </div>
-                  <button className='text-amber-600 hover:text-amber-700 text-sm font-medium'>
-                    View
-                  </button>
-                </div>
-
-                {profile.category?.toLowerCase() === 'dancer' && profile.danceVideo && (
+            {profile.category?.toLowerCase() === 'dancer' && profile.danceVideo && (
+              <div className='bg-white rounded-xl p-6 shadow-sm'>
+                <h3 className='text-lg font-semibold text-gray-800 mb-4'>Documents</h3>
+                <div className='space-y-4'>
                   <div className='flex items-center justify-between p-3 border border-gray-200 rounded-lg'>
                     <div className='flex items-center gap-3'>
                       <div className='p-2 bg-gray-100 rounded-lg text-gray-600'>
@@ -1876,9 +1867,10 @@ const Profile: React.FC = () => {
                       Watch
                     </a>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
+
           </div>
         </div>
       </div>
