@@ -1363,7 +1363,7 @@ const Profile: React.FC = () => {
                           className='flex-1 min-w-[120px] outline-none text-sm text-gray-700 bg-transparent py-1'
                         />
                       </div>
-                      <p className='text-xs text-gray-400'>Enter किंवा comma दाबा skill add करायला</p>
+                      <p className='text-xs text-gray-400'>Press Enter or comma to add a skill</p>
                     </div>
                   ) : (
                     <div className='flex flex-wrap gap-2'>
