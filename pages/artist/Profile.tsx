@@ -88,6 +88,29 @@ const Profile: React.FC = () => {
   const [localFaceVerified, setLocalFaceVerified] = useState(false)
   const [skillInput, setSkillInput] = useState('')
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  const parseSkillsArray = (val?: string): string[] => {
+    if (!val) return []
+    const unwrap = (s: string, depth = 0): string[] => {
+      if (depth > 8) return s.trim() ? [s.trim()] : []
+      const t = s.trim()
+      if (!t) return []
+      try {
+        const p = JSON.parse(t)
+        if (Array.isArray(p)) return p.flatMap(x => unwrap(String(x), depth + 1)).filter(Boolean)
+        if (typeof p === 'string') return unwrap(p, depth + 1)
+        return [String(p).trim()].filter(Boolean)
+      } catch {}
+      if (t.startsWith('[')) {
+        const hits = [...t.matchAll(/"((?:[^"\\]|\\.)*)"/g)]
+        if (hits.length > 0)
+          return hits.flatMap(m => unwrap(m[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\'), depth + 1)).filter(Boolean)
+      }
+      if (t.includes(',')) return t.split(',').map(x => x.trim()).filter(Boolean)
+      return [t]
+    }
+    return unwrap(val)
+  }
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
@@ -358,7 +381,7 @@ const Profile: React.FC = () => {
         phone: editedProfile.phone,
         city: editedProfile.city,
         bio: editedProfile.bio,
-        languagesSpoken: editedProfile.languages ? editedProfile.languages.split(',').map(l => l.trim()) : [],
+        languagesSpoken: parseSkillsArray(editedProfile.languages),
         gender: editedProfile.gender,
         dateOfBirth: editedProfile.dateOfBirth,
         profilePhoto: editedProfile.profilePhoto,
@@ -377,9 +400,9 @@ const Profile: React.FC = () => {
         complexion: editedProfile.complexion,
         hasPassport: editedProfile.hasPassport,
         maritalStatus: editedProfile.maritalStatus,
-        skills: editedProfile.skills ? editedProfile.skills.split(',').map(s => s.trim()) : undefined,
-        comfortableAreas: editedProfile.comfortableAreas ? editedProfile.comfortableAreas.split(',').map(a => a.trim()) : undefined,
-        travelCities: editedProfile.travelCities ? editedProfile.travelCities.split(',').map(c => c.trim()) : undefined,
+        skills: parseSkillsArray(editedProfile.skills),
+        comfortableAreas: parseSkillsArray(editedProfile.comfortableAreas),
+        travelCities: parseSkillsArray(editedProfile.travelCities),
         portfolioUrls: editedProfile.portfolioUrls ?? [],
         videoUrl: editedProfile.videoUrl,
         projectsWorked: editedProfile.projectsWorked ?? [],
@@ -824,15 +847,6 @@ const Profile: React.FC = () => {
 
   const currentProfile = isEditing ? editedProfile : profile
 
-  const parseSkillsArray = (skills?: string): string[] => {
-    if (!skills) return []
-    try {
-      const parsed = JSON.parse(skills)
-      if (Array.isArray(parsed)) return parsed.flatMap(s => String(s).trim()).filter(Boolean)
-    } catch {}
-    return skills.split(',').map(s => s.trim()).filter(Boolean)
-  }
-
   const handleAddSkill = (skill: string) => {
     const trimmed = skill.trim()
     if (!trimmed) return
@@ -1055,9 +1069,10 @@ const Profile: React.FC = () => {
                       className='w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     >
                       <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
+                      <option value="MALE">Male</option>
+                      <option value="FEMALE">Female</option>
+                      <option value="OTHER">Other</option>
+                      <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
                     </select>
                   </div>
                 </div>
@@ -1631,13 +1646,22 @@ const Profile: React.FC = () => {
                   {isEditing ? (
                     <input
                       type='text'
-                      value={currentProfile?.comfortableAreas || ''}
+                      value={parseSkillsArray(currentProfile?.comfortableAreas).join(', ')}
                       onChange={(e) => handleInputChange('comfortableAreas', e.target.value)}
                       placeholder='e.g., Drama, Romance, Action'
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
-                    <p className='text-gray-600'>{currentProfile?.comfortableAreas || '-'}</p>
+                    <div className='flex flex-wrap gap-2'>
+                      {parseSkillsArray(currentProfile?.comfortableAreas).length > 0
+                        ? parseSkillsArray(currentProfile?.comfortableAreas).map(area => (
+                            <span key={area} className='inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700 font-medium'>
+                              {area}
+                            </span>
+                          ))
+                        : <span className='text-gray-500'>-</span>
+                      }
+                    </div>
                   )}
                 </div>
 
@@ -1647,19 +1671,20 @@ const Profile: React.FC = () => {
                   {isEditing ? (
                     <input
                       type='text'
-                      value={currentProfile?.travelCities || ''}
+                      value={parseSkillsArray(currentProfile?.travelCities).join(', ')}
                       onChange={(e) => handleInputChange('travelCities', e.target.value)}
                       placeholder='e.g., Mumbai, Delhi, Bangalore'
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
-                  ) : currentProfile?.travelCities ? (
-                    <div className='flex flex-wrap gap-2'>
-                      {currentProfile.travelCities.split(',').map((city, i) => (
-                        <span key={i} className='bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full'>{city.trim()}</span>
-                      ))}
-                    </div>
                   ) : (
-                    <p className='text-gray-600'>-</p>
+                    <div className='flex flex-wrap gap-2'>
+                      {parseSkillsArray(currentProfile?.travelCities).length > 0
+                        ? parseSkillsArray(currentProfile?.travelCities).map(city => (
+                            <span key={city} className='bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full'>{city}</span>
+                          ))
+                        : <span className='text-gray-600'>-</span>
+                      }
+                    </div>
                   )}
                 </div>
               </div>
