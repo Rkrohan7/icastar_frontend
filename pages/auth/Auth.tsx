@@ -342,6 +342,14 @@ const Auth = () => {
                     {errors.password && errors.password.trim() && (
                       <p className='text-xs text-red-400 mt-1'>{errors.password}</p>
                     )}
+                    <div className='flex justify-end mt-1'>
+                      <Link
+                        to='/forgot-password'
+                        className='text-xs text-white/50 hover:text-white/80 transition-colors'
+                      >
+                        Forgot Password?
+                      </Link>
+                    </div>
                   </div>
 
                   <Button
