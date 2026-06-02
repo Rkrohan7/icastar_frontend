@@ -15,6 +15,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import ApplyJobModal from '@/components/ApplyJobModal'
 import { bookmarksService } from '@/services/bookmarksService'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
+import usePageParam from '@/hooks/usePageParam'
 
 
 type JobCardProps = {
@@ -207,7 +208,7 @@ const Jobs: React.FC = () => {
   const [jobType, setJobType] = useState<JobType | ''>('')
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | ''>('')
   // 1-based page index for UI; convert to 0-based for API
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = usePageParam('page', 1)
   const [pageSize, setPageSize] = useState(12)
   const [total, setTotal] = useState(0)
   const [applyOpen, setApplyOpen] = useState(false)

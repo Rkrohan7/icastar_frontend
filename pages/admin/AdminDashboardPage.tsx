@@ -1,183 +1,160 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   UsersIcon,
   BriefcaseIcon,
   MicVocal,
   FileTextIcon,
-  CreditCardIcon,
   ChartBarIcon,
+  ShieldCheckIcon,
   TrendingUpIcon,
-  TrendingDownIcon,
 } from '../../components/icons/IconComponents'
+import superAdminService, {
+  SuperAdminDashboard,
+} from '../../services/superAdminService'
 
-interface KPICard {
+interface KpiCardConfig {
   title: string
-  value: string | number
-  change: number
-  changeLabel: string
+  value: number | string
+  subtitle?: string
   icon: React.ComponentType<{ className?: string }>
-  bgColor: string
+  iconBg: string
   iconColor: string
 }
 
-interface ActivityItem {
-  id: number
-  type: 'recruiter' | 'artist' | 'job' | 'audition' | 'application' | 'report'
-  message: string
-  timestamp: string
-  icon: React.ComponentType<{ className?: string }>
-  iconBg: string
-}
+// Safe number formatter — handles null/undefined/NaN
+const n = (v: number | null | undefined): string => (v ?? 0).toLocaleString()
 
 export const AdminDashboardPage: React.FC = () => {
-  // Mock data - replace with actual API calls
-  const kpiData: KPICard[] = [
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<SuperAdminDashboard | null>(null)
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const result = await superAdminService.getDashboard()
+        setData(result)
+      } catch (err) {
+        console.error('Failed to load super admin dashboard:', err)
+        setError('Unable to load dashboard data. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDashboard()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className='p-6 flex items-center justify-center min-h-[400px]'>
+        <div className='text-gray-500'>Loading dashboard...</div>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className='p-6 flex items-center justify-center min-h-[400px]'>
+        <div className='bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg'>
+          {error || 'No data available'}
+        </div>
+      </div>
+    )
+  }
+
+  const kpis: KpiCardConfig[] = [
     {
-      title: 'Total Recruiters',
-      value: '1,234',
-      change: 12.5,
-      changeLabel: '+156 this month',
+      title: 'Total Users',
+      value: n(data.totalUsers),
+      subtitle: `+${data.newUsersToday ?? 0} today`,
       icon: UsersIcon,
-      bgColor: 'bg-orange-50',
+      iconBg: 'bg-orange-50',
       iconColor: 'text-[#E36A3A]',
     },
     {
       title: 'Total Artists',
-      value: '8,567',
-      change: 8.3,
-      changeLabel: '+712 this month',
+      value: n(data.totalArtists),
+      subtitle: `${n(data.totalRecruiters)} recruiters`,
       icon: MicVocal,
-      bgColor: 'bg-orange-50',
+      iconBg: 'bg-orange-50',
       iconColor: 'text-[#E36A3A]',
     },
     {
       title: 'Active Jobs',
-      value: '432',
-      change: -3.2,
-      changeLabel: '64 posted today',
+      value: n(data.activeJobs),
+      subtitle: `${n(data.totalJobs)} total`,
       icon: BriefcaseIcon,
-      bgColor: 'bg-orange-50',
-      iconColor: 'text-[#E36A3A]',
-    },
-    {
-      title: 'Open Auditions',
-      value: '287',
-      change: 15.7,
-      changeLabel: '45 posted today',
-      icon: MicVocal,
-      bgColor: 'bg-orange-50',
+      iconBg: 'bg-orange-50',
       iconColor: 'text-[#E36A3A]',
     },
     {
       title: 'Total Applications',
-      value: '12,456',
-      change: 22.4,
-      changeLabel: '+2,791 this week',
+      value: n(data.totalApplications),
+      subtitle: `${n(data.pendingApplications)} pending`,
       icon: FileTextIcon,
-      bgColor: 'bg-orange-50',
+      iconBg: 'bg-orange-50',
       iconColor: 'text-[#E36A3A]',
     },
     {
-      title: 'Platform Revenue',
-      value: '$127,580',
-      change: 18.9,
-      changeLabel: '+$23,450 this month',
-      icon: CreditCardIcon,
-      bgColor: 'bg-orange-50',
-      iconColor: 'text-[#E36A3A]',
+      title: 'Verified Users',
+      value: n(data.verifiedUsers),
+      subtitle: `${n(data.unverifiedUsers)} unverified`,
+      icon: ShieldCheckIcon,
+      iconBg: 'bg-green-50',
+      iconColor: 'text-green-600',
+    },
+    {
+      title: 'New This Month',
+      value: n(data.newUsersThisMonth),
+      subtitle: `+${data.newUsersThisWeek ?? 0} this week`,
+      icon: TrendingUpIcon,
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
     },
   ]
 
-  const recentActivity: ActivityItem[] = [
-    {
-      id: 1,
-      type: 'recruiter',
-      message: 'Warner Bros Pictures registered as new recruiter',
-      timestamp: '2 minutes ago',
-      icon: UsersIcon,
-      iconBg: 'bg-orange-100 text-[#E36A3A]',
-    },
-    {
-      id: 2,
-      type: 'audition',
-      message: 'New audition created: "Lead Role - Action Thriller"',
-      timestamp: '15 minutes ago',
-      icon: MicVocal,
-      iconBg: 'bg-orange-100 text-[#E36A3A]',
-    },
-    {
-      id: 3,
-      type: 'job',
-      message: 'Job posted: "Senior Cinematographer - Feature Film"',
-      timestamp: '1 hour ago',
-      icon: BriefcaseIcon,
-      iconBg: 'bg-green-100 text-green-600',
-    },
-    {
-      id: 4,
-      type: 'application',
-      message: '47 new applications received for "Broadway Musical Lead"',
-      timestamp: '2 hours ago',
-      icon: FileTextIcon,
-      iconBg: 'bg-orange-100 text-[#E36A3A]',
-    },
-    {
-      id: 5,
-      type: 'report',
-      message: 'Content reported: Inappropriate portfolio image',
-      timestamp: '3 hours ago',
-      icon: ChartBarIcon,
-      iconBg: 'bg-red-100 text-red-600',
-    },
-    {
-      id: 6,
-      type: 'artist',
-      message: 'Sarah Mitchell completed profile verification',
-      timestamp: '4 hours ago',
-      icon: MicVocal,
-      iconBg: 'bg-green-100 text-green-600',
-    },
-    {
-      id: 7,
-      type: 'recruiter',
-      message: 'Netflix approved for premium recruiter tier',
-      timestamp: '5 hours ago',
-      icon: UsersIcon,
-      iconBg: 'bg-green-100 text-green-600',
-    },
-    {
-      id: 8,
-      type: 'job',
-      message: 'Job closed: "Voice Actor - Animation Series" (23 applications)',
-      timestamp: '6 hours ago',
-      icon: BriefcaseIcon,
-      iconBg: 'bg-gray-100 text-gray-600',
-    },
+  const userStatusBreakdown = [
+    { label: 'Active', value: data.activeUsers ?? 0, color: 'bg-green-500' },
+    { label: 'Inactive', value: data.inactiveUsers ?? 0, color: 'bg-gray-400' },
+    { label: 'Suspended', value: data.suspendedUsers ?? 0, color: 'bg-yellow-500' },
+    { label: 'Banned', value: data.bannedUsers ?? 0, color: 'bg-red-500' },
   ]
+  const userStatusTotal = userStatusBreakdown.reduce((s, x) => s + x.value, 0) || 1
+
+  const appStatusBreakdown = [
+    { label: 'Pending', value: data.pendingApplications ?? 0, color: 'bg-[#F6A57A]' },
+    { label: 'Shortlisted', value: data.shortlistedApplications ?? 0, color: 'bg-[#E36A3A]' },
+    { label: 'Accepted', value: data.acceptedApplications ?? 0, color: 'bg-green-600' },
+    { label: 'Rejected', value: data.rejectedApplications ?? 0, color: 'bg-red-500' },
+  ]
+  const appStatusTotal = appStatusBreakdown.reduce((s, x) => s + x.value, 0) || 1
+
+  const artistTypeEntries = Object.entries(data.artistTypeDistribution || {}) as [string, number][]
+  const maxArtistType = Math.max(...artistTypeEntries.map(([, v]) => v), 1)
+  const jobTypeEntries = Object.entries(data.jobTypeDistribution || {}) as [string, number][]
+  const jobTypeTotal = jobTypeEntries.reduce((s, [, v]) => s + v, 0) || 1
 
   return (
     <div className='p-6 space-y-6'>
       {/* KPI Cards Grid */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {kpiData.map((kpi, index) => (
-          <div key={index} className='bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow'>
+        {kpis.map((kpi) => (
+          <div
+            key={kpi.title}
+            className='bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow'>
             <div className='flex items-start justify-between'>
               <div className='flex-1'>
                 <p className='text-sm font-medium text-gray-600 mb-1'>{kpi.title}</p>
                 <h3 className='text-3xl font-bold text-gray-900 mb-2'>{kpi.value}</h3>
-                <div className='flex items-center gap-2'>
-                  <div className={`flex items-center gap-1 ${kpi.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {kpi.change >= 0 ? (
-                      <TrendingUpIcon className='h-4 w-4' />
-                    ) : (
-                      <TrendingDownIcon className='h-4 w-4' />
-                    )}
-                    <span className='text-sm font-semibold'>{Math.abs(kpi.change)}%</span>
-                  </div>
-                  <span className='text-xs text-gray-500'>{kpi.changeLabel}</span>
-                </div>
+                {kpi.subtitle && (
+                  <span className='text-xs text-gray-500'>{kpi.subtitle}</span>
+                )}
               </div>
-              <div className={`${kpi.bgColor} p-3 rounded-lg`}>
+              <div className={`${kpi.iconBg} p-3 rounded-lg`}>
                 <kpi.icon className={`h-6 w-6 ${kpi.iconColor}`} />
               </div>
             </div>
@@ -185,216 +162,218 @@ export const AdminDashboardPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Analytics Section */}
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        {/* User Growth Trend */}
-        <div className='lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <div className='flex items-center justify-between mb-6'>
-            <div>
-              <h3 className='text-lg font-bold text-gray-900'>User Growth Trend</h3>
-              <p className='text-sm text-gray-500'>Last 6 months</p>
-            </div>
-            <div className='flex gap-4'>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 bg-[#E36A3A] rounded-full'></div>
-                <span className='text-xs text-gray-600'>Recruiters</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 bg-[#F6A57A] rounded-full'></div>
-                <span className='text-xs text-gray-600'>Artists</span>
-              </div>
-            </div>
-          </div>
-          {/* Simplified line chart visualization */}
-          <div className='h-64 flex items-end justify-between gap-2'>
-            {[
-              { recruiters: 60, artists: 75 },
-              { recruiters: 65, artists: 80 },
-              { recruiters: 72, artists: 85 },
-              { recruiters: 78, artists: 88 },
-              { recruiters: 85, artists: 92 },
-              { recruiters: 95, artists: 98 },
-            ].map((data, index) => (
-              <div key={index} className='flex-1 flex flex-col items-center gap-2'>
-                <div className='w-full flex flex-col gap-1'>
-                  <div
-                    className='w-full bg-gradient-to-t from-[#E36A3A] to-[#F6A57A] rounded-t-lg transition-all hover:opacity-80'
-                    style={{ height: `${data.recruiters}%` }}></div>
-                  <div
-                    className='w-full bg-gradient-to-t from-[#F6A57A] to-orange-200 rounded-t-lg transition-all hover:opacity-80'
-                    style={{ height: `${data.artists}%` }}></div>
-                </div>
-                <span className='text-xs text-gray-500'>
-                  {['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][index]}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Application Status Distribution */}
+      {/* Status breakdown row */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <div className='mb-6'>
-            <h3 className='text-lg font-bold text-gray-900'>Application Status</h3>
-            <p className='text-sm text-gray-500'>Current distribution</p>
-          </div>
-          {/* Simplified donut chart */}
-          <div className='flex items-center justify-center mb-6'>
-            <div className='relative w-40 h-40'>
-              <svg className='w-full h-full transform -rotate-90'>
-                <circle cx='80' cy='80' r='70' fill='none' stroke='#e5e7eb' strokeWidth='20' />
-                <circle
-                  cx='80'
-                  cy='80'
-                  r='70'
-                  fill='none'
-                  stroke='#10b981'
-                  strokeWidth='20'
-                  strokeDasharray='439.8'
-                  strokeDashoffset='110'
-                />
-                <circle
-                  cx='80'
-                  cy='80'
-                  r='70'
-                  fill='none'
-                  stroke='#3b82f6'
-                  strokeWidth='20'
-                  strokeDasharray='439.8'
-                  strokeDashoffset='220'
-                />
-                <circle
-                  cx='80'
-                  cy='80'
-                  r='70'
-                  fill='none'
-                  stroke='#f59e0b'
-                  strokeWidth='20'
-                  strokeDasharray='439.8'
-                  strokeDashoffset='330'
-                />
-              </svg>
-              <div className='absolute inset-0 flex items-center justify-center'>
-                <div className='text-center'>
-                  <p className='text-2xl font-bold text-gray-900'>12.4K</p>
-                  <p className='text-xs text-gray-500'>Total</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <h3 className='text-lg font-bold text-gray-900 mb-1'>User Account Status</h3>
+          <p className='text-sm text-gray-500 mb-4'>Current distribution across all users</p>
           <div className='space-y-3'>
-            {[
-              { label: 'Under Review', value: '4,234', percentage: 34, color: 'bg-[#F6A57A]' },
-              { label: 'Shortlisted', value: '3,127', percentage: 25, color: 'bg-[#E36A3A]' },
-              { label: 'Interviewed', value: '2,456', percentage: 20, color: 'bg-green-600' },
-              { label: 'Others', value: '2,639', percentage: 21, color: 'bg-gray-400' },
-            ].map((status, index) => (
-              <div key={index} className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <div className={`w-3 h-3 ${status.color} rounded-full`}></div>
-                  <span className='text-sm text-gray-700'>{status.label}</span>
+            {userStatusBreakdown.map((s) => {
+              const pct = (s.value / userStatusTotal) * 100
+              return (
+                <div key={s.label}>
+                  <div className='flex items-center justify-between text-sm mb-1'>
+                    <span className='text-gray-700'>{s.label}</span>
+                    <span className='font-semibold text-gray-900'>
+                      {s.value.toLocaleString()} ({pct.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className='w-full h-2 bg-gray-100 rounded-full overflow-hidden'>
+                    <div className={`h-full ${s.color}`} style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-                <div className='text-right'>
-                  <p className='text-sm font-semibold text-gray-900'>{status.value}</p>
-                  <p className='text-xs text-gray-500'>{status.percentage}%</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Job vs Audition Activity & Recent Activity */}
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        {/* Job vs Audition Activity */}
-        <div className='lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <div className='flex items-center justify-between mb-6'>
-            <div>
-              <h3 className='text-lg font-bold text-gray-900'>Job vs Audition Activity</h3>
-              <p className='text-sm text-gray-500'>Last 7 days</p>
-            </div>
-            <div className='flex gap-4'>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 bg-[#E36A3A] rounded-full'></div>
-                <span className='text-xs text-gray-600'>Jobs</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <div className='w-3 h-3 bg-[#F6A57A] rounded-full'></div>
-                <span className='text-xs text-gray-600'>Auditions</span>
-              </div>
-            </div>
-          </div>
-          {/* Bar chart */}
-          <div className='h-64 flex items-end justify-between gap-4'>
-            {[
-              { jobs: 45, auditions: 32 },
-              { jobs: 52, auditions: 38 },
-              { jobs: 48, auditions: 45 },
-              { jobs: 65, auditions: 50 },
-              { jobs: 58, auditions: 48 },
-              { jobs: 72, auditions: 55 },
-              { jobs: 68, auditions: 62 },
-            ].map((data, index) => (
-              <div key={index} className='flex-1 flex flex-col items-center gap-2'>
-                <div className='w-full flex gap-1 items-end h-48'>
-                  <div
-                    className='flex-1 bg-gradient-to-t from-[#E36A3A] to-[#F6A57A] rounded-t-lg hover:opacity-80 transition-all'
-                    style={{ height: `${data.jobs}%` }}
-                    title={`Jobs: ${data.jobs}`}></div>
-                  <div
-                    className='flex-1 bg-gradient-to-t from-[#F6A57A] to-orange-200 rounded-t-lg hover:opacity-80 transition-all'
-                    style={{ height: `${data.auditions}%` }}
-                    title={`Auditions: ${data.auditions}`}></div>
-                </div>
-                <span className='text-xs text-gray-500'>
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
-        {/* Recent Activity Feed */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <div className='mb-4'>
-            <h3 className='text-lg font-bold text-gray-900'>Recent Activity</h3>
-            <p className='text-sm text-gray-500'>Latest platform events</p>
-          </div>
-          <div className='space-y-4 max-h-80 overflow-y-auto'>
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className='flex gap-3'>
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full ${activity.iconBg} flex items-center justify-center`}>
-                  <activity.icon className='h-4 w-4' />
+          <h3 className='text-lg font-bold text-gray-900 mb-1'>Application Status</h3>
+          <p className='text-sm text-gray-500 mb-4'>Breakdown across all applications</p>
+          <div className='space-y-3'>
+            {appStatusBreakdown.map((s) => {
+              const pct = (s.value / appStatusTotal) * 100
+              return (
+                <div key={s.label}>
+                  <div className='flex items-center justify-between text-sm mb-1'>
+                    <span className='text-gray-700'>{s.label}</span>
+                    <span className='font-semibold text-gray-900'>
+                      {s.value.toLocaleString()} ({pct.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className='w-full h-2 bg-gray-100 rounded-full overflow-hidden'>
+                    <div className={`h-full ${s.color}`} style={{ width: `${pct}%` }} />
+                  </div>
                 </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-sm text-gray-900 leading-tight mb-1'>{activity.message}</p>
-                  <p className='text-xs text-gray-500'>{activity.timestamp}</p>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
-          <button className='w-full mt-4 px-4 py-2 text-sm font-medium text-[#E36A3A] hover:bg-orange-50 rounded-lg transition-colors border border-[#E36A3A]'>
-            View All Activity
-          </button>
         </div>
       </div>
 
-      {/* Quick Stats Bar */}
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-        {[
-          { label: 'Pending Job Approvals', value: '8', color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: 'Pending Audition Approvals', value: '5', color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: 'Reported Content', value: '3', color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Active Interviews', value: '127', color: 'text-green-600', bg: 'bg-green-50' },
-        ].map((stat, index) => (
-          <div key={index} className={`${stat.bg} rounded-lg p-4 border border-gray-200`}>
-            <p className='text-sm font-medium text-gray-600 mb-1'>{stat.label}</p>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+      {/* Distribution charts */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+          <h3 className='text-lg font-bold text-gray-900 mb-1'>Artist Type Distribution</h3>
+          <p className='text-sm text-gray-500 mb-6'>Active artists by category</p>
+          <div className='space-y-3'>
+            {artistTypeEntries.map(([type, count]) => {
+              const pct = (count / maxArtistType) * 100
+              return (
+                <div key={type}>
+                  <div className='flex items-center justify-between text-sm mb-1'>
+                    <span className='text-gray-700'>{type}</span>
+                    <span className='font-semibold text-gray-900'>{count.toLocaleString()}</span>
+                  </div>
+                  <div className='w-full h-2 bg-gray-100 rounded-full overflow-hidden'>
+                    <div
+                      className='h-full bg-gradient-to-r from-[#E36A3A] to-[#F6A57A]'
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        ))}
+        </div>
+
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+          <h3 className='text-lg font-bold text-gray-900 mb-1'>Job Type Distribution</h3>
+          <p className='text-sm text-gray-500 mb-6'>Jobs by employment type</p>
+          <div className='space-y-3'>
+            {jobTypeEntries.map(([type, count]) => {
+              const pct = (count / jobTypeTotal) * 100
+              return (
+                <div key={type}>
+                  <div className='flex items-center justify-between text-sm mb-1'>
+                    <span className='text-gray-700'>{type.replace('_', ' ')}</span>
+                    <span className='font-semibold text-gray-900'>
+                      {count.toLocaleString()} ({pct.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className='w-full h-2 bg-gray-100 rounded-full overflow-hidden'>
+                    <div
+                      className='h-full bg-gradient-to-r from-blue-500 to-blue-300'
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Top recruiters / artists / jobs */}
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+        <TopList
+          title='Top Recruiters'
+          subtitle='By jobs posted'
+          onViewAll={() => navigate('/admin/recruiters')}
+          items={(data.topRecruiters || []).map((r) => ({
+            id: r.id,
+            primary: r.name || '—',
+            secondary: r.companyName || '',
+            metricLabel: `${r.totalJobsPosted ?? 0} jobs`,
+            metricSub: `${r.totalHires ?? 0} hires`,
+            image: r.profileImage,
+          }))}
+        />
+        <TopList
+          title='Top Artists'
+          subtitle='By applications'
+          onViewAll={() => navigate('/admin/artists')}
+          items={(data.topArtists || []).map((a) => ({
+            id: a.id,
+            primary: a.name || '—',
+            secondary: a.artistType || '',
+            metricLabel: `${a.totalApplications ?? 0} apps`,
+            metricSub: `${n(a.profileViews)} views`,
+            image: a.profileImage,
+          }))}
+        />
+        <TopList
+          title='Top Jobs'
+          subtitle='Most applied'
+          onViewAll={() => navigate('/admin/jobs')}
+          items={(data.topJobs || []).map((j) => ({
+            id: j.id,
+            primary: j.title || '—',
+            secondary: j.recruiterName || '',
+            metricLabel: `${j.applicationCount ?? 0} apps`,
+            metricSub: `${n(j.viewCount)} views`,
+            image: null,
+          }))}
+        />
+      </div>
+
+      <div className='text-xs text-gray-400 text-right'>
+        Last updated: {data.generatedAt ? new Date(data.generatedAt).toLocaleString() : '—'}
       </div>
     </div>
   )
 }
+
+interface TopListItem {
+  id: number
+  primary: string
+  secondary: string
+  metricLabel: string
+  metricSub: string
+  image: string | null
+}
+
+const TopList: React.FC<{
+  title: string
+  subtitle: string
+  items: TopListItem[]
+  onViewAll: () => void
+}> = ({ title, subtitle, items, onViewAll }) => (
+  <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+    <div className='mb-4 flex items-center justify-between'>
+      <div>
+        <h3 className='text-lg font-bold text-gray-900'>{title}</h3>
+        <p className='text-sm text-gray-500'>{subtitle}</p>
+      </div>
+      <ChartBarIcon className='h-5 w-5 text-[#E36A3A]' />
+    </div>
+    <div className='space-y-3 max-h-72 overflow-y-auto'>
+      {items.length === 0 ? (
+        <p className='text-sm text-gray-400 text-center py-4'>No data</p>
+      ) : (
+        items.map((item) => (
+          <div
+            key={item.id}
+            className='flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors'>
+            {item.image ? (
+              <img
+                src={item.image}
+                alt={item.primary}
+                className='h-10 w-10 rounded-full object-cover flex-shrink-0'
+              />
+            ) : (
+              <div className='h-10 w-10 rounded-full bg-gradient-to-br from-[#E36A3A] to-[#F6A57A] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0'>
+                {(item.primary || '?').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className='flex-1 min-w-0'>
+              <p className='text-sm font-medium text-gray-900 truncate'>{item.primary}</p>
+              <p className='text-xs text-gray-500 truncate'>{item.secondary}</p>
+            </div>
+            <div className='text-right flex-shrink-0'>
+              <p className='text-sm font-semibold text-gray-900'>{item.metricLabel}</p>
+              <p className='text-xs text-gray-500'>{item.metricSub}</p>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+    <button
+      onClick={onViewAll}
+      className='w-full mt-4 px-4 py-2 text-sm font-medium text-[#E36A3A] hover:bg-orange-50 rounded-lg transition-colors border border-[#E36A3A]'>
+      View All
+    </button>
+  </div>
+)
 
 export default AdminDashboardPage

@@ -7,6 +7,7 @@ import {
   BriefcaseIcon,
   MapPinIcon,
   CheckCircleIcon,
+  XIcon,
 } from '../../components/icons/IconComponents'
 import { ProfileCompletionBar } from '../../components/ProfileCompletionBar'
 import { HireRequestModal } from '../../components/HireRequestModal'
@@ -255,6 +256,8 @@ export const ArtistProfilePage = () => {
   const [isOwner, setIsOwner] = useState(false)
   const [hasPendingRequest, setHasPendingRequest] = useState(false)
   const [checkingPendingRequest, setCheckingPendingRequest] = useState(true)
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
+  const [coverPreviewOpen, setCoverPreviewOpen] = useState(false)
 
   // Fetch recruiter's jobs
   useEffect(() => {
@@ -475,16 +478,26 @@ export const ArtistProfilePage = () => {
               <Card className='overflow-hidden !p-0'>
                 {/* Cover photo banner */}
                 {artist.coverPhotoUrl ? (
-                  <img src={artist.coverPhotoUrl} alt='Cover' className='w-full h-40 object-cover' />
+                  <img
+                    src={artist.coverPhotoUrl}
+                    alt='Cover'
+                    className='w-full h-40 object-cover cursor-pointer hover:opacity-95 transition-opacity'
+                    onClick={() => setCoverPreviewOpen(true)}
+                  />
                 ) : (
                   <div className='w-full h-40 bg-gradient-to-r from-primary/20 to-primary/5' />
                 )}
                 <div className='px-6 pb-6'>
                   <div className='flex items-end gap-4 -mt-12 mb-4'>
                     <img
-                      className='h-24 w-24 rounded-full object-cover ring-4 ring-white shrink-0'
+                      className={`h-24 w-24 rounded-full object-cover ring-4 ring-white shrink-0 ${
+                        artist.avatarUrl ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+                      }`}
                       src={artist.avatarUrl}
                       alt={artist.name}
+                      onClick={() => {
+                        if (artist.avatarUrl) setPhotoPreviewOpen(true)
+                      }}
                     />
                     <div className='pb-1'>
                       <div className='flex flex-wrap items-center gap-2'>
@@ -873,6 +886,56 @@ export const ArtistProfilePage = () => {
           </div>
         )}
       </div>
+
+      {photoPreviewOpen && artist.avatarUrl && (
+        <div
+          className='fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4'
+          onClick={() => setPhotoPreviewOpen(false)}
+          role='dialog'
+          aria-modal='true'>
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation()
+              setPhotoPreviewOpen(false)
+            }}
+            className='absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors'
+            aria-label='Close preview'>
+            <XIcon className='h-6 w-6' />
+          </button>
+          <img
+            src={artist.avatarUrl}
+            alt={artist.name}
+            className='max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {coverPreviewOpen && artist.coverPhotoUrl && (
+        <div
+          className='fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4'
+          onClick={() => setCoverPreviewOpen(false)}
+          role='dialog'
+          aria-modal='true'>
+          <button
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation()
+              setCoverPreviewOpen(false)
+            }}
+            className='absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors'
+            aria-label='Close preview'>
+            <XIcon className='h-6 w-6' />
+          </button>
+          <img
+            src={artist.coverPhotoUrl}
+            alt='Cover'
+            className='max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>
   )
 }

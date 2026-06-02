@@ -3,6 +3,7 @@ import Icon from '@/components/Icon'
 import auditionService from '@/services/auditionService'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
+import usePageParam from '@/hooks/usePageParam'
 
 interface AuditionData {
   id: number
@@ -307,7 +308,7 @@ const Auditions: React.FC = () => {
   const [auditions, setAuditions] = useState<AuditionData[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'open'>('open')
-  const [page, setPage] = useState(0)
+  const [page, setPage] = usePageParam('page', 0)
   const [totalPages, setTotalPages] = useState(0)
   const [selectedAudition, setSelectedAudition] = useState<AuditionData | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)

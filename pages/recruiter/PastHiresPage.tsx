@@ -4,6 +4,7 @@ import { RecentHireDto, getHires } from '../../services/recruiterHiresService'
 import { Pagination } from '../../components/Pagination'
 import { SearchIcon } from '../../components/icons/IconComponents'
 import { useNavigate } from 'react-router-dom'
+import usePageParam from '../../hooks/usePageParam'
 
 // Format date to readable format: "22 Dec 2025, 12:36 PM"
 const formatDate = (iso?: string) => {
@@ -25,7 +26,7 @@ const formatDate = (iso?: string) => {
 }
 
 export const PastHiresPage = () => {
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = usePageParam('page', 1)
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [jobFilter, setJobFilter] = useState('All')

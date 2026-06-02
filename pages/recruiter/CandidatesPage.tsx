@@ -17,6 +17,7 @@ import {
 } from '@/types'
 import Icon from '@/components/Icon'
 import UpdateStatusModal from '@/components/UpdateStatusModal'
+import usePageParam from '@/hooks/usePageParam'
 
 const CandidatesPage: React.FC = () => {
   const navigate = useNavigate()
@@ -32,9 +33,10 @@ const CandidatesPage: React.FC = () => {
     size: 10,
   })
 
-  // Filters
+  // Filters (page kept in URL via usePageParam so refresh preserves position)
+  const [pageParam, setPageParam] = usePageParam('page', 0)
   const [filters, setFilters] = useState<HireRequestFilters>({
-    page: 0,
+    page: pageParam,
     size: 10,
   })
   const [searchTerm, setSearchTerm] = useState('')
@@ -79,14 +81,22 @@ const CandidatesPage: React.FC = () => {
     fetchStats()
   }, [filters])
 
+  // Keep URL page param in sync with filters.page
+  const goToPage = (next: number) => {
+    setPageParam(next)
+    setFilters((prev) => ({ ...prev, page: next }))
+  }
+
   // Handle search
   const handleSearch = () => {
+    setPageParam(0)
     setFilters({ ...filters, searchTerm, page: 0 })
   }
 
   // Handle status filter
   const handleStatusFilter = (status: HireRequestStatus | '') => {
     setStatusFilter(status)
+    setPageParam(0)
     setFilters({ ...filters, status: status || undefined, page: 0 })
   }
 
@@ -372,14 +382,14 @@ const CandidatesPage: React.FC = () => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setFilters({ ...filters, page: filters.page! - 1 })}
+                  onClick={() => goToPage(filters.page! - 1)}
                   disabled={pagination.currentPage === 0}
                   className="px-3 py-1 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   Previous
                 </button>
                 <button
-                  onClick={() => setFilters({ ...filters, page: filters.page! + 1 })}
+                  onClick={() => goToPage(filters.page! + 1)}
                   disabled={pagination.currentPage >= pagination.totalPages - 1}
                   className="px-3 py-1 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >

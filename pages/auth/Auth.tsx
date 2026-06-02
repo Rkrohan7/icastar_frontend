@@ -97,6 +97,12 @@ const Auth = () => {
 
       toast.success('You have successfully logged in!')
 
+      // Admins land in the super-admin section, not the user dashboard
+      if (userRole === UserRole.ADMIN) {
+        navigate('/admin/dashboard')
+        return
+      }
+
       // Check onboarding status using /api/auth/me
       if (userRole === UserRole.ARTIST) {
         try {

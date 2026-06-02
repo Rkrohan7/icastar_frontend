@@ -20,6 +20,22 @@ import AuditionsListPage from '@/pages/recruiter/AuditionsListPage'
 import CreateAuditionPage from '@/pages/recruiter/CreateAuditionPage'
 import AuditionApplicationsPage from '@/pages/recruiter/AuditionApplicationsPage'
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
+import SuperAdminRecruitersPage from '@/pages/admin/SuperAdminRecruitersPage'
+import SuperAdminArtistsPage from '@/pages/admin/SuperAdminArtistsPage'
+import SuperAdminJobsPage from '@/pages/admin/SuperAdminJobsPage'
+import SuperAdminReportsPage from '@/pages/admin/SuperAdminReportsPage'
+import SuperAdminConfigPage from '@/pages/admin/SuperAdminConfigPage'
+import AdminComingSoonPage from '@/pages/admin/AdminComingSoonPage'
+import SuperAdminAdminUsersPage from '@/pages/admin/SuperAdminAdminUsersPage'
+import SuperAdminAuditionsPage, { SuperAdminAuditionApprovalsPage } from '@/pages/admin/SuperAdminAuditionsPage'
+import SuperAdminJobApprovalsPage from '@/pages/admin/SuperAdminJobApprovalsPage'
+import SuperAdminCategoriesPage from '@/pages/admin/SuperAdminCategoriesPage'
+import SuperAdminSkillsPage from '@/pages/admin/SuperAdminSkillsPage'
+import SuperAdminJobApplicationsPage from '@/pages/admin/SuperAdminJobApplicationsPage'
+import SuperAdminAuditionApplicationsPage from '@/pages/admin/SuperAdminAuditionApplicationsPage'
+import SuperAdminInterviewsPage from '@/pages/admin/SuperAdminInterviewsPage'
+import SuperAdminPortfolioPage from '@/pages/admin/SuperAdminPortfolioPage'
+import SuperAdminReportContentPage from '@/pages/admin/SuperAdminReportContentPage'
 import DashboardIndex from '@/pages/DashboardIndex'
 import Jobs from '@/pages/artist/Jobs'
 import Bookmarks from '@/pages/artist/Bookmarks'
@@ -171,10 +187,85 @@ const AppRouter = () =>
           path: '/admin/dashboard',
           element: <AdminDashboardPage />,
         },
+        {
+          path: '/admin/recruiters',
+          element: <SuperAdminRecruitersPage />,
+        },
+        {
+          path: '/admin/artists',
+          element: <SuperAdminArtistsPage />,
+        },
+        {
+          path: '/admin/jobs',
+          element: <SuperAdminJobsPage />,
+        },
+        {
+          path: '/admin/reports',
+          element: <SuperAdminReportsPage />,
+        },
+        {
+          path: '/admin/config',
+          element: <SuperAdminConfigPage />,
+        },
+        {
+          path: '/admin/users/admins',
+          element: <SuperAdminAdminUsersPage />,
+        },
+        {
+          path: '/admin/auditions/all',
+          element: <SuperAdminAuditionsPage />,
+        },
+        {
+          path: '/admin/auditions/approvals',
+          element: <SuperAdminAuditionApprovalsPage />,
+        },
+        {
+          path: '/admin/jobs/approvals',
+          element: <SuperAdminJobApprovalsPage />,
+        },
+        {
+          path: '/admin/jobs/categories',
+          element: <SuperAdminCategoriesPage />,
+        },
+        {
+          path: '/admin/settings/categories',
+          element: <SuperAdminCategoriesPage />,
+        },
+        {
+          path: '/admin/settings/skills',
+          element: <SuperAdminSkillsPage />,
+        },
+        {
+          path: '/admin/applications/jobs',
+          element: <SuperAdminJobApplicationsPage />,
+        },
+        {
+          path: '/admin/applications/auditions',
+          element: <SuperAdminAuditionApplicationsPage />,
+        },
+        {
+          path: '/admin/applications/interviews',
+          element: <SuperAdminInterviewsPage />,
+        },
+        {
+          path: '/admin/artists/:id/portfolio',
+          element: <SuperAdminPortfolioPage />,
+        },
+        {
+          path: '/admin/content/reports',
+          element: <SuperAdminReportContentPage />,
+        },
         // Redirect /admin to dashboard
         {
           path: '/admin',
           element: <Navigate to='/admin/dashboard' replace />,
+        },
+        // Catch-all for any /admin/* path not matched above.
+        // Keeps the sidebar visible and shows a "Coming soon / API pending"
+        // placeholder so the user can navigate through the full menu structure.
+        {
+          path: '/admin/*',
+          element: <AdminComingSoonPage />,
         },
       ],
     },

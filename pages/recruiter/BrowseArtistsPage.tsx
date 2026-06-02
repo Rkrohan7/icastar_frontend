@@ -6,6 +6,7 @@ import { ArtistCategory } from '../../types'
 import { Pagination } from '../../components/Pagination'
 import { useNavigate } from 'react-router-dom'
 import { browseArtists } from '../../services/recruiterArtistsService'
+import usePageParam from '../../hooks/usePageParam'
 
 // Remote data
 const ITEMS_PER_PAGE = 6
@@ -45,7 +46,7 @@ const ArtistCard: React.FC<{ artist: Artist; onViewProfile: () => void }> = ({
 )
 
 export const BrowseArtistsPage = () => {
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = usePageParam('page', 1)
   const [artists, setArtists] = useState<Artist[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(false)

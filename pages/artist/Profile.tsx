@@ -78,6 +78,7 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [editedProfile, setEditedProfile] = useState<ArtistProfile | null>(null)
   const [saving, setSaving] = useState(false)
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
   const navigate = useNavigate()
 
   // Face Verification state
@@ -1038,7 +1039,15 @@ const Profile: React.FC = () => {
                   />
                 </div>
               ) : (
-                <div className='w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-amber-400 bg-amber-50 flex items-center justify-center'>
+                <div
+                  className={`w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-amber-400 bg-amber-50 flex items-center justify-center ${
+                    currentProfile?.profilePhoto ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+                  }`}
+                  onClick={() => {
+                    if (currentProfile?.profilePhoto) setPhotoPreviewOpen(true)
+                  }}
+                  role={currentProfile?.profilePhoto ? 'button' : undefined}
+                  aria-label={currentProfile?.profilePhoto ? 'View profile photo' : undefined}>
                   {currentProfile?.profilePhoto ? (
                     <img
                       src={currentProfile.profilePhoto}
@@ -1052,6 +1061,31 @@ const Profile: React.FC = () => {
                   ) : (
                     <Icon name='User' size={48} className='text-amber-400' />
                   )}
+                </div>
+              )}
+
+              {photoPreviewOpen && currentProfile?.profilePhoto && (
+                <div
+                  className='fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4'
+                  onClick={() => setPhotoPreviewOpen(false)}
+                  role='dialog'
+                  aria-modal='true'>
+                  <button
+                    type='button'
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPhotoPreviewOpen(false)
+                    }}
+                    className='absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors'
+                    aria-label='Close preview'>
+                    <Icon name='X' size={24} />
+                  </button>
+                  <img
+                    src={currentProfile.profilePhoto}
+                    alt={currentProfile?.fullName}
+                    className='max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl'
+                    onClick={(e) => e.stopPropagation()}
+                  />
                 </div>
               )}
 

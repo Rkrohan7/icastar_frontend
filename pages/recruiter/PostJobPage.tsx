@@ -11,6 +11,7 @@ import {
 import { Pagination } from '../../components/Pagination'
 import { useNavigate } from 'react-router-dom'
 import recruiterJobsService, { CreateJobInput } from '../../services/recruiterJobsService'
+import usePageParam from '../../hooks/usePageParam'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -186,7 +187,7 @@ export const PostJobPage = () => {
   const [jobToBoost, setJobToBoost] = useState<Job | null>(null)
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = usePageParam('page', 1)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All' | Job['status']>('All')
   const [typeFilter, setTypeFilter] = useState<'All' | Job['type']>('All')

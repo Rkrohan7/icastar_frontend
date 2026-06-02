@@ -44,28 +44,27 @@ export const AdminLayout: React.FC = () => {
       path: '/admin/users',
       icon: UsersIcon,
       children: [
-        { name: 'Recruiters', path: '/admin/users/recruiters', icon: BriefcaseIcon },
-        { name: 'Artists', path: '/admin/users/artists', icon: MicVocal },
-        { name: 'Admin Users', path: '/admin/users/admins', icon: ShieldCheckIcon },
+        { name: 'Recruiters', path: '/admin/recruiters', icon: BriefcaseIcon },
+        { name: 'Artists', path: '/admin/artists', icon: MicVocal },
       ],
     },
     {
       name: 'Jobs Management',
-      path: '/admin/jobs',
+      path: '/admin/jobs-mgmt',
       icon: BriefcaseIcon,
       children: [
-        { name: 'All Jobs', path: '/admin/jobs/all', icon: BriefcaseIcon },
-        { name: 'Job Approvals', path: '/admin/jobs/approvals', icon: ShieldCheckIcon, badge: 8 },
+        { name: 'All Jobs', path: '/admin/jobs', icon: BriefcaseIcon },
+        { name: 'Job Approvals', path: '/admin/jobs/approvals', icon: ShieldCheckIcon },
         { name: 'Job Categories', path: '/admin/jobs/categories', icon: FileTextIcon },
       ],
     },
     {
-      name: 'Auditions Management',
+      name: 'Auditions',
       path: '/admin/auditions',
       icon: MicVocal,
       children: [
         { name: 'All Auditions', path: '/admin/auditions/all', icon: MicVocal },
-        { name: 'Audition Approvals', path: '/admin/auditions/approvals', icon: ShieldCheckIcon, badge: 5 },
+        { name: 'Audition Approvals', path: '/admin/auditions/approvals', icon: ShieldCheckIcon },
       ],
     },
     {
@@ -83,8 +82,8 @@ export const AdminLayout: React.FC = () => {
       path: '/admin/content',
       icon: ImageIcon,
       children: [
-        { name: 'Artist Portfolios', path: '/admin/content/portfolios', icon: ImageIcon },
-        { name: 'Reported Content', path: '/admin/content/reports', icon: ShieldCheckIcon, badge: 3 },
+        { name: 'Artist Portfolios', path: '/admin/artists', icon: ImageIcon },
+        { name: 'Reported Content', path: '/admin/content/reports', icon: ShieldCheckIcon },
       ],
     },
     {
@@ -101,20 +100,16 @@ export const AdminLayout: React.FC = () => {
       name: 'Reports & Analytics',
       path: '/admin/reports',
       icon: ChartBarIcon,
-      children: [
-        { name: 'Platform Growth', path: '/admin/reports/growth', icon: ChartBarIcon },
-        { name: 'User Activity', path: '/admin/reports/activity', icon: UsersIcon },
-        { name: 'Revenue Insights', path: '/admin/reports/revenue', icon: CreditCardIcon },
-      ],
     },
     {
       name: 'Settings',
       path: '/admin/settings',
       icon: SettingsIcon,
       children: [
+        { name: 'Platform Config', path: '/admin/config', icon: SettingsIcon },
         { name: 'Roles & Permissions', path: '/admin/settings/roles', icon: ShieldCheckIcon },
-        { name: 'Platform Config', path: '/admin/settings/config', icon: SettingsIcon },
-        { name: 'Categories & Skills', path: '/admin/settings/categories', icon: FileTextIcon },
+        { name: 'Categories', path: '/admin/settings/categories', icon: FileTextIcon },
+        { name: 'Skills', path: '/admin/settings/skills', icon: FileTextIcon },
       ],
     },
   ]

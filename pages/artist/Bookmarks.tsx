@@ -14,6 +14,7 @@ import bookmarksService, { BookmarkedJobDto } from '@/services/bookmarksService'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { Switch } from '@/components/ui/switch'
+import usePageParam from '@/hooks/usePageParam'
 
 const BookmarkCard: React.FC<{
   bookmark: BookmarkedJobDto
@@ -144,7 +145,7 @@ const BookmarkCard: React.FC<{
 const Bookmarks: React.FC = () => {
   const [bookmarks, setBookmarks] = useState<BookmarkedJobDto[]>([])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(0)
+  const [page, setPage] = usePageParam('page', 0)
   const [totalPages, setTotalPages] = useState(0)
   const [activeOnly, setActiveOnly] = useState(true)
   const navigate = useNavigate()
