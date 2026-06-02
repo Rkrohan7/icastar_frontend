@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify'
 
 const App: React.FC = () => {
   return (
-    <React.StrictMode>
+    <>
       <ToastContainer
         position='top-right'
         autoClose={3000}
@@ -13,7 +13,7 @@ const App: React.FC = () => {
         aria-label={undefined}
       />
       <RouterProvider router={AppRouter()} />
-    </React.StrictMode>
+    </>
   )
 }
 

@@ -9,6 +9,13 @@ import {
   PaginatedResponse,
   AuditionStats,
 } from '../types'
+import { cachedGet, buildCacheKey, invalidateCache } from './cache'
+
+const LIST_TTL = 15_000
+const STATS_TTL = 30_000
+
+// Invalidate every cached audition list/detail. Call after any mutation.
+const invalidateAuditions = () => invalidateCache('auditions:')
 
 /**
  * Audition/Casting Call Management Service
@@ -19,66 +26,56 @@ const auditionService = {
    * Get all casting calls for the current recruiter with filtering and pagination
    */
   async getAllAuditions(filters?: AuditionFilters): Promise<PaginatedResponse<Audition>> {
-    const response = await apiClient.get('/recruiter/auditions', {
-      params: {
-        searchTerm: filters?.searchTerm,
-        status: filters?.status,
-        roleType: filters?.roleType,
-        projectType: filters?.projectType,
-        location: filters?.location,
-        isUrgent: filters?.isUrgent,
-        isFeatured: filters?.isFeatured,
-        page: filters?.page ?? 0,
-        size: filters?.size ?? 20,
-      },
-    })
-    return response.data
+    const params = {
+      searchTerm: filters?.searchTerm,
+      status: filters?.status,
+      roleType: filters?.roleType,
+      projectType: filters?.projectType,
+      location: filters?.location,
+      isUrgent: filters?.isUrgent,
+      isFeatured: filters?.isFeatured,
+      page: filters?.page ?? 0,
+      size: filters?.size ?? 20,
+    }
+    return cachedGet(buildCacheKey('auditions:recruiter-list', params as Record<string, unknown>), async () => {
+      const response = await apiClient.get('/recruiter/auditions', { params })
+      return response.data as PaginatedResponse<Audition>
+    }, { ttl: LIST_TTL })
   },
 
-  /**
-   * Get a single casting call by ID
-   */
   async getAuditionById(id: number): Promise<Audition> {
-    const response = await apiClient.get(`/recruiter/auditions/${id}`)
-    return response.data.data
+    return cachedGet(`auditions:${id}`, async () => {
+      const response = await apiClient.get(`/recruiter/auditions/${id}`)
+      return response.data.data as Audition
+    }, { ttl: 30_000 })
   },
 
-  /**
-   * Create a new casting call
-   */
   async createAudition(data: CreateAuditionDto): Promise<Audition> {
     const response = await apiClient.post('/recruiter/auditions', data)
+    invalidateAuditions()
     return response.data.data
   },
 
-  /**
-   * Update an existing casting call
-   */
   async updateAudition(id: number, data: Partial<CreateAuditionDto>): Promise<Audition> {
     const response = await apiClient.put(`/recruiter/auditions/${id}`, data)
+    invalidateAuditions()
     return response.data.data
   },
 
-  /**
-   * Delete a draft casting call
-   */
   async deleteAudition(id: number): Promise<void> {
     await apiClient.delete(`/recruiter/auditions/${id}`)
+    invalidateAuditions()
   },
 
-  /**
-   * Publish a casting call (change from Draft to Open)
-   */
   async publishAudition(id: number): Promise<Audition> {
     const response = await apiClient.post(`/recruiter/auditions/${id}/publish`)
+    invalidateAuditions()
     return response.data.data
   },
 
-  /**
-   * Close a casting call
-   */
   async closeAudition(id: number): Promise<Audition> {
     const response = await apiClient.post(`/recruiter/auditions/${id}/close`)
+    invalidateAuditions()
     return response.data.data
   },
 
@@ -202,8 +199,10 @@ const auditionService = {
    * Get casting call statistics
    */
   async getAuditionStats(): Promise<AuditionStats> {
-    const response = await apiClient.get('/recruiter/auditions/stats')
-    return response.data.data
+    return cachedGet('auditions:recruiter-stats', async () => {
+      const response = await apiClient.get('/recruiter/auditions/stats')
+      return response.data.data
+    }, { ttl: STATS_TTL })
   },
 
   // ==================== ARTIST AUDITION APIs ====================
@@ -218,129 +217,104 @@ const auditionService = {
     status?: string
     type?: string
   }): Promise<PaginatedResponse<any>> {
-    const response = await apiClient.get('/artist/auditions', {
-      params: {
-        page: filters?.page ?? 0,
-        size: filters?.size ?? 20,
-        status: filters?.status,
-        type: filters?.type,
-      },
-    })
-
-    // New API returns: { success: true, data: { auditions: [...], totalPages, ... } }
-    const apiData = response.data?.data || response.data
-
-    // Transform to match PaginatedResponse interface
-    return {
-      success: response.data?.success ?? true,
-      data: apiData.auditions || [],
-      totalElements: apiData.totalElements || 0,
-      totalPages: apiData.totalPages || 0,
-      currentPage: apiData.currentPage || 0,
+    const params = {
+      page: filters?.page ?? 0,
       size: filters?.size ?? 20,
+      status: filters?.status,
+      type: filters?.type,
     }
+    return cachedGet(buildCacheKey('auditions:artist-list', params as Record<string, unknown>), async () => {
+      const response = await apiClient.get('/artist/auditions', { params })
+      const apiData = response.data?.data || response.data
+      return {
+        success: response.data?.success ?? true,
+        data: apiData.auditions || [],
+        totalElements: apiData.totalElements || 0,
+        totalPages: apiData.totalPages || 0,
+        currentPage: apiData.currentPage || 0,
+        size: filters?.size ?? 20,
+      }
+    }, { ttl: LIST_TTL })
   },
 
-  /**
-   * Get upcoming auditions for the artist
-   * Returns array directly (no pagination for upcoming)
-   */
   async getUpcomingAuditions(): Promise<any[]> {
-    const response = await apiClient.get('/artist/auditions/upcoming')
-    const data = response.data?.data || response.data
-
-    // If response has 'auditions' array, use it; otherwise assume data is the array
-    return Array.isArray(data) ? data : (data.auditions || [])
+    return cachedGet('auditions:artist-upcoming', async () => {
+      const response = await apiClient.get('/artist/auditions/upcoming')
+      const data = response.data?.data || response.data
+      return Array.isArray(data) ? data : (data.auditions || [])
+    }, { ttl: LIST_TTL })
   },
 
-  /**
-   * Get past auditions for the artist
-   * Returns paginated response
-   */
   async getPastAuditions(page: number = 0, size: number = 20): Promise<PaginatedResponse<any>> {
-    const response = await apiClient.get('/artist/auditions/past', {
-      params: { page, size },
-    })
-
-    // New API returns: { success: true, data: { auditions: [...], totalPages, ... } }
-    const apiData = response.data?.data || response.data
-
-    // Transform to match PaginatedResponse interface
-    return {
-      success: response.data?.success ?? true,
-      data: apiData.auditions || [],
-      totalElements: apiData.totalElements || 0,
-      totalPages: apiData.totalPages || 0,
-      currentPage: apiData.currentPage || 0,
-      size: size,
-    }
+    return cachedGet(buildCacheKey('auditions:artist-past', { page, size }), async () => {
+      const response = await apiClient.get('/artist/auditions/past', {
+        params: { page, size },
+      })
+      const apiData = response.data?.data || response.data
+      return {
+        success: response.data?.success ?? true,
+        data: apiData.auditions || [],
+        totalElements: apiData.totalElements || 0,
+        totalPages: apiData.totalPages || 0,
+        currentPage: apiData.currentPage || 0,
+        size: size,
+      }
+    }, { ttl: LIST_TTL })
   },
 
-  /**
-   * Get audition details by ID
-   */
   async getMyAuditionById(id: number): Promise<any> {
-    const response = await apiClient.get(`/artist/auditions/${id}`)
-    return response.data.data
+    return cachedGet(`auditions:artist:${id}`, async () => {
+      const response = await apiClient.get(`/artist/auditions/${id}`)
+      return response.data.data
+    }, { ttl: 30_000 })
   },
 
-  /**
-   * Update audition status (e.g., cancel)
-   */
   async updateMyAuditionStatus(id: number, status: string): Promise<any> {
     const response = await apiClient.put(`/artist/auditions/${id}/status`, { status })
+    invalidateAuditions()
     return response.data.data
   },
 
-  /**
-   * Cancel an audition
-   */
   async cancelMyAudition(id: number): Promise<any> {
     const response = await apiClient.post(`/artist/auditions/${id}/cancel`)
+    invalidateAuditions()
     return response.data.data
   },
 
-  /**
-   * Get audition statistics for artist
-   */
   async getMyAuditionStats(): Promise<{
     upcomingAuditions: number
     hasUpcomingAuditions: boolean
   }> {
-    const response = await apiClient.get('/artist/auditions/stats')
-    return response.data.data
+    return cachedGet('auditions:artist-stats', async () => {
+      const response = await apiClient.get('/artist/auditions/stats')
+      return response.data.data
+    }, { ttl: STATS_TTL })
   },
 
   // ==================== OPEN AUDITION APIs ====================
 
-  /**
-   * Get open auditions for artist (role-based filtering done by backend)
-   */
   async getOpenAuditions(page: number = 0, size: number = 20): Promise<PaginatedResponse<any>> {
-    const response = await apiClient.get('/artist/auditions/open', {
-      params: { page, size },
-    })
-
-    // API returns: { success: true, data: { auditions: [...], totalPages, ... } }
-    const apiData = response.data?.data || response.data
-
-    // Transform to match PaginatedResponse interface
-    return {
-      success: response.data?.success ?? true,
-      data: apiData.auditions || [],
-      totalElements: apiData.totalElements || 0,
-      totalPages: apiData.totalPages || 0,
-      currentPage: apiData.currentPage || 0,
-      size: size,
-    }
+    return cachedGet(buildCacheKey('auditions:open-list', { page, size }), async () => {
+      const response = await apiClient.get('/artist/auditions/open', {
+        params: { page, size },
+      })
+      const apiData = response.data?.data || response.data
+      return {
+        success: response.data?.success ?? true,
+        data: apiData.auditions || [],
+        totalElements: apiData.totalElements || 0,
+        totalPages: apiData.totalPages || 0,
+        currentPage: apiData.currentPage || 0,
+        size: size,
+      }
+    }, { ttl: LIST_TTL })
   },
 
-  /**
-   * Get single open audition details
-   */
   async getOpenAuditionById(id: number): Promise<any> {
-    const response = await apiClient.get(`/artist/auditions/open/${id}`)
-    return response.data.data
+    return cachedGet(`auditions:open:${id}`, async () => {
+      const response = await apiClient.get(`/artist/auditions/open/${id}`)
+      return response.data.data
+    }, { ttl: 30_000 })
   },
 
   // ==================== RECRUITER OPEN AUDITION APIs ====================

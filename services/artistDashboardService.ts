@@ -115,80 +115,83 @@ export interface ProfileCompletion {
   }>
 }
 
+import { cachedGet, buildCacheKey, invalidateCache } from './cache'
+
+const DASH_TTL = 30_000 // dashboards are heavy + change slowly between refreshes
+const COMPLETION_TTL = 60_000
+
 const artistDashboardService = {
-  /**
-   * Get artist dashboard KPI metrics
-   */
   async getDashboardMetrics(): Promise<ArtistDashboardMetrics> {
-    const response = await apiClient.get('/artist/dashboard/metrics')
-    return response.data.data
+    return cachedGet('artist:dashboard:metrics', async () => {
+      const response = await apiClient.get('/artist/dashboard/metrics')
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get profile views trend data
-   */
   async getProfileViewsTrend(period: '7' | '30' | '90' = '30'): Promise<ProfileViewsTrend> {
-    const response = await apiClient.get('/artist/dashboard/profile-views-trend', {
-      params: { period }
-    })
-    return response.data.data
+    return cachedGet(buildCacheKey('artist:dashboard:profile-views-trend', { period }), async () => {
+      const response = await apiClient.get('/artist/dashboard/profile-views-trend', {
+        params: { period }
+      })
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get application status distribution
-   */
   async getApplicationStatus(): Promise<ApplicationStatus> {
-    const response = await apiClient.get('/artist/dashboard/application-status')
-    return response.data.data
+    return cachedGet('artist:dashboard:application-status', async () => {
+      const response = await apiClient.get('/artist/dashboard/application-status')
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get earnings trend data
-   */
   async getEarningsTrend(period: '7' | '30' | '90' = '30'): Promise<EarningsTrend> {
-    const response = await apiClient.get('/artist/dashboard/earnings-trend', {
-      params: { period }
-    })
-    return response.data.data
+    return cachedGet(buildCacheKey('artist:dashboard:earnings-trend', { period }), async () => {
+      const response = await apiClient.get('/artist/dashboard/earnings-trend', {
+        params: { period }
+      })
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get AI-matched job opportunities
-   */
   async getJobOpportunities(limit: number = 4): Promise<JobOpportunity[]> {
-    const response = await apiClient.get('/artist/dashboard/job-opportunities', {
-      params: { limit }
-    })
-    return response.data.data
+    return cachedGet(buildCacheKey('artist:dashboard:job-opportunities', { limit }), async () => {
+      const response = await apiClient.get('/artist/dashboard/job-opportunities', {
+        params: { limit }
+      })
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get recent activity timeline
-   */
   async getRecentActivity(limit: number = 4): Promise<RecentActivity[]> {
-    const response = await apiClient.get('/artist/dashboard/recent-activity', {
-      params: { limit }
-    })
-    return response.data.data
+    return cachedGet(buildCacheKey('artist:dashboard:recent-activity', { limit }), async () => {
+      const response = await apiClient.get('/artist/dashboard/recent-activity', {
+        params: { limit }
+      })
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get portfolio items
-   */
   async getPortfolio(limit: number = 4, sortBy: 'recent' | 'popular' = 'recent'): Promise<PortfolioItem[]> {
-    const response = await apiClient.get('/artist/dashboard/portfolio', {
-      params: { limit, sortBy }
-    })
-    return response.data.data
+    return cachedGet(buildCacheKey('artist:dashboard:portfolio', { limit, sortBy }), async () => {
+      const response = await apiClient.get('/artist/dashboard/portfolio', {
+        params: { limit, sortBy }
+      })
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get profile completion status
-   */
   async getProfileCompletion(): Promise<ProfileCompletion> {
-    const response = await apiClient.get('/artist/profile/completion')
-    return response.data.data
-  }
+    return cachedGet('artist:profile-completion', async () => {
+      const response = await apiClient.get('/artist/profile/completion')
+      return response.data.data
+    }, { ttl: COMPLETION_TTL })
+  },
+
+  /** Call after any artist-side mutation that would change dashboard data. */
+  invalidateDashboard(): void {
+    invalidateCache('artist:dashboard:')
+    invalidateCache('artist:profile-completion')
+  },
 }
 
 export default artistDashboardService

@@ -64,48 +64,51 @@ export interface InterviewOutcomes {
   data: number[]
 }
 
+import { cachedGet, buildCacheKey, invalidateCache } from './cache'
+
+const DASH_TTL = 30_000
+
 const recruiterDashboardService = {
-  /**
-   * Get dashboard KPI metrics
-   */
   async getDashboardMetrics(): Promise<DashboardMetrics> {
-    const response = await apiClient.get('/recruiter/dashboard/metrics')
-    return response.data.data
+    return cachedGet('recruiter:dashboard:metrics', async () => {
+      const response = await apiClient.get('/recruiter/dashboard/metrics')
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get latest applicants
-   */
   async getLatestApplicants(limit: number = 10): Promise<LatestApplicant[]> {
-    const response = await apiClient.get('/recruiter/dashboard/latest-applicants', {
-      params: { limit }
-    })
-    return response.data.data
+    return cachedGet(buildCacheKey('recruiter:dashboard:latest-applicants', { limit }), async () => {
+      const response = await apiClient.get('/recruiter/dashboard/latest-applicants', {
+        params: { limit }
+      })
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get applications trend data
-   */
   async getApplicationsTrend(): Promise<ApplicationsTrend> {
-    const response = await apiClient.get('/recruiter/dashboard/applications-trend')
-    return response.data.data
+    return cachedGet('recruiter:dashboard:applications-trend', async () => {
+      const response = await apiClient.get('/recruiter/dashboard/applications-trend')
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get application status breakdown
-   */
   async getApplicationStatus(): Promise<ApplicationStatus> {
-    const response = await apiClient.get('/recruiter/dashboard/application-status')
-    return response.data.data
+    return cachedGet('recruiter:dashboard:application-status', async () => {
+      const response = await apiClient.get('/recruiter/dashboard/application-status')
+      return response.data.data
+    }, { ttl: DASH_TTL })
   },
 
-  /**
-   * Get interview outcomes
-   */
   async getInterviewOutcomes(): Promise<InterviewOutcomes> {
-    const response = await apiClient.get('/recruiter/dashboard/interview-outcomes')
-    return response.data.data
-  }
+    return cachedGet('recruiter:dashboard:interview-outcomes', async () => {
+      const response = await apiClient.get('/recruiter/dashboard/interview-outcomes')
+      return response.data.data
+    }, { ttl: DASH_TTL })
+  },
+
+  invalidateDashboard(): void {
+    invalidateCache('recruiter:dashboard:')
+  },
 }
 
 export default recruiterDashboardService

@@ -49,16 +49,42 @@ function mapDtoToRecruiter(dto: RecruiterProfileDto): Recruiter {
   } as Recruiter;
 }
 
-export async function getRecruiterProfile(): Promise<Recruiter> {
-  const resp = await apiClient.get('/recruiter/dashboard/profile');
-  const payload = resp.data;
-  const dto: RecruiterProfileDto = payload?.data || payload;
-  return mapDtoToRecruiter(dto);
+// ----- Recruiter profile cache (Header + Profile page both fetched independently) -----
+const RECRUITER_PROFILE_TTL = 60_000
+let recruiterProfileCache: { value: Recruiter; ts: number } | null = null
+let inflightRecruiterProfile: Promise<Recruiter> | null = null
+
+export const invalidateRecruiterProfileCache = () => {
+  recruiterProfileCache = null
+  inflightRecruiterProfile = null
+}
+
+export async function getRecruiterProfile(forceRefresh: boolean = false): Promise<Recruiter> {
+  if (!forceRefresh && recruiterProfileCache && Date.now() - recruiterProfileCache.ts < RECRUITER_PROFILE_TTL) {
+    return recruiterProfileCache.value
+  }
+  if (!forceRefresh && inflightRecruiterProfile) return inflightRecruiterProfile
+
+  inflightRecruiterProfile = (async () => {
+    try {
+      const resp = await apiClient.get('/recruiter/dashboard/profile');
+      const payload = resp.data;
+      const dto: RecruiterProfileDto = payload?.data || payload;
+      const mapped = mapDtoToRecruiter(dto)
+      recruiterProfileCache = { value: mapped, ts: Date.now() }
+      return mapped
+    } finally {
+      inflightRecruiterProfile = null
+    }
+  })()
+
+  return inflightRecruiterProfile
 }
 
 export async function updateRecruiterProfile(data: Partial<RecruiterProfileDto>): Promise<Recruiter> {
   const resp = await apiClient.put('/recruiter/dashboard/profile', data);
   const payload = resp.data;
   const dto: RecruiterProfileDto = payload?.data || payload;
+  invalidateRecruiterProfileCache()
   return mapDtoToRecruiter(dto);
 }

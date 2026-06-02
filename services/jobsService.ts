@@ -1,5 +1,6 @@
 import api from './apiClient'
 import { PaginatedResult } from './types'
+import { cachedGet, buildCacheKey } from './cache'
 
 export type JobType =
   | 'FULL_TIME'
@@ -90,15 +91,18 @@ export const jobsService = {
       sortBy: 'createdAt',
       sortDir: 'desc',
     }
-    const response = await api.get('/jobs', {
-      params: { ...defaultParams, ...params },
-    })
-    return normalizePaginated(response.data)
+    const merged = { ...defaultParams, ...params }
+    return cachedGet(buildCacheKey('jobs:list', merged as Record<string, unknown>), async () => {
+      const response = await api.get('/jobs', { params: merged })
+      return normalizePaginated(response.data)
+    }, { ttl: 15_000 })
   },
 
   async getJob(id: number | string): Promise<Job> {
-    const response = await api.get(`/jobs/${id}`)
-    return response.data
+    return cachedGet(`jobs:${id}`, async () => {
+      const response = await api.get(`/jobs/${id}`)
+      return response.data as Job
+    }, { ttl: 60_000 })
   },
 }
 

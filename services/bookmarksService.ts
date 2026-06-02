@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { cachedGet, buildCacheKey, invalidateCache } from './cache'
 
 export interface CreateBookmarkDto {
   notes?: string
@@ -44,14 +45,17 @@ export interface BookmarkResponse {
 export const bookmarksService = {
   async bookmarkJob(jobId: number, dto: CreateBookmarkDto = {}): Promise<BookmarkResponse> {
     const res = await apiClient.post(`/bookmarks/${jobId}`, dto)
+    invalidateCache('bookmarks:')
     return res.data
   },
 
   async getBookmarksWithNotes(page = 0, size = 10, activeOnly = false): Promise<PagedBookmarkResponse> {
-    const res = await apiClient.get('/bookmarks/with-notes', {
-      params: { page, size, activeOnly }
-    })
-    return res.data
+    return cachedGet(buildCacheKey('bookmarks:with-notes', { page, size, activeOnly }), async () => {
+      const res = await apiClient.get('/bookmarks/with-notes', {
+        params: { page, size, activeOnly }
+      })
+      return res.data
+    }, { ttl: 15_000 })
   },
 
   async getBookmarks(params: {
@@ -66,18 +70,21 @@ export const bookmarksService = {
     location?: string;
   } = {}): Promise<PagedBookmarkResponse> {
     const { page = 0, size = 10, activeOnly = false, sortBy = 'bookmarkedAt', sortDir = 'desc', ...filters } = params;
-    const res = await apiClient.get('/bookmarks', {
-      params: { page, size, activeOnly, sortBy, sortDir, ...filters }
-    })
-    return res.data
+    const merged = { page, size, activeOnly, sortBy, sortDir, ...filters }
+    return cachedGet(buildCacheKey('bookmarks:list', merged as Record<string, unknown>), async () => {
+      const res = await apiClient.get('/bookmarks', { params: merged })
+      return res.data
+    }, { ttl: 15_000 })
   },
 
   async removeBookmark(bookmarkId: number): Promise<void> {
     await apiClient.delete(`/bookmarks/${bookmarkId}`)
+    invalidateCache('bookmarks:')
   },
 
   async unbookmarkByJobId(jobId: number): Promise<void> {
     await apiClient.delete(`/bookmarks/job/${jobId}`)
+    invalidateCache('bookmarks:')
   },
 }
 

@@ -1,4 +1,10 @@
 import apiClient from './apiClient'
+import { cachedGet, buildCacheKey, invalidateCache } from './cache'
+
+const DASH_TTL = 30_000
+const LIST_TTL = 15_000
+const REFERENCE_TTL = 300_000 // 5 minutes — categories/skills rarely change
+const CONFIG_TTL = 120_000
 
 // ============ Shared enums ============
 
@@ -686,236 +692,311 @@ function parsePaginated<T>(body: any, fallbackPage: number): PaginatedResponse<T
 const superAdminService = {
   // Dashboard
   async getDashboard(): Promise<SuperAdminDashboard> {
-    const resp = await apiClient.get('/super-admin/dashboard')
-    return unwrap(resp)
+    return cachedGet('admin:dashboard', async () => {
+      const resp = await apiClient.get('/super-admin/dashboard')
+      return unwrap<SuperAdminDashboard>(resp)
+    }, { ttl: DASH_TTL })
   },
 
   async getDashboardSummary(): Promise<DashboardSummary> {
-    const resp = await apiClient.get('/super-admin/dashboard/summary')
-    return unwrap(resp)
+    return cachedGet('admin:dashboard:summary', async () => {
+      const resp = await apiClient.get('/super-admin/dashboard/summary')
+      return unwrap<DashboardSummary>(resp)
+    }, { ttl: DASH_TTL })
   },
 
   // Recruiters
   async getRecruiters(query: RecruitersQuery = {}): Promise<PaginatedResponse<SuperAdminRecruiter>> {
-    const resp = await apiClient.get('/super-admin/recruiters', { params: query })
-    return parsePaginated<SuperAdminRecruiter>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:recruiters', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/recruiters', { params: query })
+      return parsePaginated<SuperAdminRecruiter>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   async getRecruiter(id: number): Promise<SuperAdminRecruiter> {
-    const resp = await apiClient.get(`/super-admin/recruiters/${id}`)
-    return unwrap(resp)
+    return cachedGet(`admin:recruiter:${id}`, async () => {
+      const resp = await apiClient.get(`/super-admin/recruiters/${id}`)
+      return unwrap<SuperAdminRecruiter>(resp)
+    }, { ttl: 60_000 })
   },
 
   // Artists
   async getArtists(query: ArtistsQuery = {}): Promise<PaginatedResponse<SuperAdminArtist>> {
-    const resp = await apiClient.get('/super-admin/artists', { params: query })
-    return parsePaginated<SuperAdminArtist>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:artists', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/artists', { params: query })
+      return parsePaginated<SuperAdminArtist>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   async getArtist(id: number): Promise<SuperAdminArtist> {
-    const resp = await apiClient.get(`/super-admin/artists/${id}`)
-    return unwrap(resp)
+    return cachedGet(`admin:artist:${id}`, async () => {
+      const resp = await apiClient.get(`/super-admin/artists/${id}`)
+      return unwrap<SuperAdminArtist>(resp)
+    }, { ttl: 60_000 })
   },
 
   // Jobs
   async getJobs(query: JobsQuery = {}): Promise<PaginatedResponse<SuperAdminJob>> {
-    const resp = await apiClient.get('/super-admin/jobs', { params: query })
-    return parsePaginated<SuperAdminJob>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:jobs', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/jobs', { params: query })
+      return parsePaginated<SuperAdminJob>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
-  // Reports
+  // Reports — cached by date range
   async getUserReport(startDate: string, endDate: string): Promise<UserReport> {
-    const resp = await apiClient.get('/super-admin/reports/users', {
-      params: { startDate, endDate },
-    })
-    return unwrap(resp)
+    return cachedGet(`admin:report:users:${startDate}:${endDate}`, async () => {
+      const resp = await apiClient.get('/super-admin/reports/users', {
+        params: { startDate, endDate },
+      })
+      return unwrap<UserReport>(resp)
+    }, { ttl: 60_000 })
   },
 
   async getJobReport(startDate: string, endDate: string): Promise<JobReport> {
-    const resp = await apiClient.get('/super-admin/reports/jobs', {
-      params: { startDate, endDate },
-    })
-    return unwrap(resp)
+    return cachedGet(`admin:report:jobs:${startDate}:${endDate}`, async () => {
+      const resp = await apiClient.get('/super-admin/reports/jobs', {
+        params: { startDate, endDate },
+      })
+      return unwrap<JobReport>(resp)
+    }, { ttl: 60_000 })
   },
 
   async getOverviewReport(startDate: string, endDate: string): Promise<OverviewReport> {
-    const resp = await apiClient.get('/super-admin/reports/overview', {
-      params: { startDate, endDate },
-    })
-    return unwrap(resp)
+    return cachedGet(`admin:report:overview:${startDate}:${endDate}`, async () => {
+      const resp = await apiClient.get('/super-admin/reports/overview', {
+        params: { startDate, endDate },
+      })
+      return unwrap<OverviewReport>(resp)
+    }, { ttl: 60_000 })
   },
 
-  // Stats
+  // Stats — short TTL, hit on dashboard
   async getUserStats(): Promise<UserStats> {
-    const resp = await apiClient.get('/super-admin/stats/users')
-    return unwrap(resp)
+    return cachedGet('admin:stats:users', async () => {
+      const resp = await apiClient.get('/super-admin/stats/users')
+      return unwrap<UserStats>(resp)
+    }, { ttl: DASH_TTL })
   },
 
   async getJobStats(): Promise<JobStats> {
-    const resp = await apiClient.get('/super-admin/stats/jobs')
-    return unwrap(resp)
+    return cachedGet('admin:stats:jobs', async () => {
+      const resp = await apiClient.get('/super-admin/stats/jobs')
+      return unwrap<JobStats>(resp)
+    }, { ttl: DASH_TTL })
   },
 
   async getApplicationStats(): Promise<ApplicationStats> {
-    const resp = await apiClient.get('/super-admin/stats/applications')
-    return unwrap(resp)
+    return cachedGet('admin:stats:applications', async () => {
+      const resp = await apiClient.get('/super-admin/stats/applications')
+      return unwrap<ApplicationStats>(resp)
+    }, { ttl: DASH_TTL })
   },
 
   async getDistributionStats(): Promise<DistributionStats> {
-    const resp = await apiClient.get('/super-admin/stats/distribution')
-    return unwrap(resp)
+    return cachedGet('admin:stats:distribution', async () => {
+      const resp = await apiClient.get('/super-admin/stats/distribution')
+      return unwrap<DistributionStats>(resp)
+    }, { ttl: REFERENCE_TTL })
   },
 
-  // Configuration
+  // Configuration — rarely changes, persist across reloads
   async getConfig(): Promise<SystemConfig> {
-    const resp = await apiClient.get('/super-admin/config')
-    return unwrap(resp)
+    return cachedGet('admin:config', async () => {
+      const resp = await apiClient.get('/super-admin/config')
+      return unwrap<SystemConfig>(resp)
+    }, { ttl: CONFIG_TTL, persist: true })
   },
 
   async updateConfig(payload: ConfigUpdatePayload): Promise<void> {
     await apiClient.put('/super-admin/config', payload)
+    invalidateCache('admin:config')
   },
 
   // Admin Users
   async getAdminUsers(query: { page?: number; size?: number; search?: string; status?: AccountStatus } = {}): Promise<PaginatedResponse<AdminUser>> {
-    const resp = await apiClient.get('/super-admin/admins', { params: query })
-    return parsePaginated<AdminUser>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:admins', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/admins', { params: query })
+      return parsePaginated<AdminUser>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   async getAdminUser(id: number): Promise<AdminUser> {
-    const resp = await apiClient.get(`/super-admin/admins/${id}`)
-    return unwrap(resp)
+    return cachedGet(`admin:admin:${id}`, async () => {
+      const resp = await apiClient.get(`/super-admin/admins/${id}`)
+      return unwrap<AdminUser>(resp)
+    }, { ttl: 60_000 })
   },
 
   async createAdminUser(payload: AdminUserCreatePayload): Promise<AdminUser> {
     const resp = await apiClient.post('/super-admin/admins', payload)
+    invalidateCache('admin:admins')
     return unwrap(resp)
   },
 
   async updateAdminUser(id: number, payload: AdminUserUpdatePayload): Promise<AdminUser> {
     const resp = await apiClient.put(`/super-admin/admins/${id}`, payload)
+    invalidateCache('admin:admins')
+    invalidateCache(`admin:admin:${id}`)
     return unwrap(resp)
   },
 
   async updateAdminUserStatus(id: number, status: AccountStatus): Promise<AdminUser> {
     const resp = await apiClient.patch(`/super-admin/admins/${id}/status`, { status })
+    invalidateCache('admin:admins')
+    invalidateCache(`admin:admin:${id}`)
     return unwrap(resp)
   },
 
   async deleteAdminUser(id: number): Promise<void> {
     await apiClient.delete(`/super-admin/admins/${id}`)
+    invalidateCache('admin:admins')
+    invalidateCache(`admin:admin:${id}`)
   },
 
   // Auditions
   async getAuditions(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: AuditionAdminStatus; type?: string } = {}): Promise<PaginatedResponse<SuperAdminAudition>> {
-    const resp = await apiClient.get('/super-admin/auditions', { params: query })
-    return parsePaginated<SuperAdminAudition>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:auditions', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/auditions', { params: query })
+      return parsePaginated<SuperAdminAudition>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   async updateAuditionStatus(id: number, payload: AuditionStatusUpdatePayload): Promise<SuperAdminAudition> {
     const resp = await apiClient.patch(`/super-admin/auditions/${id}/status`, payload)
+    invalidateCache('admin:auditions')
     return unwrap(resp)
   },
 
   // Job Approvals
   async getPendingJobs(query: { page?: number; size?: number } = {}): Promise<PaginatedResponse<PendingJob>> {
-    const resp = await apiClient.get('/super-admin/jobs/pending-approval', { params: query })
-    return parsePaginated<PendingJob>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:jobs:pending', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/jobs/pending-approval', { params: query })
+      return parsePaginated<PendingJob>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   async approveJob(id: number): Promise<PendingJob> {
     const resp = await apiClient.post(`/super-admin/jobs/${id}/approve`)
+    invalidateCache('admin:jobs')
     return unwrap(resp)
   },
 
   async rejectJob(id: number, payload: JobRejectPayload): Promise<PendingJob> {
     const resp = await apiClient.post(`/super-admin/jobs/${id}/reject`, payload)
+    invalidateCache('admin:jobs')
     return unwrap(resp)
   },
 
-  // Categories
+  // Categories — reference data, long TTL + persistent cache
   async getCategories(query: { page?: number; size?: number; search?: string } = {}): Promise<PaginatedResponse<SuperAdminCategory>> {
-    const resp = await apiClient.get('/super-admin/categories', { params: query })
-    return parsePaginated<SuperAdminCategory>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:categories', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/categories', { params: query })
+      return parsePaginated<SuperAdminCategory>(resp.data, query.page ?? 0)
+    }, { ttl: REFERENCE_TTL, persist: true })
   },
 
   async getCategory(id: number): Promise<SuperAdminCategory> {
-    const resp = await apiClient.get(`/super-admin/categories/${id}`)
-    return unwrap(resp)
+    return cachedGet(`admin:category:${id}`, async () => {
+      const resp = await apiClient.get(`/super-admin/categories/${id}`)
+      return unwrap<SuperAdminCategory>(resp)
+    }, { ttl: REFERENCE_TTL })
   },
 
   async createCategory(payload: CategoryUpsertPayload): Promise<SuperAdminCategory> {
     const resp = await apiClient.post('/super-admin/categories', payload)
+    invalidateCache('admin:categories')
     return unwrap(resp)
   },
 
   async updateCategory(id: number, payload: CategoryUpsertPayload): Promise<SuperAdminCategory> {
     const resp = await apiClient.put(`/super-admin/categories/${id}`, payload)
+    invalidateCache('admin:categories')
+    invalidateCache(`admin:category:${id}`)
     return unwrap(resp)
   },
 
   async deleteCategory(id: number): Promise<void> {
     await apiClient.delete(`/super-admin/categories/${id}`)
+    invalidateCache('admin:categories')
+    invalidateCache(`admin:category:${id}`)
   },
 
-  // Skills
+  // Skills — reference data
   async getSkills(query: { page?: number; size?: number; search?: string } = {}): Promise<PaginatedResponse<SuperAdminSkill>> {
-    const resp = await apiClient.get('/super-admin/skills', { params: query })
-    const body = resp.data
-    // Skills response uses `name` as key, no numeric id — adapt to PaginatedResponse
-    if (Array.isArray(body?.data)) {
-      return {
-        data: body.data as SuperAdminSkill[],
-        currentPage: body.currentPage ?? query.page ?? 0,
-        totalItems: body.totalItems ?? body.totalElements ?? body.data.length,
-        totalPages: body.totalPages ?? 1,
+    return cachedGet(buildCacheKey('admin:skills', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/skills', { params: query })
+      const body = resp.data
+      if (Array.isArray(body?.data)) {
+        return {
+          data: body.data as SuperAdminSkill[],
+          currentPage: body.currentPage ?? query.page ?? 0,
+          totalItems: body.totalItems ?? body.totalElements ?? body.data.length,
+          totalPages: body.totalPages ?? 1,
+        }
       }
-    }
-    return parsePaginated<SuperAdminSkill>(body, query.page ?? 0)
+      return parsePaginated<SuperAdminSkill>(body, query.page ?? 0)
+    }, { ttl: REFERENCE_TTL, persist: true })
   },
 
   // Job Applications
   async getJobApplications(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: string } = {}): Promise<PaginatedResponse<JobApplicationItem>> {
-    const resp = await apiClient.get('/super-admin/job-applications', { params: query })
-    return parsePaginated<JobApplicationItem>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:job-applications', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/job-applications', { params: query })
+      return parsePaginated<JobApplicationItem>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   async getJobApplication(id: number): Promise<JobApplicationItem> {
-    const resp = await apiClient.get(`/super-admin/job-applications/${id}`)
-    return unwrap(resp)
+    return cachedGet(`admin:job-application:${id}`, async () => {
+      const resp = await apiClient.get(`/super-admin/job-applications/${id}`)
+      return unwrap<JobApplicationItem>(resp)
+    }, { ttl: 60_000 })
   },
 
   // Audition Applications
   async getAuditionApplications(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: string } = {}): Promise<PaginatedResponse<AuditionApplicationItem>> {
-    const resp = await apiClient.get('/super-admin/audition-applications', { params: query })
-    return parsePaginated<AuditionApplicationItem>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:audition-applications', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/audition-applications', { params: query })
+      return parsePaginated<AuditionApplicationItem>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   // Interviews
   async getInterviews(query: { page?: number; size?: number; status?: string } = {}): Promise<PaginatedResponse<InterviewItem>> {
-    const resp = await apiClient.get('/super-admin/interviews', { params: query })
-    return parsePaginated<InterviewItem>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:interviews', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/interviews', { params: query })
+      return parsePaginated<InterviewItem>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   // Artist Portfolio
   async getArtistPortfolio(artistId: number): Promise<SuperAdminPortfolio> {
-    const resp = await apiClient.get(`/super-admin/artists/${artistId}/portfolio`)
-    return unwrap(resp)
+    return cachedGet(`admin:artist-portfolio:${artistId}`, async () => {
+      const resp = await apiClient.get(`/super-admin/artists/${artistId}/portfolio`)
+      return unwrap<SuperAdminPortfolio>(resp)
+    }, { ttl: 60_000 })
   },
 
   // Report Content
   async getReportedContent(query: { page?: number; size?: number; status?: ReportStatus; priority?: ReportPriority } = {}): Promise<PaginatedResponse<ReportContentItem>> {
-    const resp = await apiClient.get('/super-admin/report-content', { params: query })
-    return parsePaginated<ReportContentItem>(resp.data, query.page ?? 0)
+    return cachedGet(buildCacheKey('admin:reports', query as Record<string, unknown>), async () => {
+      const resp = await apiClient.get('/super-admin/report-content', { params: query })
+      return parsePaginated<ReportContentItem>(resp.data, query.page ?? 0)
+    }, { ttl: LIST_TTL })
   },
 
   async getReportedContentItem(id: number): Promise<ReportContentItem> {
-    const resp = await apiClient.get(`/super-admin/report-content/${id}`)
-    return unwrap(resp)
+    return cachedGet(`admin:report:${id}`, async () => {
+      const resp = await apiClient.get(`/super-admin/report-content/${id}`)
+      return unwrap<ReportContentItem>(resp)
+    }, { ttl: 60_000 })
   },
 
   async reviewReportedContent(id: number, payload: ReportReviewPayload): Promise<ReportContentItem> {
     const resp = await apiClient.patch(`/super-admin/report-content/${id}/review`, payload)
+    invalidateCache('admin:reports')
+    invalidateCache(`admin:report:${id}`)
     return unwrap(resp)
   },
 }

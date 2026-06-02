@@ -15,35 +15,42 @@ const DashLayout: React.FC = () => {
   const recruiterData = { name: 'John Doe', role: 'Admin' }
   const [notifications, setNotifications] = useState<string[]>(['Welcome!'])
 
-  // Check if artist has completed onboarding
+  // Check if artist has completed onboarding.
+  // Most loads hit a localStorage cache so we don't re-call /auth/me on every
+  // dashboard navigation. We only network-call when the flag is missing.
   useEffect(() => {
     const checkOnboarding = async () => {
       const role = localStorage.getItem('role') as UserRole
 
-      if (role === UserRole.ARTIST) {
-        // Check onboarding status using /api/auth/me
-        try {
-          const user = await authService.getMe()
+      if (role !== UserRole.ARTIST) {
+        setIsCheckingOnboarding(false)
+        return
+      }
 
-          // Check isOnboardingComplete flag from user data
-          const isOnboardingComplete = user?.isOnboardingComplete === true
+      const cached = localStorage.getItem('isOnboardingComplete')
+      if (cached === 'true') {
+        setIsCheckingOnboarding(false)
+        return
+      }
+      if (cached === 'false') {
+        navigate('/onboarding', { replace: true })
+        return
+      }
 
-          // Store onboarding status in localStorage
-          localStorage.setItem('isOnboardingComplete', String(isOnboardingComplete))
-
-          if (!isOnboardingComplete) {
-            // User has not completed onboarding, redirect to onboarding
-            navigate('/onboarding', { replace: true })
-            return
-          }
-          // User has completed onboarding, allow access to dashboard
-        } catch (error) {
-          // If API fails, redirect to onboarding to be safe
-          console.error('Failed to fetch user info:', error)
-          localStorage.setItem('isOnboardingComplete', 'false')
+      // No cached flag — fall back to API (cached in userService, so only fires once per minute)
+      try {
+        const user = await authService.getMe()
+        const isOnboardingComplete = user?.isOnboardingComplete === true
+        localStorage.setItem('isOnboardingComplete', String(isOnboardingComplete))
+        if (!isOnboardingComplete) {
           navigate('/onboarding', { replace: true })
           return
         }
+      } catch (error) {
+        console.error('Failed to fetch user info:', error)
+        localStorage.setItem('isOnboardingComplete', 'false')
+        navigate('/onboarding', { replace: true })
+        return
       }
 
       setIsCheckingOnboarding(false)

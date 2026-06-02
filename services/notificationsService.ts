@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { cachedGet, buildCacheKey, invalidateCache } from './cache'
 
 export interface Notification {
   id: number
@@ -24,44 +25,39 @@ export interface UnreadCountResponse {
   count: number
 }
 
+// Short TTL because notifications are time-sensitive, but long enough to
+// dedupe the inevitable double-fetch when notification panel mounts.
+const UNREAD_TTL = 10_000
+const LIST_TTL = 15_000
+
 const notificationsService = {
-  /**
-   * Get all notifications with pagination
-   */
   async getNotifications(page: number = 0, size: number = 20): Promise<NotificationResponse> {
-    const response = await apiClient.get('/notifications', {
-      params: { page, size }
-    })
-    return response.data
+    return cachedGet(buildCacheKey('notif:list', { page, size }), async () => {
+      const response = await apiClient.get('/notifications', { params: { page, size } })
+      return response.data
+    }, { ttl: LIST_TTL })
   },
 
-  /**
-   * Get unread notification count
-   */
   async getUnreadCount(): Promise<number> {
-    const response = await apiClient.get<UnreadCountResponse>('/notifications/unread-count')
-    return response.data.count
+    return cachedGet('notif:unread-count', async () => {
+      const response = await apiClient.get<UnreadCountResponse>('/notifications/unread-count')
+      return response.data.count
+    }, { ttl: UNREAD_TTL })
   },
 
-  /**
-   * Mark a specific notification as read
-   */
   async markAsRead(notificationId: number): Promise<void> {
     await apiClient.put(`/notifications/${notificationId}/read`)
+    invalidateCache('notif:')
   },
 
-  /**
-   * Mark all notifications as read
-   */
   async markAllAsRead(): Promise<void> {
     await apiClient.put('/notifications/mark-all-read')
+    invalidateCache('notif:')
   },
 
-  /**
-   * Delete a notification
-   */
   async deleteNotification(notificationId: number): Promise<void> {
     await apiClient.delete(`/notifications/${notificationId}`)
+    invalidateCache('notif:')
   }
 }
 
