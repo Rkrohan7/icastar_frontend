@@ -802,7 +802,7 @@ Make sure your `apiClient.ts` points to the correct backend:
 
 ```typescript
 const apiClient = axios.create({
-  baseURL: 'https://app.icastar.com/api', // Update this to your backend URL
+  baseURL: 'http://api.icastar.com/api', // Update this to your backend URL
   headers: {
     'Content-Type': 'application/json',
   },

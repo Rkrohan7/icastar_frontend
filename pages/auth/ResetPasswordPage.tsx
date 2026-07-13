@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, Eye, EyeOff, Loader2, CheckCircle, AlertTriangle } from 'lucide-react'
 import heroBg from '@/assets/hero-stage.jpg'
 
-const BASE_URL = 'https://app.icastar.com/api'
+const BASE_URL = 'http://api.icastar.com/api'
 
 const bgStyle = {
   backgroundImage: `url(${heroBg})`,
