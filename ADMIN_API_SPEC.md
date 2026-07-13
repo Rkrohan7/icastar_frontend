@@ -1,6 +1,6 @@
 # Admin Panel — Complete API Specification
 
-Base URL: `http://api.icastar.com/api`
+Base URL: `https://api.icastar.com/api`
 All endpoints require: `Authorization: Bearer <jwt>` with role `ADMIN`.
 
 Standard response envelope:

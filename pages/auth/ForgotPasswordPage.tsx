@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft, Loader2, Mail } from 'lucide-react'
 import heroBg from '@/assets/hero-stage.jpg'
 
-const BASE_URL = 'http://api.icastar.com/api'
+const BASE_URL = 'https://api.icastar.com/api'
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('')
