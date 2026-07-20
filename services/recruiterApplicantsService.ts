@@ -1,4 +1,9 @@
 import api from './apiClient'
+import { cachedGet, invalidateCache } from './cache'
+
+// Applicant lists per job cache for 60s; scheduling an interview or submitting
+// a result clears the prefix so the list reflects the new status.
+const APPLICANTS_TTL = 60_000
 
 export interface ApplicantDto {
   id: number
@@ -37,6 +42,7 @@ export interface InterviewResultDto {
 
 export const recruiterApplicantsService = {
   async getJobApplicants(jobId: number | string): Promise<ApplicantDto[]> {
+    return cachedGet(`recruiter:applicants:job:${jobId}`, async () => {
     const response = await api.get(`/recruiter/dashboard/jobs/${jobId}/applicants`)
 
     // Normalize the response to match the expected format
@@ -81,6 +87,7 @@ export const recruiterApplicantsService = {
       artistExperience: applicant.artistExperience,
       isArtistVerified: applicant.isArtistVerified,
     }))
+    }, { ttl: APPLICANTS_TTL })
   },
 
   // Helper method to map backend status to UI status
@@ -122,11 +129,13 @@ export const recruiterApplicantsService = {
 
   async scheduleInterview(data: ScheduleInterviewDto): Promise<any> {
     const response = await api.post('/recruiter/dashboard/schedule-interview', data)
+    invalidateCache('recruiter:applicants:')
     return response.data
   },
 
   async submitInterviewResult(data: InterviewResultDto): Promise<any> {
     const response = await api.post('/recruiter/dashboard/interview-result', data)
+    invalidateCache('recruiter:applicants:')
     return response.data
   },
 }

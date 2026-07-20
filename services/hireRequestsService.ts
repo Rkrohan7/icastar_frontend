@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { cachedGet, buildCacheKey, invalidateCache } from './cache'
 import {
   HireRequest,
   CreateHireRequestDto,
@@ -9,6 +10,10 @@ import {
   ApiResponse,
   HireRequestStats,
 } from '../types'
+
+// Cache reads for 60s; any create/status-change/withdraw/remind clears the
+// whole `recruiter:hire-requests:` prefix so lists/stats reflect the change.
+const HIRE_REQ_TTL = 60_000
 
 /**
  * Get all hire requests for current recruiter with filters
@@ -28,27 +33,31 @@ export const getHireRequests = async (
   if (filters.sortBy) params.append('sortBy', filters.sortBy)
   if (filters.sortDir) params.append('sortDir', filters.sortDir)
 
-  const response = await apiClient.get<PagedResponse<HireRequest>>(
-    `/recruiter/hire-requests?${params.toString()}`
-  )
+  return cachedGet(buildCacheKey('recruiter:hire-requests:list', { q: params.toString() }), async () => {
+    const response = await apiClient.get<PagedResponse<HireRequest>>(
+      `/recruiter/hire-requests?${params.toString()}`
+    )
 
-  // Map Spring Boot pagination format to our frontend format
-  const pagedData = response.data
-  return {
-    items: pagedData.content,
-    totalElements: pagedData.totalElements,
-    totalPages: pagedData.totalPages,
-    currentPage: pagedData.pageable.pageNumber,
-    size: pagedData.pageable.pageSize,
-  }
+    // Map Spring Boot pagination format to our frontend format
+    const pagedData = response.data
+    return {
+      items: pagedData.content,
+      totalElements: pagedData.totalElements,
+      totalPages: pagedData.totalPages,
+      currentPage: pagedData.pageable.pageNumber,
+      size: pagedData.pageable.pageSize,
+    }
+  }, { ttl: HIRE_REQ_TTL })
 }
 
 /**
  * Get single hire request by ID
  */
 export const getHireRequestById = async (id: number): Promise<HireRequest> => {
-  const response = await apiClient.get<HireRequest>(`/recruiter/hire-requests/${id}`)
-  return response.data
+  return cachedGet(`recruiter:hire-requests:detail:${id}`, async () => {
+    const response = await apiClient.get<HireRequest>(`/recruiter/hire-requests/${id}`)
+    return response.data
+  }, { ttl: HIRE_REQ_TTL })
 }
 
 /**
@@ -64,6 +73,7 @@ export const createHireRequest = async (
 
   // Extract data from wrapped response
   if (response.data.success && response.data.data) {
+    invalidateCache('recruiter:hire-requests:')
     return response.data.data
   }
 
@@ -83,6 +93,7 @@ export const updateHireRequestStatus = async (
   )
 
   if (response.data.success && response.data.data) {
+    invalidateCache('recruiter:hire-requests:')
     return response.data.data
   }
 
@@ -100,6 +111,7 @@ export const withdrawHireRequest = async (id: number): Promise<void> => {
   if (!response.data.success) {
     throw new Error(response.data.error || 'Failed to withdraw hire request')
   }
+  invalidateCache('recruiter:hire-requests:')
 }
 
 /**
@@ -111,6 +123,7 @@ export const sendReminderEmail = async (id: number): Promise<HireRequest> => {
   )
 
   if (response.data.success && response.data.data) {
+    invalidateCache('recruiter:hire-requests:')
     return response.data.data
   }
 
@@ -121,10 +134,12 @@ export const sendReminderEmail = async (id: number): Promise<HireRequest> => {
  * Get hire request statistics
  */
 export const getHireRequestStats = async (): Promise<HireRequestStats> => {
-  const response = await apiClient.get<HireRequestStats>(
-    '/recruiter/hire-requests/stats'
-  )
-  return response.data
+  return cachedGet('recruiter:hire-requests:stats', async () => {
+    const response = await apiClient.get<HireRequestStats>(
+      '/recruiter/hire-requests/stats'
+    )
+    return response.data
+  }, { ttl: HIRE_REQ_TTL })
 }
 
 export default {

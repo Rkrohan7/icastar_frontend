@@ -1,4 +1,8 @@
 import api from './apiClient'
+import { cachedGet, invalidateCache } from './cache'
+
+// By-id profile lookups are cached 60s (public profile pages re-render often).
+const ARTIST_BYID_TTL = 60_000
 
 // ----- In-memory cache for /artists/profile/complete -----
 // Header, DashLayout and the Profile page each called getMyProfile() on mount,
@@ -192,23 +196,30 @@ export const artistService = {
   },
 
   async getMyCompleteProfile(): Promise<ArtistProfile | null> {
-    const res = await api.get('/artist-profiles/complete')
-    return res.data ?? null
+    return cachedGet('artist:profile:my-complete', async () => {
+      const res = await api.get('/artist-profiles/complete')
+      return res.data ?? null
+    }, { ttl: ARTIST_BYID_TTL })
   },
 
   async getProfileById(id: number | string): Promise<ArtistProfile | null> {
-    const res = await api.get(`/artists/profile/${id}`)
-    return res.data ?? null
+    return cachedGet(`artist:profile:by-id:${id}`, async () => {
+      const res = await api.get(`/artists/profile/${id}`)
+      return res.data ?? null
+    }, { ttl: ARTIST_BYID_TTL })
   },
 
   async getCompleteProfileById(id: number | string): Promise<ArtistProfile | null> {
-    const res = await api.get(`/artists/profile/${id}/complete`)
-    return res.data ?? null
+    return cachedGet(`artist:profile:complete-by-id:${id}`, async () => {
+      const res = await api.get(`/artists/profile/${id}/complete`)
+      return res.data ?? null
+    }, { ttl: ARTIST_BYID_TTL })
   },
 
   async updateMyProfile(input: UpdateArtistProfileInput): Promise<ArtistProfile> {
     const res = await api.put('/artists/profile', input)
     invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
     return res.data
   },
 

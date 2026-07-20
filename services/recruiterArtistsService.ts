@@ -1,5 +1,11 @@
 import { api } from './apiClient'
 import { Artist } from '../types'
+import { cachedGet, buildCacheKey } from './cache'
+
+// Read-only browse/suggestion/audience data — safe to cache briefly. Header +
+// list page + suggestions widget used to re-fetch the same query independently.
+const ARTISTS_TTL = 60_000
+const SUGGESTIONS_TTL = 120_000
 
 // DTO from backend RecruiterDashboardController /artists response
 export interface ArtistSuggestionDto {
@@ -158,34 +164,40 @@ const toArtist = (dto: ArtistSuggestionDto): Artist => ({
 
 export async function browseArtists(params: BrowseArtistsParams): Promise<PagedArtistsResult> {
   const { page = 1, size = 12, ...filters } = params
-  const response = await api.get<{ success: boolean; data: ArtistSuggestionDto[]; totalElements: number; totalPages: number; currentPage: number; size: number }>(
-    '/recruiter/dashboard/artists',
-    { params: { page: page - 1, size, ...filters } },
-  )
+  return cachedGet(buildCacheKey('recruiter:artists:browse', { page, size, ...filters }), async () => {
+    const response = await api.get<{ success: boolean; data: ArtistSuggestionDto[]; totalElements: number; totalPages: number; currentPage: number; size: number }>(
+      '/recruiter/dashboard/artists',
+      { params: { page: page - 1, size, ...filters } },
+    )
 
-  const payload = response.data
-  const items = (payload.data || []).map(toArtist)
-  return {
-    items,
-    totalElements: payload.totalElements || items.length,
-    totalPages: payload.totalPages || 1,
-    currentPage: (payload.currentPage ?? 0) + 1,
-    size: payload.size || size,
-  }
+    const payload = response.data
+    const items = (payload.data || []).map(toArtist)
+    return {
+      items,
+      totalElements: payload.totalElements || items.length,
+      totalPages: payload.totalPages || 1,
+      currentPage: (payload.currentPage ?? 0) + 1,
+      size: payload.size || size,
+    }
+  }, { ttl: ARTISTS_TTL })
 }
 
 export async function getArtistSuggestions(params: Omit<BrowseArtistsParams, 'page' | 'size'> & { jobId?: number; limit?: number }): Promise<Artist[]> {
   const { limit = 10, ...filters } = params
-  const response = await api.get<{ success: boolean; data: ArtistSuggestionDto[]; count: number }>(
-    '/recruiter/dashboard/suggestions',
-    { params: { ...filters, limit } },
-  )
-  return (response.data.data || []).map(toArtist)
+  return cachedGet(buildCacheKey('recruiter:artists:suggestions', { limit, ...filters }), async () => {
+    const response = await api.get<{ success: boolean; data: ArtistSuggestionDto[]; count: number }>(
+      '/recruiter/dashboard/suggestions',
+      { params: { ...filters, limit } },
+    )
+    return (response.data.data || []).map(toArtist)
+  }, { ttl: SUGGESTIONS_TTL })
 }
 
 export async function getAudienceMetrics(artistId: number): Promise<AudienceMetricsDto> {
-  const response = await api.get<{ success: boolean; data: AudienceMetricsDto }>(
-    `/recruiter/artists/${artistId}/audience`
-  )
-  return response.data.data
+  return cachedGet(`recruiter:artists:audience:${artistId}`, async () => {
+    const response = await api.get<{ success: boolean; data: AudienceMetricsDto }>(
+      `/recruiter/artists/${artistId}/audience`
+    )
+    return response.data.data
+  }, { ttl: ARTISTS_TTL })
 }

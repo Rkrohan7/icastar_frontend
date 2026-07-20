@@ -1,4 +1,8 @@
 import apiClient from './apiClient'
+import { cachedGet, buildCacheKey } from './cache'
+
+// Recent hires are read-only here; cache each query/detail for 60s.
+const HIRES_TTL = 60_000
 
 export interface RecentHireDto {
   id: number
@@ -49,27 +53,27 @@ export interface PagedHiresResult {
 
 export async function getHires(params: GetHiresParams = {}): Promise<PagedHiresResult> {
   const { page = 0, size = 10, ...filters } = params
-  const response = await apiClient.get('/recruiter/dashboard/hires', {
-    params: { page, size, ...filters },
-  })
+  return cachedGet(buildCacheKey('recruiter:hires:list', { page, size, ...filters }), async () => {
+    const response = await apiClient.get('/recruiter/dashboard/hires', {
+      params: { page, size, ...filters },
+    })
 
-  console.log('Raw API Response:', response.data)
+    // Extract data from response.data.data structure
+    const apiData = response.data?.data ?? {}
 
-  // Extract data from response.data.data structure
-  const apiData = response.data?.data ?? {}
-  console.log('Extracted apiData:', apiData)
-  console.log('Hires array:', apiData.hires)
-
-  return {
-    items: Array.isArray(apiData.hires) ? apiData.hires : [],
-    totalElements: apiData.totalElements ?? 0,
-    totalPages: apiData.totalPages ?? 0,
-    currentPage: apiData.currentPage ?? 0,
-    size: apiData.size ?? size,
-  }
+    return {
+      items: Array.isArray(apiData.hires) ? apiData.hires : [],
+      totalElements: apiData.totalElements ?? 0,
+      totalPages: apiData.totalPages ?? 0,
+      currentPage: apiData.currentPage ?? 0,
+      size: apiData.size ?? size,
+    }
+  }, { ttl: HIRES_TTL })
 }
 
 export async function getHireDetails(hireId: number): Promise<Record<string, unknown>> {
-  const response = await apiClient.get(`/recruiter/dashboard/hires/${hireId}`)
-  return response.data?.data ?? {}
+  return cachedGet(`recruiter:hires:detail:${hireId}`, async () => {
+    const response = await apiClient.get(`/recruiter/dashboard/hires/${hireId}`)
+    return response.data?.data ?? {}
+  }, { ttl: HIRES_TTL })
 }

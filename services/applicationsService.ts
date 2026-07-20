@@ -1,5 +1,10 @@
 import apiClient from './apiClient'
 import { PaginatedResult } from './types'
+import { cachedGet, invalidateCache } from './cache'
+
+// My-applications list is re-fetched by the header badge and the page itself.
+// Cache 60s; applying to a job invalidates it so the new entry shows up.
+const MY_APPS_TTL = 60_000
 
 export interface ApplicationRequest {
   coverLetter: string
@@ -67,34 +72,37 @@ const normalizePaginated = <T = any>(data: any): PaginatedResult<T> => {
 export const applicationsService = {
   async createApplication(req: ApplicationRequest): Promise<ApplicationResponse> {
     const res = await apiClient.post('/applications', req)
+    invalidateCache('artist:my-applications')
     return res.data
   },
 
-  async listMyApplications(params: ListMyApplicationsParams = {}): Promise<PaginatedResult<MyApplication>> {
-    // Call API without any query parameters
-    const res = await apiClient.get('/my-applications')
+  async listMyApplications(_params: ListMyApplicationsParams = {}): Promise<PaginatedResult<MyApplication>> {
+    return cachedGet('artist:my-applications', async () => {
+      // Call API without any query parameters
+      const res = await apiClient.get('/my-applications')
 
-    const normalized = normalizePaginated<any>(res.data)
+      const normalized = normalizePaginated<any>(res.data)
 
-    const items: MyApplication[] = (normalized.items || []).map((it: any) => {
-      const appliedAt = it.appliedAt || it.applied_date || it.appliedDate || it.createdAt || ''
+      const items: MyApplication[] = (normalized.items || []).map((it: any) => {
+        const appliedAt = it.appliedAt || it.applied_date || it.appliedDate || it.createdAt || ''
+        return {
+          id: Number(it.id ?? it.applicationId ?? Math.random() * 100000),
+          jobId: it.jobId ?? it.job_id,
+          jobTitle: it.jobTitle ?? it.title ?? 'Untitled Role',
+          company: it.company ?? it.companyName ?? it.orgName,
+          appliedAt,
+          status: String(it.status ?? it.applicationStatus ?? 'Applied').toUpperCase(),
+          logo: it.companyLogo ?? it.logoUrl ?? undefined,
+        }
+      })
+
       return {
-        id: Number(it.id ?? it.applicationId ?? Math.random() * 100000),
-        jobId: it.jobId ?? it.job_id,
-        jobTitle: it.jobTitle ?? it.title ?? 'Untitled Role',
-        company: it.company ?? it.companyName ?? it.orgName,
-        appliedAt,
-        status: String(it.status ?? it.applicationStatus ?? 'Applied').toUpperCase(),
-        logo: it.companyLogo ?? it.logoUrl ?? undefined,
+        items,
+        total: normalized.total,
+        page: normalized.page,
+        pageSize: normalized.pageSize,
       }
-    })
-
-    return {
-      items,
-      total: normalized.total,
-      page: normalized.page,
-      pageSize: normalized.pageSize,
-    }
+    }, { ttl: MY_APPS_TTL })
   },
 }
 
