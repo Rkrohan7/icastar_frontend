@@ -88,7 +88,8 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
 
       // Verify onboarding status via /api/auth/me before navigating
       try {
-        const user = await authService.getMe()
+        // force a network read — the cached /auth/me predates the submit above
+        const user = await authService.getMe(true)
         const isOnboardingComplete = user?.isOnboardingComplete === true
 
         // Store the verified onboarding status

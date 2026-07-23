@@ -1,4 +1,6 @@
 import api from './apiClient'
+import { invalidateUserCache } from './userService'
+import { invalidateArtistProfileCache } from './artistService'
 
 export interface OnboardingData {
   category: string
@@ -60,6 +62,12 @@ export const onboardingService = {
   ): Promise<{ success: boolean; message: string }> {
     try {
       const response = await api.post('/artists/profile', data)
+      // Onboarding flips isOnboardingComplete on the User. The cached /auth/me
+      // response (60s TTL) still says false, so drop it — otherwise the very
+      // next getMe() re-reads the stale flag and the caller wrongly concludes
+      // onboarding failed.
+      invalidateUserCache()
+      invalidateArtistProfileCache()
       return {
         success: true,
         message: response.data.message || 'Onboarding completed successfully',

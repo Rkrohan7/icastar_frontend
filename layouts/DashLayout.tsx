@@ -27,13 +27,12 @@ const DashLayout: React.FC = () => {
         return
       }
 
+      // Only the 'true' flag is trusted from localStorage. A stale 'false'
+      // (written before onboarding finished) would otherwise trap the user in
+      // a permanent redirect to /onboarding, so that case re-checks the server.
       const cached = localStorage.getItem('isOnboardingComplete')
       if (cached === 'true') {
         setIsCheckingOnboarding(false)
-        return
-      }
-      if (cached === 'false') {
-        navigate('/onboarding', { replace: true })
         return
       }
 
