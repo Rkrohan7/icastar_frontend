@@ -271,17 +271,22 @@ export const Pagination: React.FC<{
   onChange: (p: number) => void
   totalItems?: number
 }> = ({ page, totalPages, onChange, totalItems }) => {
-  // Windowed page numbers with ellipses: 1 … 4 5 [6] 7 8 … 20
   const current = page + 1
-  const nums: (number | '...')[] = []
-  const range = 2
-  const start = Math.max(2, current - range)
-  const end = Math.min(totalPages - 1, current + range)
-  nums.push(1)
-  if (start > 2) nums.push('...')
-  for (let i = start; i <= end; i++) nums.push(i)
-  if (end < totalPages - 1) nums.push('...')
-  if (totalPages > 1) nums.push(totalPages)
+  let nums: (number | '...')[] = []
+  if (totalPages <= 12) {
+    // Few enough pages — show every one rather than hiding some behind "…"
+    nums = Array.from({ length: totalPages }, (_, i) => i + 1)
+  } else {
+    // Long lists stay windowed: 1 … 4 5 [6] 7 8 … 20
+    const range = 2
+    const start = Math.max(2, current - range)
+    const end = Math.min(totalPages - 1, current + range)
+    nums.push(1)
+    if (start > 2) nums.push('...')
+    for (let i = start; i <= end; i++) nums.push(i)
+    if (end < totalPages - 1) nums.push('...')
+    nums.push(totalPages)
+  }
 
   return (
     <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3'>

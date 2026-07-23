@@ -345,15 +345,21 @@ const Jobs: React.FC = () => {
   }
 
   const pageNumbers = useMemo(() => {
+    // With a small number of pages, list every one of them — collapsing 4-8
+    // behind an ellipsis only hides pages the user could have clicked.
+    if (totalPages <= 12) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    // Long lists stay windowed: 1 … 5 6 [7] 8 9 … 40
     const nums: (number | '...')[] = []
     const range = 2
-    let start = Math.max(2, currentPage - range)
-    let end = Math.min(totalPages - 1, currentPage + range)
+    const start = Math.max(2, currentPage - range)
+    const end = Math.min(totalPages - 1, currentPage + range)
     nums.push(1)
     if (start > 2) nums.push('...')
     for (let i = start; i <= end; i++) nums.push(i)
     if (end < totalPages - 1) nums.push('...')
-    if (totalPages > 1) nums.push(totalPages)
+    nums.push(totalPages)
     return nums
   }, [currentPage, totalPages])
 
