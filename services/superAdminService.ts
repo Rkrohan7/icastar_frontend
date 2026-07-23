@@ -289,6 +289,23 @@ export interface JobsQuery {
   jobType?: JobType
 }
 
+/** Per-row failure reported by the bulk-upload endpoint. */
+export interface BulkUploadRowError {
+  /** 1-based row number in the uploaded sheet (header row excluded). */
+  row: number
+  /** Which column failed, when the backend can attribute it. */
+  field?: string
+  message: string
+}
+
+export interface BulkUploadJobsResult {
+  totalRows: number
+  successCount: number
+  failureCount: number
+  errors: BulkUploadRowError[]
+  message?: string
+}
+
 // ============ Paginated wrapper ============
 
 export interface PaginatedResponse<T> {
@@ -741,6 +758,43 @@ const superAdminService = {
       const resp = await apiClient.get('/super-admin/jobs', { params: query })
       return parsePaginated<SuperAdminJob>(resp.data, query.page ?? 0)
     }, { ttl: LIST_TTL })
+  },
+
+  /**
+   * Bulk-create jobs from an uploaded spreadsheet (.xlsx / .xls / .csv).
+   * The file is posted as multipart/form-data under the field name `file`.
+   * Long timeout — a large sheet can take a while to parse server-side.
+   */
+  async bulkUploadJobs(
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): Promise<BulkUploadJobsResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const resp = await apiClient.post('/super-admin/jobs/bulk-upload', formData, {
+      timeout: 300_000,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total))
+        }
+      },
+    })
+
+    // New rows landed in the jobs table — drop every cached admin jobs listing
+    // so the table reflects them immediately. Regex, not a plain string: the
+    // keys are `admin:jobs?page=…`, which an exact-match invalidate would miss.
+    invalidateCache(/^admin:jobs(\?|$)/)
+
+    const payload = resp.data?.data ?? resp.data ?? {}
+    return {
+      totalRows: payload.totalRows ?? payload.total ?? 0,
+      successCount: payload.successCount ?? payload.created ?? 0,
+      failureCount: payload.failureCount ?? payload.failed ?? 0,
+      errors: Array.isArray(payload.errors) ? payload.errors : [],
+      message: resp.data?.message,
+    }
   },
 
   // Reports — cached by date range

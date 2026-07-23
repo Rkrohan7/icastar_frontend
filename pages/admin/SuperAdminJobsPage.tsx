@@ -5,6 +5,7 @@ import {
   BriefcaseIcon,
   EyeIcon,
   FileTextIcon,
+  PlusIcon,
 } from '../../components/icons/IconComponents'
 import superAdminService, {
   JobStatus,
@@ -14,6 +15,7 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import { Pagination } from './SuperAdminRecruitersPage'
 import usePageParam from '../../hooks/usePageParam'
+import BulkUploadJobsModal from './BulkUploadJobsModal'
 
 const STATUS_OPTIONS: { label: string; value: JobStatus | '' }[] = [
   { label: 'All Statuses', value: '' },
@@ -44,6 +46,9 @@ export const SuperAdminJobsPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState('')
   const [status, setStatus] = useState<JobStatus | ''>('')
   const [jobType, setJobType] = useState<JobType | ''>('')
+  const [showBulkUpload, setShowBulkUpload] = useState(false)
+  // Bumped after a bulk upload to force the list to refetch.
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     const fetch = async () => {
@@ -78,7 +83,7 @@ export const SuperAdminJobsPage: React.FC = () => {
       }
     }
     fetch()
-  }, [page, search, status, jobType])
+  }, [page, search, status, jobType, reloadKey])
 
   const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,6 +93,16 @@ export const SuperAdminJobsPage: React.FC = () => {
 
   return (
     <div className='p-6 space-y-4'>
+      <div className='flex items-center justify-between'>
+        <h1 className='text-xl font-semibold text-gray-900'>Jobs</h1>
+        <button
+          onClick={() => setShowBulkUpload(true)}
+          className='flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[#E36A3A] text-white hover:bg-[#d05c2e]'>
+          <PlusIcon className='h-4 w-4' />
+          Bulk Upload Jobs
+        </button>
+      </div>
+
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
         <div className='flex flex-col md:flex-row gap-3'>
           <form onSubmit={onSearchSubmit} className='flex-1 relative'>
@@ -218,6 +233,16 @@ export const SuperAdminJobsPage: React.FC = () => {
 
       {totalPages > 1 && (
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      )}
+
+      {showBulkUpload && (
+        <BulkUploadJobsModal
+          onClose={() => setShowBulkUpload(false)}
+          onUploaded={() => {
+            setPage(0)
+            setReloadKey((k) => k + 1)
+          }}
+        />
       )}
     </div>
   )
