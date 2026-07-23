@@ -260,31 +260,75 @@ export const StatusBadge: React.FC<{ status: AccountStatus }> = ({ status }) => 
   )
 }
 
+/**
+ * Shared admin pagination. `page` is 0-based (what the API wants); the numbers
+ * shown to the user are 1-based. `totalItems` is optional so existing call
+ * sites keep working without passing it.
+ */
 export const Pagination: React.FC<{
   page: number
   totalPages: number
   onChange: (p: number) => void
-}> = ({ page, totalPages, onChange }) => (
-  <div className='flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3'>
-    <p className='text-sm text-gray-600'>
-      Page <span className='font-semibold'>{page + 1}</span> of{' '}
-      <span className='font-semibold'>{totalPages}</span>
-    </p>
-    <div className='flex gap-2'>
-      <button
-        onClick={() => onChange(Math.max(0, page - 1))}
-        disabled={page === 0}
-        className='px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed'>
-        Previous
-      </button>
-      <button
-        onClick={() => onChange(Math.min(totalPages - 1, page + 1))}
-        disabled={page >= totalPages - 1}
-        className='px-3 py-1.5 text-sm bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] disabled:opacity-40 disabled:cursor-not-allowed'>
-        Next
-      </button>
+  totalItems?: number
+}> = ({ page, totalPages, onChange, totalItems }) => {
+  // Windowed page numbers with ellipses: 1 … 4 5 [6] 7 8 … 20
+  const current = page + 1
+  const nums: (number | '...')[] = []
+  const range = 2
+  const start = Math.max(2, current - range)
+  const end = Math.min(totalPages - 1, current + range)
+  nums.push(1)
+  if (start > 2) nums.push('...')
+  for (let i = start; i <= end; i++) nums.push(i)
+  if (end < totalPages - 1) nums.push('...')
+  if (totalPages > 1) nums.push(totalPages)
+
+  return (
+    <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3'>
+      <p className='text-sm text-gray-600'>
+        Page <span className='font-semibold'>{current}</span> of{' '}
+        <span className='font-semibold'>{totalPages}</span>
+        {typeof totalItems === 'number' && (
+          <span className='text-gray-400'> · {totalItems.toLocaleString()} total</span>
+        )}
+      </p>
+      <div className='flex items-center gap-1'>
+        <button
+          onClick={() => onChange(Math.max(0, page - 1))}
+          disabled={page === 0}
+          className='px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed'>
+          Previous
+        </button>
+
+        {nums.map((n, i) =>
+          n === '...' ? (
+            <span key={`e-${i}`} className='px-2 text-sm text-gray-400 select-none'>
+              …
+            </span>
+          ) : (
+            <button
+              key={n}
+              onClick={() => onChange((n as number) - 1)}
+              aria-current={current === n ? 'page' : undefined}
+              className={`min-w-[2rem] px-2 py-1.5 text-sm rounded-lg border transition-colors ${
+                current === n
+                  ? 'bg-[#E36A3A] text-white border-[#E36A3A] font-semibold'
+                  : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}>
+              {n}
+            </button>
+          ),
+        )}
+
+        <button
+          onClick={() => onChange(Math.min(totalPages - 1, page + 1))}
+          disabled={page >= totalPages - 1}
+          className='px-3 py-1.5 text-sm bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] disabled:opacity-40 disabled:cursor-not-allowed'>
+          Next
+        </button>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 export default SuperAdminRecruitersPage

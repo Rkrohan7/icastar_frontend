@@ -18,6 +18,8 @@ import {
   CalendarIcon,
   FileTextIcon,
 } from '../components/icons/IconComponents'
+import { toast } from 'react-toastify'
+import userService from '../services/userService'
 
 interface AdminNavItem {
   name: string
@@ -257,7 +259,17 @@ export const AdminLayout: React.FC = () => {
               AD
             </div>
           )}
-          <button className='w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium text-white'>
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              // Clears tokens/localStorage and wipes the API response cache,
+              // so the next session can't read the previous admin's data.
+              userService.logout()
+              toast.success('You have been logged out successfully')
+              navigate('/auth', { replace: true })
+            }}
+            title='Logout'
+            className='w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium text-white'>
             <LogOutIcon className='h-4 w-4' />
             {sidebarOpen && <span>Logout</span>}
           </button>

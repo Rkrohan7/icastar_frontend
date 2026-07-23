@@ -232,7 +232,12 @@ export const SuperAdminJobsPage: React.FC = () => {
       </div>
 
       {totalPages > 1 && (
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onChange={setPage}
+          totalItems={totalItems}
+        />
       )}
 
       {showBulkUpload && (

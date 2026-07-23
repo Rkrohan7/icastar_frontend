@@ -467,18 +467,24 @@ const Jobs: React.FC = () => {
         )}
       </div>
 
-      <div className='flex justify-center items-center pt-6'>
+      {!loading && totalPages > 1 && (
+      <div className='flex flex-col items-center gap-2 pt-6'>
+        <p className='text-sm text-gray-500'>
+          Page {currentPage} of {totalPages} · {total.toLocaleString()} jobs
+        </p>
         <UIPagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
                 href='#'
                 aria-label='Previous page'
+                aria-disabled={currentPage <= 1}
                 onClick={e => {
                   e.preventDefault()
+                  if (currentPage <= 1) return
                   setCurrentPage(p => Math.max(1, p - 1))
                 }}
-                className='disabled:opacity-50'
+                className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
               >
                 <ChevronLeft className='h-4 w-4' />
               </PaginationPrevious>
@@ -509,11 +515,13 @@ const Jobs: React.FC = () => {
               <PaginationNext
                 href='#'
                 aria-label='Next page'
+                aria-disabled={currentPage >= totalPages}
                 onClick={e => {
                   e.preventDefault()
+                  if (currentPage >= totalPages) return
                   setCurrentPage(p => Math.min(totalPages, p + 1))
                 }}
-                className='disabled:opacity-50'
+                className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
               >
                 <ChevronRight className='h-4 w-4' />
               </PaginationNext>
@@ -521,6 +529,7 @@ const Jobs: React.FC = () => {
           </PaginationContent>
         </UIPagination>
       </div>
+      )}
 
       <AlertDialog open={confirmBookmarkOpen} onOpenChange={setConfirmBookmarkOpen}>
         <AlertDialogContent className='bg-white rounded-2xl border-0 shadow-2xl max-w-md'>

@@ -69,6 +69,20 @@ const normalizePaginated = (data: any): PaginatedResult<Job> => {
     }
   }
 
+  // Backend's actual page shape: the rows sit in `data` while the counts sit
+  // beside it — { data: [...], totalElements, totalPages, currentPage, size }.
+  // This must be checked before the generic `data.data` unwrap below, which
+  // would recurse into the array and throw the counts away (leaving total =
+  // one page's worth, so the UI computed a single page and hid pagination).
+  if (data && Array.isArray(data.data) && typeof data.totalElements === 'number') {
+    return {
+      items: data.data,
+      total: data.totalElements,
+      page: typeof data.currentPage === 'number' ? data.currentPage : 0,
+      pageSize: typeof data.size === 'number' ? data.size : data.data.length,
+    }
+  }
+
   // Nested under data
   if (data && data.data) {
     return normalizePaginated(data.data)
