@@ -28,41 +28,41 @@ const POPULAR_ROLES = [
 const TOP_ARTISTS = [
     {
         id: 101,
-        name: 'Aarav Patil',
-        role: 'Marathi Actor',
-        location: 'Mumbai',
-        rating: 4.9,
-        image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-        completion: 95,
+        name: 'RJ Komal',
+        role: 'Anchor',
+        location: 'Navi Mumbai',
+        rating: 5.0,
+        image: '/talent/rj-komal.png',
+        completion: 100,
         verified: true
     },
     {
         id: 102,
-        name: 'Priya Sharma',
-        role: 'Junior Director',
-        location: 'Pune',
+        name: 'Sagar Sapkale',
+        role: 'Music Director',
+        location: 'Mumbai',
         rating: 5.0,
-        image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-        completion: 88,
+        image: '/talent/sagar-sapkale.png',
+        completion: 100,
         verified: true
     },
     {
         id: 103,
-        name: 'Rohan Deshmukh',
-        role: 'Voice Artist',
-        location: 'Nagpur',
-        rating: 4.8,
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
-        completion: 82,
-        verified: false
+        name: 'Shivani Kulkarni',
+        role: 'Singer',
+        location: 'Pune',
+        rating: 5.0,
+        image: '/talent/shivani-kulkarni.png',
+        completion: 100,
+        verified: true
     },
     {
         id: 104,
-        name: 'Saanvi Mehta',
-        role: 'Classical Dancer',
-        location: 'Mumbai',
-        rating: 4.9,
-        image: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80',
+        name: 'Mohika Gadare',
+        role: 'Actress / Model',
+        location: 'Pune',
+        rating: 5.0,
+        image: '/talent/mohika-gadare.jpg',
         completion: 100,
         verified: true
     }
@@ -71,24 +71,25 @@ const TOP_ARTISTS = [
 const TESTIMONIALS = [
     {
         id: 1,
-        name: 'Sarah Johnson',
-        role: 'Professional Actress',
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=64&q=80',
-        quote: "iCastar completely transformed my career. I landed three major roles within the first month of joining. The platform is intuitive and connects you with real opportunities."
+        name: 'Shivani Baokar',
+        role: 'Actress',
+        // Initials avatar — using a stock photo would misrepresent a real person.
+        image: 'https://ui-avatars.com/api/?name=Shivani+Baokar&background=E36A3A&color=fff&size=128&bold=true',
+        quote: "As an artist, getting the right opportunities and reaching the right audience is crucial. iCastar is a great concept that brings artists, casting directors, and production houses together on a single platform. iCastar's effort to provide a proper platform for talent—especially for upcoming and rural artists—is truly commendable. I feel every artist should connect with iCastar through their profile and talent."
     },
     {
         id: 2,
-        name: 'Michael Chen',
-        role: 'Casting Director',
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=64&q=80',
-        quote: "As a casting director, iCastar has streamlined my entire workflow. Finding the perfect talent has never been easier, and the quality of submissions is outstanding."
+        name: 'Jeevan Bharati',
+        role: 'Writer & Director',
+        image: 'https://ui-avatars.com/api/?name=Jeevan+Bharati&background=E36A3A&color=fff&size=128&bold=true',
+        quote: "Finding local artists while shooting at various locations is always a challenging task. iCastar has made this job very simple. I have personally selected artists through iCastar, and the experience was great. The platform is easy to use and can certainly be useful for the entire entertainment industry. Here, you can hire not just actors, but also writers, directors, and other industry professionals. iCastar's initiative to connect artists and industry professionals on a single platform is truly commendable."
     },
     {
         id: 3,
-        name: 'Emma Rodriguez',
-        role: 'Voice Artist',
-        image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=64&q=80',
-        quote: "The video audition feature is game-changing. I can showcase my talent from anywhere in the world and the feedback system helps me improve constantly."
+        name: 'Shailesh More',
+        role: 'Makeup Artist',
+        image: 'https://ui-avatars.com/api/?name=Shailesh+More&background=E36A3A&color=fff&size=128&bold=true',
+        quote: "There are plenty of opportunities for makeup artists, but relying solely on personal references and contacts isn't enough to find them. If you want access to more work, registering on iCastar is a must—I personally prefer iCastar too."
     }
 ]
 
@@ -795,8 +796,18 @@ export const AboutSection = () => {
                         </p>
                         <p className="text-gray-700 font-medium">
                             More information:{' '}
-                            <a href="mailto:icastarhelp@gmail.com" className="text-orange-600 hover:text-orange-700 underline">
-                                icastarhelp@gmail.com
+                            <a
+                                href="mailto:admin.icastar@gmail.com"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    window.open(
+                                        'https://mail.google.com/mail/?view=cm&fs=1&to=admin.icastar@gmail.com&su=Support%20Request%20-%20iCastar',
+                                        '_blank',
+                                        'noopener,noreferrer',
+                                    )
+                                }}
+                                className="text-orange-600 hover:text-orange-700 underline">
+                                admin.icastar@gmail.com
                             </a>
                         </p>
                     </div>
@@ -956,11 +967,23 @@ export const FAQSection = () => {
                             If you need further assistance, don't hesitate! Just shoot us an email, and we'll be happy to help you shine.
                         </p>
                         <a
-                            href="mailto:icastarhelp@gmail.com"
+                            href="mailto:admin.icastar@gmail.com"
+                            onClick={(e) => {
+                                // A bare mailto: does nothing when the browser has no default
+                                // mail app registered (common on desktop Chrome). Open Gmail's
+                                // web compose in a new tab so the click always does something;
+                                // the mailto href still serves right-click / native-client users.
+                                e.preventDefault()
+                                window.open(
+                                    'https://mail.google.com/mail/?view=cm&fs=1&to=admin.icastar@gmail.com&su=Support%20Request%20-%20iCastar',
+                                    '_blank',
+                                    'noopener,noreferrer',
+                                )
+                            }}
                             className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
                         >
                             <Send className="h-5 w-5" />
-                            Email Us: icastarhelp@gmail.com
+                            Email Us: admin.icastar@gmail.com
                         </a>
                     </div>
                 </div>

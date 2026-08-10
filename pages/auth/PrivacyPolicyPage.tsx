@@ -81,7 +81,7 @@ const PrivacyPolicyPage = () => {
 
                 <div>
                   <h4 className="font-bold text-gray-900 mb-2">4. Data Retention</h4>
-                  <p>We retain personal information as long as necessary to fulfill the purposes outlined in this Privacy Policy or as required by law. You may request deletion of your data by contacting us at <a href="mailto:icastarhelp@gmail.com" className="text-orange-600 hover:text-orange-700 underline">icastarhelp@gmail.com</a></p>
+                  <p>We retain personal information as long as necessary to fulfill the purposes outlined in this Privacy Policy or as required by law. You may request deletion of your data by contacting us at <a href="mailto:admin.icastar@gmail.com" className="text-orange-600 hover:text-orange-700 underline">admin.icastar@gmail.com</a></p>
                 </div>
 
                 <div>
@@ -91,7 +91,7 @@ const PrivacyPolicyPage = () => {
 
                 <div>
                   <h4 className="font-bold text-gray-900 mb-2">6. User Rights</h4>
-                  <p>You have rights to access, review, correct, or delete your data. You may also withdraw consent for promotional communication at any time by contacting us at <a href="mailto:icastarhelp@gmail.com" className="text-orange-600 hover:text-orange-700 underline">icastarhelp@gmail.com</a></p>
+                  <p>You have rights to access, review, correct, or delete your data. You may also withdraw consent for promotional communication at any time by contacting us at <a href="mailto:admin.icastar@gmail.com" className="text-orange-600 hover:text-orange-700 underline">admin.icastar@gmail.com</a></p>
                 </div>
 
                 <div>
@@ -117,10 +117,10 @@ const PrivacyPolicyPage = () => {
                   If you have any questions about our Privacy Policy or Terms and Conditions, please contact us at:
                 </p>
                 <a
-                  href="mailto:icastarhelp@gmail.com"
+                  href="mailto:admin.icastar@gmail.com"
                   className="inline-block mt-3 text-orange-600 hover:text-orange-700 font-semibold underline"
                 >
-                  icastarhelp@gmail.com
+                  admin.icastar@gmail.com
                 </a>
               </div>
             </div>

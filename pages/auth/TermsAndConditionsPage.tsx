@@ -142,10 +142,10 @@ const TermsAndConditionsPage = () => {
                   If you have any questions about our Terms and Conditions, please contact us at:
                 </p>
                 <a
-                  href="mailto:icastarhelp@gmail.com"
+                  href="mailto:admin.icastar@gmail.com"
                   className="inline-block mt-3 text-orange-600 hover:text-orange-700 font-semibold underline"
                 >
-                  icastarhelp@gmail.com
+                  admin.icastar@gmail.com
                 </a>
               </div>
             </div>
