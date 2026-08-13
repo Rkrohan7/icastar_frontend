@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import {
   UsersIcon,
   BriefcaseIcon,
@@ -8,6 +9,7 @@ import {
   ChartBarIcon,
   ShieldCheckIcon,
   TrendingUpIcon,
+  MailIcon,
 } from '../../components/icons/IconComponents'
 import superAdminService, {
   SuperAdminDashboard,
@@ -30,6 +32,32 @@ export const AdminDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<SuperAdminDashboard | null>(null)
+  const [sendingReminders, setSendingReminders] = useState(false)
+
+  // Single-click bulk action: email every user whose profile is < 100% complete.
+  const handleSendProfileReminders = async () => {
+    if (sendingReminders) return
+    const confirmed = window.confirm(
+      'Send a "complete your profile" reminder email to ALL users whose profile is less than 100% complete?',
+    )
+    if (!confirmed) return
+    try {
+      setSendingReminders(true)
+      const result = await superAdminService.sendIncompleteProfileReminders()
+      toast.success(
+        `Reminder emails sent to ${result.emailsSent} of ${result.totalTargeted} incomplete-profile users` +
+          (result.emailsFailed > 0 ? ` (${result.emailsFailed} failed)` : ''),
+      )
+    } catch (err: any) {
+      console.error('Failed to send profile reminder emails:', err)
+      toast.error(
+        err?.response?.data?.message ||
+          'Failed to send reminder emails. Please try again.',
+      )
+    } finally {
+      setSendingReminders(false)
+    }
+  }
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -140,6 +168,22 @@ export const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className='p-6 space-y-6'>
+      {/* Header + single bulk action button */}
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+        <div>
+          <h2 className='text-xl font-bold text-gray-900'>Dashboard Overview</h2>
+          <p className='text-sm text-gray-500'>Platform-wide metrics and quick actions</p>
+        </div>
+        <button
+          onClick={handleSendProfileReminders}
+          disabled={sendingReminders}
+          title='Email every user whose profile is less than 100% complete'
+          className='inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-[#E36A3A] hover:bg-[#c85729] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm'>
+          <MailIcon className='h-4 w-4' />
+          {sendingReminders ? 'Sending…' : 'Email Incomplete Profiles'}
+        </button>
+      </div>
+
       {/* KPI Cards Grid */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
         {kpis.map((kpi) => (

@@ -81,6 +81,16 @@ export interface SuperAdminDashboard {
   generatedAt: string
 }
 
+export interface IncompleteProfileReminderResult {
+  // How many users were found with profile completion < 100%
+  totalTargeted: number
+  // How many reminder emails were actually sent successfully
+  emailsSent: number
+  // How many failed to send (bad email, bounce, etc.)
+  emailsFailed: number
+  message?: string
+}
+
 export interface DashboardSummary {
   totalUsers: number
   totalArtists: number
@@ -1052,6 +1062,14 @@ const superAdminService = {
     invalidateCache('admin:reports')
     invalidateCache(`admin:report:${id}`)
     return unwrap(resp)
+  },
+
+  // Profile-completion reminder emails
+  // One-click bulk action: backend finds every user whose profile is < 100%
+  // complete and emails them a "complete your profile" reminder.
+  async sendIncompleteProfileReminders(): Promise<IncompleteProfileReminderResult> {
+    const resp = await apiClient.post('/super-admin/users/incomplete-profile-reminder')
+    return unwrap<IncompleteProfileReminderResult>(resp)
   },
 }
 
