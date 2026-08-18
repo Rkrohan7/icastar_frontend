@@ -74,6 +74,9 @@ interface ArtistProfile {
 
 const Profile: React.FC = () => {
   const [profile, setProfile] = useState<ArtistProfile | null>(null)
+  const [userId, setUserId] = useState<number | null>(null)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [editedProfile, setEditedProfile] = useState<ArtistProfile | null>(null)
@@ -125,6 +128,8 @@ const Profile: React.FC = () => {
         setProfile(null)
         return
       }
+      // Capture userId — needed to build the public shareable profile link
+      if (data.userId) setUserId(data.userId)
       // Calculate age from dateOfBirth
       const calculateAge = (dob: string | undefined): number | undefined => {
         if (!dob) return undefined
@@ -229,128 +234,30 @@ const Profile: React.FC = () => {
     fetchProfile()
   }, [fetchProfile])
 
-  const handleShareProfile = async () => {
-    if (!profile) return
+  // The artist's PUBLIC mini-site link (no login needed to view).
+  // Always uses the production domain so shared links work everywhere.
+  const PUBLIC_PROFILE_BASE_URL = 'https://icastar.com'
+  const shareLink = userId ? `${PUBLIC_PROFILE_BASE_URL}/${userId}/profile` : ''
 
-    // Parse JSON array strings like '["drama"]' into clean text
-    const parseArrayField = (val?: string): string => {
-      if (!val) return ''
-      try {
-        const parsed = JSON.parse(val)
-        if (Array.isArray(parsed)) {
-          return parsed.map((item: any) => {
-            if (typeof item === 'string' && item.startsWith('[')) {
-              try { const inner = JSON.parse(item); return Array.isArray(inner) ? inner.join(', ') : item } catch { return item }
-            }
-            return item
-          }).join(', ')
-        }
-        return String(parsed)
-      } catch {
-        return val
-      }
+  // "Share Profile" opens a popup that shows the generated link + a Copy option.
+  const handleShareProfile = () => {
+    if (!userId) {
+      toast.error('Your profile link is not ready yet. Please refresh and try again.')
+      return
     }
+    setLinkCopied(false)
+    setShareModalOpen(true)
+  }
 
-    const lines: string[] = []
-
-    // Header - Name & Stage Name
-    lines.push(`✨ ${profile.fullName} ✨`)
-    if (profile.stageName) lines.push(`✨ ${profile.stageName} ✨`)
-
-    // Basic Info
-    if (profile.category) lines.push(`🎭 ${profile.category}`)
-    if (profile.gender) lines.push(`👤 Gender: ${profile.gender}`)
-    if (profile.age) lines.push(`🎂 Age: ${profile.age} yrs`)
-    if (profile.hourlyRate) lines.push(`💰 Per Day Rate: ₹${profile.hourlyRate}`)
-    if (profile.city) lines.push(`📍 Location: ${profile.city}`)
-    if (profile.languages) lines.push(`🗣️ Languages: ${profile.languages}`)
-
-    // About
-    if (profile.bio) {
-      lines.push(``)
-      lines.push(`📝 *About:*`)
-      lines.push(profile.bio)
-    }
-
-    // Skills & Details
-    const detailLines: string[] = []
-    if (profile.skills) detailLines.push(`🎯 Skills: ${parseArrayField(profile.skills)}`)
-    if (profile.experienceYears) detailLines.push(`📅 Experience: ${profile.experienceYears} years`)
-    if (profile.height) detailLines.push(`📏 Height: ${profile.height}`)
-    if (profile.weight) detailLines.push(`⚖️ Weight: ${profile.weight} kg`)
-    if (profile.hairColor) detailLines.push(`💇 Hair Color: ${profile.hairColor}`)
-    if (profile.hairLength) detailLines.push(`💈 Hair Length: ${profile.hairLength}`)
-    if (profile.eyeColor) detailLines.push(`👁️ Eye Color: ${profile.eyeColor}`)
-    if (profile.complexion) detailLines.push(`🌟 Complexion: ${profile.complexion}`)
-    if (profile.shoeSize) detailLines.push(`👟 Shoe Size: ${profile.shoeSize}`)
-    if (profile.danceStyles && profile.danceStyles.length > 0) detailLines.push(`💃 Dance Styles: ${profile.danceStyles.join(', ')}`)
-    if (profile.comfortableAreas) detailLines.push(`✅ Comfortable Areas: ${parseArrayField(profile.comfortableAreas)}`)
-    if (profile.travelCities) detailLines.push(`✈️ Willing to Travel: ${parseArrayField(profile.travelCities)}`)
-    if (profile.maritalStatus) detailLines.push(`💍 Marital Status: ${profile.maritalStatus}`)
-
-    if (detailLines.length > 0) {
-      lines.push(``)
-      lines.push(`✅ *Details & Attributes:*`)
-      detailLines.forEach(d => lines.push(d))
-    }
-
-    // Portfolio / Media Links
-    const hasPortfolio = profile.portfolioUrls && profile.portfolioUrls.length > 0
-    const hasVideo = !!profile.videoUrl || !!profile.danceVideo
-    if (hasPortfolio || hasVideo) {
-      lines.push(``)
-      lines.push(`🔗 *Media Links:*`)
-      if (profile.videoUrl) lines.push(`🎬 Profile Video:\n${profile.videoUrl}`)
-      if (profile.danceVideo) lines.push(`💃 Dance Showreel:\n${profile.danceVideo}`)
-      if (profile.portfolioUrls && profile.portfolioUrls.length > 0) {
-        lines.push(`🖼️ Portfolio:`)
-        profile.portfolioUrls.forEach(url => lines.push(url))
-      }
-    }
-
-    // Contact
-    lines.push(``)
-    lines.push(`📞 *Contact:*`)
-    if (profile.phone) lines.push(`📱 Phone: ${profile.phone}`)
-    if (profile.email) lines.push(`📧 Email: ${profile.email}`)
-
-    const shareText = lines.join('\n')
-
-    if (navigator.share) {
-      try {
-        const shareData: ShareData = {
-          title: `${profile.fullName} - Artist Profile`,
-          text: shareText,
-        }
-
-        // Try to share with cover photo image + text together
-        if (profile.coverPhoto) {
-          try {
-            const res = await fetch(profile.coverPhoto, { mode: 'cors', cache: 'no-store' })
-            if (res.ok) {
-              const blob = await res.blob()
-              const file = new File([blob], 'cover-photo.jpg', { type: blob.type || 'image/jpeg' })
-              // Try image + text share first
-              await navigator.share({ ...shareData, files: [file] })
-              return
-            }
-          } catch { /* fallthrough to text-only */ }
-        }
-
-        // Fallback: text only
-        await navigator.share(shareData)
-      } catch (err: any) {
-        if (err?.name !== 'AbortError') {
-          toast.error('Could not share profile.')
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(shareText)
-        toast.success('Profile copied to clipboard!')
-      } catch {
-        toast.error('Could not copy profile.')
-      }
+  const handleCopyShareLink = async () => {
+    if (!shareLink) return
+    try {
+      await navigator.clipboard.writeText(shareLink)
+      setLinkCopied(true)
+      toast.success('Profile link copied!')
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      toast.error('Could not copy link')
     }
   }
 
@@ -1908,6 +1815,58 @@ const Profile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Share Profile Modal — shows the public link with a Copy option */}
+      {shareModalOpen && (
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4'
+          onClick={() => setShareModalOpen(false)}
+        >
+          <div
+            className='bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden'
+            onClick={e => e.stopPropagation()}
+          >
+            <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100'>
+              <div className='flex items-center gap-2'>
+                <Icon name='Share2' size={18} className='text-primary' />
+                <h3 className='text-lg font-semibold text-gray-900'>Share Profile</h3>
+              </div>
+              <button
+                onClick={() => setShareModalOpen(false)}
+                className='text-gray-400 hover:text-gray-600 transition-colors'
+                aria-label='Close'
+              >
+                <Icon name='X' size={20} />
+              </button>
+            </div>
+
+            <div className='px-6 py-5'>
+              <p className='text-sm text-gray-500 mb-3'>
+                Anyone with this link can view your profile — no login needed.
+              </p>
+
+              <div className='flex items-center gap-2'>
+                <input
+                  type='text'
+                  readOnly
+                  value={shareLink}
+                  onFocus={e => e.target.select()}
+                  className='flex-1 min-w-0 px-3 py-2.5 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40'
+                />
+                <button
+                  onClick={handleCopyShareLink}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors shrink-0 ${
+                    linkCopied ? 'bg-green-600' : 'bg-primary hover:bg-primary-hover'
+                  }`}
+                >
+                  <Icon name={linkCopied ? 'Check' : 'Copy'} size={16} />
+                  {linkCopied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Face Verification Modal */}
       {isFaceModalOpen && (

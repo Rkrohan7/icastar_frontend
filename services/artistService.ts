@@ -91,7 +91,7 @@ export interface UpdateArtistProfileInput extends Partial<ArtistProfile> { }
 
 const mapResponseToProfile = (responseData: any): ArtistProfile => ({
   id: responseData.artistProfileId ?? responseData.id,
-  oderId: responseData.userId,
+  userId: responseData.userId,
   firstName: responseData.firstName,
   lastName: responseData.lastName,
   fullName: responseData.firstName && responseData.lastName
