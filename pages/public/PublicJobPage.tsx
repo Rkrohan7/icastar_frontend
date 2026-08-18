@@ -93,19 +93,23 @@ const ApplyForm: React.FC<{ jobId: string; jobTitle: string }> = ({ jobId, jobTi
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
   const phoneValid = /^\+?[0-9]{7,15}$/.test(form.phone.replace(/[\s-]/g, ''))
-  const canSubmit =
-    form.fullName.trim().length > 1 &&
-    emailValid &&
-    phoneValid &&
-    form.address.trim().length > 2 &&
-    form.experienceYears >= 0 &&
-    form.coverLetter.trim().length >= 10 &&
-    form.expectedSalary > 0
+  // Returns the first validation problem, or null when the form is valid.
+  const getValidationError = (): string | null => {
+    if (form.fullName.trim().length < 2) return 'Please enter your full name.'
+    if (!emailValid) return 'Please enter a valid email address.'
+    if (!phoneValid) return 'Please enter a valid phone number (7–15 digits).'
+    if (form.address.trim().length < 3) return 'Please enter your address.'
+    if (!(Number(form.experienceYears) >= 0)) return 'Please enter your years of experience.'
+    if (form.coverLetter.trim().length < 10) return 'Cover letter must be at least 10 characters.'
+    if (!(Number(form.expectedSalary) > 0)) return 'Please enter an expected salary greater than 0.'
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!canSubmit) {
-      toast.error('Please fill in all required fields correctly.')
+    const validationError = getValidationError()
+    if (validationError) {
+      toast.error(validationError)
       return
     }
     try {
@@ -200,7 +204,7 @@ const ApplyForm: React.FC<{ jobId: string; jobTitle: string }> = ({ jobId, jobTi
 
       <button
         type='submit'
-        disabled={!canSubmit || submitting}
+        disabled={submitting}
         className='w-full py-3 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed transition-colors'
       >
         {submitting ? 'Submitting…' : 'Submit Application'}
