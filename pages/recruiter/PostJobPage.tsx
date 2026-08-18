@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'react-toastify'
+import ShareLinkModal from '../../components/ShareLinkModal'
 
 const getStatusStyles = (status: Job['status']) => {
   switch (status) {
@@ -194,6 +195,7 @@ export const PostJobPage = () => {
   const [jobs, setJobs] = useState<Job[]>([])
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
+  const [shareJob, setShareJob] = useState<Job | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const navigate = useNavigate()
 
@@ -541,6 +543,13 @@ export const PostJobPage = () => {
         onBoost={handleBoostJob}
         jobToBoost={jobToBoost}
       />
+      <ShareLinkModal
+        open={!!shareJob}
+        onClose={() => setShareJob(null)}
+        link={shareJob?.id ? `https://icastar.com/jobs/${shareJob.id}/public` : ''}
+        title='Share Job'
+        description='Anyone with this link can view this job and apply — no login needed.'
+      />
       <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
@@ -738,6 +747,15 @@ export const PostJobPage = () => {
                                 role='menu'
                                 aria-orientation='vertical'
                                 aria-labelledby='options-menu'>
+                                <button
+                                  onClick={() => {
+                                    setShareJob(job)
+                                    setActiveDropdown(null)
+                                  }}
+                                  className='block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                                  role='menuitem'>
+                                  Share Job
+                                </button>
                                 <button
                                   onClick={() => handleOpenEditModal(job)}
                                   className='block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
