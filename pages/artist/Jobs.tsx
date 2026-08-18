@@ -13,6 +13,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import ApplyJobModal from '@/components/ApplyJobModal'
+import ShareLinkModal from '@/components/ShareLinkModal'
 import { bookmarksService } from '@/services/bookmarksService'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import usePageParam from '@/hooks/usePageParam'
@@ -35,6 +36,7 @@ type JobCardProps = {
   postedDate?: string
   applicantsCount?: number
   onApply?: (job: { id?: number; title: string }) => void
+  onShare?: (job: { id?: number; title: string }) => void
   onBookmark?: (jobId?: number) => void
   bookmarking?: boolean
   isBookmarked?: boolean
@@ -57,6 +59,7 @@ const JobCard: React.FC<JobCardProps> = ({
   postedDate,
   applicantsCount,
   onApply,
+  onShare,
   onBookmark,
   bookmarking,
   isBookmarked
@@ -174,16 +177,26 @@ const JobCard: React.FC<JobCardProps> = ({
           <span>{postedDate ? new Date(postedDate).toLocaleDateString() : 'Recently'}</span>
           {applicantsCount !== undefined && <span>{applicantsCount} applicants</span>}
         </div>
-        <button
-          onClick={() => onApply && onApply({ id, title })}
-          disabled={isExpired}
-          className={`w-full font-semibold text-sm py-2.5 px-3 rounded-xl shadow-sm transition-all ${isExpired
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-primary text-white hover:bg-primary-hover hover:shadow-md'
-            }`}
-        >
-          {isExpired ? 'Applications Closed' : 'View Details & Apply'}
-        </button>
+        <div className='flex gap-2'>
+          <button
+            onClick={() => onApply && onApply({ id, title })}
+            disabled={isExpired}
+            className={`flex-1 font-semibold text-sm py-2.5 px-3 rounded-xl shadow-sm transition-all ${isExpired
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-primary text-white hover:bg-primary-hover hover:shadow-md'
+              }`}
+          >
+            {isExpired ? 'Applications Closed' : 'View Details & Apply'}
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onShare && onShare({ id, title }); }}
+            title='Share job'
+            aria-label='Share job'
+            className='flex items-center justify-center px-3 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-primary hover:border-primary transition-colors shrink-0'
+          >
+            <Icon name='Share2' size={18} />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -213,6 +226,7 @@ const Jobs: React.FC = () => {
   const [total, setTotal] = useState(0)
   const [applyOpen, setApplyOpen] = useState(false)
   const [selectedJob, setSelectedJob] = useState<{ id?: number; title?: string } | null>(null)
+  const [shareJob, setShareJob] = useState<{ id?: number; title?: string } | null>(null)
   const [bookmarkLoadingId, setBookmarkLoadingId] = useState<number | null>(null)
   const [confirmBookmarkOpen, setConfirmBookmarkOpen] = useState(false)
   const [confirmBookmarkJobId, setConfirmBookmarkJobId] = useState<number | null>(null)
@@ -461,6 +475,7 @@ const Jobs: React.FC = () => {
                 setSelectedJob(j)
                 setApplyOpen(true)
               }}
+              onShare={(j) => setShareJob(j)}
               onBookmark={(jobId) => askBookmark(jobId)}
               bookmarking={bookmarkLoadingId === job.id}
             />
@@ -588,6 +603,14 @@ const Jobs: React.FC = () => {
         onSubmitted={() => {
           // Optionally refresh jobs or show a success state
         }}
+      />
+
+      <ShareLinkModal
+        open={!!shareJob}
+        onClose={() => setShareJob(null)}
+        link={shareJob?.id ? `https://icastar.com/jobs/${shareJob.id}/public` : ''}
+        title='Share Job'
+        description='Anyone with this link can view this job and apply — no login needed.'
       />
     </div>
   )

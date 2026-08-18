@@ -45,6 +45,7 @@ import Messages from '@/pages/artist/Messages'
 import ProfileIndex from '@/pages/ProfileIndex'
 import ArtistRegistrationForm from '@/pages/artist/ArtistRegistrationForm'
 import PublicArtistProfilePage from '@/pages/public/PublicArtistProfilePage'
+import PublicJobPage from '@/pages/public/PublicJobPage'
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 
@@ -86,6 +87,11 @@ const AppRouter = () =>
           // Public, no-auth artist mini-site — shareable link opens here
           path: '/:userId/profile',
           element: <PublicArtistProfilePage />,
+        },
+        {
+          // Public, no-auth job page — anyone can view & apply via shared link
+          path: '/jobs/:jobId/public',
+          element: <PublicJobPage />,
         },
       ],
     },
