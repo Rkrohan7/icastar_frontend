@@ -121,7 +121,10 @@ export const PublicArtistProfilePage: React.FC = () => {
   const portfolio = toArr(profile.portfolioUrls)
 
   const displayName = profile.stageName || profile.fullName || 'Artist'
-  const category    = profile.artistType?.displayName ?? profile.category ?? 'Artist'
+  const professionNames = (profile.professions && profile.professions.length > 0)
+    ? profile.professions.map(p => p.displayName)
+    : [profile.artistType?.displayName ?? profile.category ?? 'Artist']
+  const category    = professionNames.join(' · ')
 
   const overviewItems = [
     profile.location && { label: 'Location', value: profile.location },

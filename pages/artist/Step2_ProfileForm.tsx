@@ -33,7 +33,10 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {}
-    if (!formData.category) newErrors.category = 'Artist type is required'
+    const hasProfession =
+      (Array.isArray(formData.artistTypeIds) && formData.artistTypeIds.length > 0) ||
+      !!formData.category
+    if (!hasProfession) newErrors.category = 'At least one profession is required'
     if (!formData.gender) newErrors.gender = 'Gender is required'
     if (!formData.city?.trim()) newErrors.city = 'City is required'
 
@@ -56,9 +59,19 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
       // SimpleCreateArtistProfileDto: artistTypeId, gender, location, experienceYears, dateOfBirth
       const payload: Record<string, any> = {}
 
-      // artistTypeId
-      if (formData.artistTypeId) {
-        payload.artistTypeId = String(formData.artistTypeId)
+      // Professions — full list of selected profession ids.
+      const artistTypeIds: string[] =
+        Array.isArray(formData.artistTypeIds) && formData.artistTypeIds.length
+          ? formData.artistTypeIds.map(String)
+          : formData.artistTypeId
+          ? [String(formData.artistTypeId)]
+          : []
+
+      if (artistTypeIds.length) {
+        // Full multi-profession list (numbers)
+        payload.artistTypeIds = artistTypeIds.map(id => Number(id))
+        // Primary profession — kept for backward compatibility + type-specific fields
+        payload.artistTypeId = Number(artistTypeIds[0])
       }
 
       // gender (normalize to uppercase with underscores)

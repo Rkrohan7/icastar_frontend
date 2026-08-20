@@ -66,16 +66,35 @@ const CommonFields: React.FC<FormProps> = ({
     fetchCategories()
   }, [])
 
-  const handleCategoryChange = (categoryId: string) => {
-    const selectedCategory = categories.find(cat => cat.id === categoryId)
-    if (selectedCategory) {
-      updateFormData({
-        artistTypeId: categoryId,
-        category: selectedCategory.name as ArtistCategory
-      })
-      setCategorySearchOpen(false)
-      setCategorySearchQuery('')
-    }
+  // Currently-selected profession ids. Supports multiple. Falls back to the
+  // legacy single `artistTypeId` so existing/in-progress data keeps working.
+  const selectedIds: string[] =
+    Array.isArray(formData.artistTypeIds) && formData.artistTypeIds.length
+      ? formData.artistTypeIds.map(String)
+      : formData.artistTypeId
+      ? [String(formData.artistTypeId)]
+      : []
+
+  // Push the selection back to the form. The FIRST selected profession stays as
+  // the "primary" artistTypeId (drives type-specific fields + backend compat),
+  // while artistTypeIds holds the full list.
+  const commitSelection = (ids: string[]) => {
+    const primary = ids[0]
+    const primaryCat = categories.find(cat => cat.id === primary)
+    updateFormData({
+      artistTypeIds: ids,
+      artistTypeId: primary ?? null,
+      category: (primaryCat?.name as ArtistCategory) ?? null,
+    })
+  }
+
+  const toggleCategory = (categoryId: string) => {
+    const exists = selectedIds.includes(categoryId)
+    const next = exists
+      ? selectedIds.filter(id => id !== categoryId)
+      : [...selectedIds, categoryId]
+    commitSelection(next)
+    setCategorySearchQuery('')
   }
 
   const filteredCategories = categories.filter(category => {
@@ -86,7 +105,7 @@ const CommonFields: React.FC<FormProps> = ({
     )
   })
 
-  const selectedCategory = categories.find(cat => cat.id === formData.artistTypeId)
+  const selectedCategories = categories.filter(cat => selectedIds.includes(cat.id))
   return (
     <div className='space-y-8'>
       {/* Artist Category Selection */}
@@ -97,8 +116,11 @@ const CommonFields: React.FC<FormProps> = ({
         <div className='grid grid-cols-1 gap-6'>
           <div>
             <label htmlFor='category' className='block text-sm font-medium mb-2'>
-              Select Your Artist Category <span className='text-red-500'>*</span>
+              Select Your Profession(s) <span className='text-red-500'>*</span>
             </label>
+            <p className='text-xs text-gray-500 mb-2'>
+              You can choose more than one — e.g. Dancer, Model and Actor.
+            </p>
             <Popover open={categorySearchOpen} onOpenChange={setCategorySearchOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -107,13 +129,11 @@ const CommonFields: React.FC<FormProps> = ({
                   aria-expanded={categorySearchOpen}
                   disabled={loadingCategories}
                   className={`h-11 w-full justify-between px-3 ${errors.category ? 'border-red-500' : ''}`}>
-                  {loadingCategories ? (
-                    'Loading categories...'
-                  ) : selectedCategory ? (
-                    selectedCategory.displayName || selectedCategory.name
-                  ) : (
-                    'Select Artist Category'
-                  )}
+                  {loadingCategories
+                    ? 'Loading professions...'
+                    : selectedCategories.length > 0
+                    ? `${selectedCategories.length} profession${selectedCategories.length > 1 ? 's' : ''} selected`
+                    : 'Select Profession(s)'}
                   <span className='ml-2 text-gray-400'>▾</span>
                 </Button>
               </PopoverTrigger>
@@ -121,7 +141,7 @@ const CommonFields: React.FC<FormProps> = ({
                 <div className='p-3 border-b'>
                   <input
                     type='text'
-                    placeholder='Search categories...'
+                    placeholder='Search professions...'
                     value={categorySearchQuery}
                     onChange={(e) => setCategorySearchQuery(e.target.value)}
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition'
@@ -131,36 +151,57 @@ const CommonFields: React.FC<FormProps> = ({
                 <div className='max-h-64 overflow-y-auto'>
                   {filteredCategories.length === 0 ? (
                     <div className='p-4 text-center text-gray-500 text-sm'>
-                      No categories found
+                      No professions found
                     </div>
                   ) : (
-                    filteredCategories.map((category) => (
-                      <button
-                        key={category.id}
-                        type='button'
-                        onClick={() => handleCategoryChange(category.id)}
-                        className={`w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors ${
-                          formData.artistTypeId === category.id ? 'bg-primary/10' : ''
-                        }`}>
-                        <div className='font-medium text-sm'>
-                          {category.displayName || category.name}
-                        </div>
-                        <div className='text-xs text-gray-500 mt-1'>
-                          {category.description}
-                        </div>
-                      </button>
-                    ))
+                    filteredCategories.map((category) => {
+                      const checked = selectedIds.includes(category.id)
+                      return (
+                        <button
+                          key={category.id}
+                          type='button'
+                          onClick={() => toggleCategory(category.id)}
+                          className={`w-full flex items-start gap-3 text-left px-4 py-3 hover:bg-gray-100 transition-colors ${
+                            checked ? 'bg-primary/10' : ''
+                          }`}>
+                          <Checkbox checked={checked} className='mt-0.5 pointer-events-none' />
+                          <span>
+                            <span className='block font-medium text-sm'>
+                              {category.displayName || category.name}
+                            </span>
+                            <span className='block text-xs text-gray-500 mt-1'>
+                              {category.description}
+                            </span>
+                          </span>
+                        </button>
+                      )
+                    })
                   )}
                 </div>
               </PopoverContent>
             </Popover>
+
+            {/* Selected professions as removable chips */}
+            {selectedCategories.length > 0 && (
+              <div className='flex flex-wrap gap-2 mt-3'>
+                {selectedCategories.map((cat, idx) => (
+                  <Badge key={cat.id} variant='secondary' className='flex items-center gap-1 py-1 pl-2.5 pr-1.5'>
+                    {(cat.displayName || cat.name)}
+                    {idx === 0 && <span className='text-[10px] text-primary font-semibold'>(Primary)</span>}
+                    <button
+                      type='button'
+                      onClick={() => toggleCategory(cat.id)}
+                      className='ml-0.5 rounded-full hover:bg-black/10 w-4 h-4 flex items-center justify-center text-gray-500'
+                      aria-label={`Remove ${cat.displayName || cat.name}`}>
+                      ×
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+
             {errors.category && (
               <p className='text-red-500 text-sm mt-1'>{errors.category}</p>
-            )}
-            {selectedCategory && (
-              <p className='text-sm text-gray-500 mt-2'>
-                {selectedCategory.description}
-              </p>
             )}
           </div>
         </div>

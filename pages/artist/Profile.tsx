@@ -69,6 +69,7 @@ interface ArtistProfile {
       options?: string[]
     }[]
   }
+  professions?: { id?: number; name?: string; displayName: string }[]
   dynamicFields?: { fieldName: string; value: any }[]
 }
 
@@ -212,6 +213,7 @@ const Profile: React.FC = () => {
         successfulHires: data.successfulHires,
         artistTypeId: data.artistType?.id ?? data.artistTypeId,
         artistType: data.artistType,
+        professions: data.professions,
         dynamicFields: data.dynamicFields ?? [],
       }
       setProfile(normalized)
@@ -1043,7 +1045,19 @@ const Profile: React.FC = () => {
                 <>
                   <h2 className='text-xl font-bold text-gray-900'>{currentProfile?.fullName}</h2>
                   {currentProfile?.stageName && <p className="text-gray-500 text-sm">({currentProfile.stageName})</p>}
-                  <p className='text-amber-600 font-medium'>{currentProfile?.category}</p>
+                  {currentProfile?.professions && currentProfile.professions.length > 0 ? (
+                    <div className='flex flex-wrap gap-1.5 mt-1'>
+                      {currentProfile.professions.map((p, i) => (
+                        <span
+                          key={p.id ?? p.displayName ?? i}
+                          className='inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium'>
+                          {p.displayName}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className='text-amber-600 font-medium'>{currentProfile?.category}</p>
+                  )}
                   <div className='mt-2 text-gray-600 space-y-1'>
                     <p>{currentProfile?.city}</p>
                     {currentProfile?.dateOfBirth && <p className='text-xs text-gray-500'>Born: {new Date(currentProfile.dateOfBirth).toLocaleDateString()}</p>}

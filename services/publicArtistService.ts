@@ -79,6 +79,24 @@ function mapPublicProfile(data: any): ArtistProfile {
         ?.replace(/_/g, ' ')
         .replace(/\b\w/g, (c: string) => c.toUpperCase()),
     },
+    professions: (() => {
+      const prettify = (s?: string) =>
+        s ? s.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : ''
+      const list = data.artistTypes ?? data.professions
+      if (Array.isArray(list) && list.length) {
+        return list.map((it: any) =>
+          typeof it === 'string'
+            ? { name: it, displayName: prettify(it) }
+            : {
+                id: it.id ?? it.artistTypeId,
+                name: it.name ?? it.artistTypeName,
+                displayName: it.displayName || prettify(it.name ?? it.artistTypeName),
+              },
+        )
+      }
+      const name = data.artistTypeName ?? data.artistType?.name
+      return name ? [{ id: data.artistTypeId ?? data.artistType?.id, name, displayName: data.artistType?.displayName || prettify(name) }] : []
+    })(),
     category:
       data.artistCategory ??
       data.artistTypeName

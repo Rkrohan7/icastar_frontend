@@ -81,6 +81,8 @@ export interface ArtistProfile {
   }
   artistTypeId?: number
   artistTypeName?: string
+  // Full list of professions (multi-select). First entry is the primary.
+  professions?: { id?: number; name?: string; displayName: string }[]
   category?: string
   documents?: any[]
   dynamicFields?: any[]
@@ -169,10 +171,44 @@ const mapResponseToProfile = (responseData: any): ArtistProfile => ({
     name: responseData.artistTypeName,
     displayName: responseData.artistTypeName?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
   },
+  // Full list of professions (multi-select). Reads the backend's multi field
+  // (`artistTypes`) when present, otherwise falls back to the single artistType
+  // so existing single-profession users keep working.
+  professions: normalizeProfessions(responseData),
   category: responseData.artistTypeName?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
   documents: responseData.documents,
   dynamicFields: responseData.dynamicFields,
 })
+
+const prettify = (s?: string) =>
+  s ? s.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : ''
+
+// Build a normalized professions array from whatever shape the backend returns.
+// Supports: artistTypes[] (objects or names), artistTypeIds[]+artistTypeNames[],
+// and the legacy single artistType/artistTypeName.
+const normalizeProfessions = (
+  d: any,
+): { id?: number; name?: string; displayName: string }[] => {
+  const list = d.artistTypes ?? d.professions
+  if (Array.isArray(list) && list.length) {
+    return list.map((it: any) =>
+      typeof it === 'string'
+        ? { name: it, displayName: prettify(it) }
+        : {
+            id: it.id ?? it.artistTypeId,
+            name: it.name ?? it.artistTypeName,
+            displayName: it.displayName || prettify(it.name ?? it.artistTypeName),
+          },
+    )
+  }
+  // Fallback: single profession
+  const single =
+    d.artistType ??
+    (d.artistTypeName
+      ? { id: d.artistTypeId, name: d.artistTypeName, displayName: prettify(d.artistTypeName) }
+      : null)
+  return single ? [{ id: single.id, name: single.name, displayName: single.displayName || prettify(single.name) }] : []
+}
 
 const fetchMyProfileFresh = async (): Promise<ArtistProfile | null> => {
   const res = await api.get('/artists/profile/complete')
