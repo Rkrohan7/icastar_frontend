@@ -490,9 +490,8 @@ export const ArtistProfilePage = () => {
                 <div className='px-6 pb-6'>
                   <div className='flex items-end gap-4 -mt-12 mb-4'>
                     <img
-                      className={`h-24 w-24 rounded-full object-cover ring-4 ring-white shrink-0 ${
-                        artist.avatarUrl ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
-                      }`}
+                      className={`h-24 w-24 rounded-full object-cover ring-4 ring-white shrink-0 ${artist.avatarUrl ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+                        }`}
                       src={artist.avatarUrl}
                       alt={artist.name}
                       onClick={() => {
@@ -597,7 +596,7 @@ export const ArtistProfilePage = () => {
                   )}
                   {artist.hourlyRate != null && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Hourly Rate</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>Per Day</p>
                       <p className='font-medium text-gray-800'>₹ {artist.hourlyRate.toLocaleString('en-IN')}/hr</p>
                     </div>
                   )}

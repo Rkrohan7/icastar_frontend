@@ -122,7 +122,11 @@ export const PublicArtistProfilePage: React.FC = () => {
 
   const displayName = profile.stageName || profile.fullName || 'Artist'
   const professionNames = (profile.professions && profile.professions.length > 0)
-    ? profile.professions.map(p => p.displayName)
+    ? profile.professions.map(p =>
+        p.experienceYears != null && p.experienceYears > 0
+          ? `${p.displayName} (${p.experienceYears} yrs)`
+          : p.displayName,
+      )
     : [profile.artistType?.displayName ?? profile.category ?? 'Artist']
   const category    = professionNames.join(' · ')
 

@@ -1,6 +1,11 @@
 import React, { useState } from 'react'
 import { ArtistCategory } from '@/types'
 import CommonFields from '@/components/forms/CommonFields'
+import {
+  experienceYearsByProfession,
+  totalExperienceYears,
+} from '@/components/experience/ExperienceSection'
+import type { ArtistExperience } from '@/services/artistService'
 import { onboardingService } from '@/services/onboardingService'
 import authService from '@/services/userService'
 import { useNavigate } from 'react-router-dom'
@@ -39,10 +44,6 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
     if (!hasProfession) newErrors.category = 'At least one profession is required'
     if (!formData.gender) newErrors.gender = 'Gender is required'
     if (!formData.city?.trim()) newErrors.city = 'City is required'
-
-    const exp = Number(formData.experienceYears)
-    if (Number.isNaN(exp) || exp < 0) newErrors.experienceYears = 'Valid years of experience is required'
-
     if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required'
 
     setErrors(newErrors)
@@ -67,11 +68,29 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
           ? [String(formData.artistTypeId)]
           : []
 
+      // Work experience entries. Drop the profession link if that profession
+      // was deselected after the entry was added.
+      const experiences: ArtistExperience[] = Array.isArray(formData.experiences) ? formData.experiences : []
+      payload.experiences = experiences.map(({ artistTypeName, ...exp }) => ({
+        ...exp,
+        artistTypeId:
+          exp.artistTypeId != null && artistTypeIds.includes(String(exp.artistTypeId))
+            ? Number(exp.artistTypeId)
+            : null,
+      }))
+
       if (artistTypeIds.length) {
         // Full multi-profession list (numbers)
         payload.artistTypeIds = artistTypeIds.map(id => Number(id))
         // Primary profession — kept for backward compatibility + type-specific fields
         payload.artistTypeId = Number(artistTypeIds[0])
+
+        // Per-profession experience derived from the entries: [{ artistTypeId, experienceYears }]
+        const yearsByProfession = experienceYearsByProfession(experiences)
+        payload.professions = artistTypeIds.map(id => ({
+          artistTypeId: Number(id),
+          experienceYears: yearsByProfession[id] ?? 0,
+        }))
       }
 
       // gender (normalize to uppercase with underscores)
@@ -85,9 +104,8 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
       // location (map from city)
       payload.location = String(formData.city || '').trim()
 
-      // experienceYears (number)
-      const expYears = Number(formData.experienceYears)
-      payload.experienceYears = Number.isNaN(expYears) ? 0 : expYears
+      // experienceYears (number) — total from entries, overlapping projects counted once
+      payload.experienceYears = totalExperienceYears(experiences)
 
       // dateOfBirth (string, e.g. YYYY-MM-DD)
       payload.dateOfBirth = String(formData.dateOfBirth || '').trim()

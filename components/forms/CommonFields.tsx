@@ -6,6 +6,8 @@ import { Checkbox } from '../ui/checkbox'
 import { Badge } from '../ui/badge'
 import { onboardingService } from '@/services/onboardingService'
 import { ArtistCategory } from '@/types'
+import ExperienceSection from '@/components/experience/ExperienceSection'
+import type { ArtistExperience } from '@/services/artistService'
 
 interface FormErrors {
   fullName?: string
@@ -106,6 +108,21 @@ const CommonFields: React.FC<FormProps> = ({
   })
 
   const selectedCategories = categories.filter(cat => selectedIds.includes(cat.id))
+
+  // Work experience entries — kept locally and sent with the onboarding submit.
+  const experiences: ArtistExperience[] = Array.isArray(formData.experiences) ? formData.experiences : []
+
+  const saveExperience = (exp: ArtistExperience, index: number | null) => {
+    const next = [...experiences]
+    if (index === null) next.push(exp)
+    else next[index] = exp
+    updateFormData({ experiences: next })
+  }
+
+  const deleteExperience = (_exp: ArtistExperience, index: number) => {
+    updateFormData({ experiences: experiences.filter((_, i) => i !== index) })
+  }
+
   return (
     <div className='space-y-8'>
       {/* Artist Category Selection */}
@@ -203,8 +220,29 @@ const CommonFields: React.FC<FormProps> = ({
             {errors.category && (
               <p className='text-red-500 text-sm mt-1'>{errors.category}</p>
             )}
+
           </div>
         </div>
+      </div>
+
+      {/* Work Experience — Naukri-style list with add / edit modal */}
+      <div>
+        <h3 className='text-xl font-bold border-b pb-2 mb-2'>
+          Work Experience
+        </h3>
+        <p className='text-xs text-gray-500 mb-4'>
+          Add each role or project separately. New to the industry? You can skip this and add it later from your profile.
+        </p>
+        <ExperienceSection
+          hideHeader
+          experiences={experiences}
+          professionOptions={selectedCategories.map(cat => ({
+            id: cat.id,
+            label: cat.displayName || cat.name,
+          }))}
+          onSave={saveExperience}
+          onDelete={deleteExperience}
+        />
       </div>
 
       {/* Location & Demographics */}
@@ -343,26 +381,6 @@ const CommonFields: React.FC<FormProps> = ({
                 </div>
               )
             })()}
-          </div>
-          <div>
-            <label htmlFor='experienceYears' className='block text-sm font-medium mb-2'>Years of Experience</label>
-            <input
-              id='experienceYears'
-              type='number'
-              placeholder='Years of Experience'
-              min={0}
-              max={80}
-              value={formData.experienceYears || ''}
-              onChange={e =>
-                updateFormData({ experienceYears: e.target.value })
-              }
-              className='h-11 px-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-primary focus:border-transparent transition'
-            />
-            {errors.experienceYears && (
-              <p className='text-red-500 text-sm mt-1'>
-                {errors.experienceYears}
-              </p>
-            )}
           </div>
         </div>
       </div>

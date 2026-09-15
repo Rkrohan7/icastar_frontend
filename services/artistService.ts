@@ -82,14 +82,69 @@ export interface ArtistProfile {
   artistTypeId?: number
   artistTypeName?: string
   // Full list of professions (multi-select). First entry is the primary.
-  professions?: { id?: number; name?: string; displayName: string }[]
+  professions?: { id?: number; name?: string; displayName: string; experienceYears?: number }[]
+  experiences?: ArtistExperience[]
   category?: string
   documents?: any[]
   dynamicFields?: any[]
   [key: string]: any
 }
 
+export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'FREELANCE' | 'CONTRACT' | 'INTERNSHIP'
+
+// One work-experience entry (Naukri-style employment).
+export interface ArtistExperience {
+  id?: number
+  artistTypeId?: number | null
+  artistTypeName?: string
+  title: string
+  companyName: string
+  projectType?: string
+  employmentType?: EmploymentType
+  location?: string
+  isCurrent: boolean
+  startDate: string // 'YYYY-MM-01'
+  endDate?: string | null // null when isCurrent
+  description?: string
+}
+
 export interface UpdateArtistProfileInput extends Partial<ArtistProfile> { }
+
+// Backend may send LocalDate as 'YYYY-MM-DD' or as a [y, m, d] array.
+const toIsoDate = (v: any): string | null => {
+  if (!v) return null
+  if (Array.isArray(v) && v.length >= 2) {
+    return `${v[0]}-${String(v[1]).padStart(2, '0')}-${String(v[2] ?? 1).padStart(2, '0')}`
+  }
+  return String(v)
+}
+
+export const normalizeExperience = (it: any): ArtistExperience => ({
+  id: it.id ?? it.experienceId,
+  artistTypeId: it.artistTypeId ?? it.artistType?.id ?? null,
+  artistTypeName:
+    it.artistTypeDisplayName ?? it.artistType?.displayName ?? prettify(it.artistTypeName ?? it.artistType?.name),
+  title: it.title ?? it.role ?? '',
+  companyName: it.companyName ?? it.company ?? '',
+  projectType: it.projectType ?? undefined,
+  employmentType: it.employmentType ?? undefined,
+  location: it.location ?? undefined,
+  isCurrent: Boolean(it.isCurrent ?? it.current),
+  startDate: toIsoDate(it.startDate) ?? '',
+  endDate: toIsoDate(it.endDate),
+  description: it.description ?? undefined,
+})
+
+export const normalizeExperiences = (raw: any): ArtistExperience[] => {
+  let list = raw
+  if (typeof list === 'string') {
+    try { list = JSON.parse(list) } catch { return [] }
+  }
+  return Array.isArray(list) ? list.map(normalizeExperience) : []
+}
+
+// Request body for create/update — display-only fields stripped.
+const toExperiencePayload = ({ id, artistTypeName, ...rest }: ArtistExperience) => rest
 
 const mapResponseToProfile = (responseData: any): ArtistProfile => ({
   id: responseData.artistProfileId ?? responseData.id,
@@ -175,6 +230,7 @@ const mapResponseToProfile = (responseData: any): ArtistProfile => ({
   // (`artistTypes`) when present, otherwise falls back to the single artistType
   // so existing single-profession users keep working.
   professions: normalizeProfessions(responseData),
+  experiences: normalizeExperiences(responseData.experiences ?? responseData.workExperiences),
   category: responseData.artistTypeName?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
   documents: responseData.documents,
   dynamicFields: responseData.dynamicFields,
@@ -198,6 +254,7 @@ const normalizeProfessions = (
             id: it.id ?? it.artistTypeId,
             name: it.name ?? it.artistTypeName,
             displayName: it.displayName || prettify(it.name ?? it.artistTypeName),
+            experienceYears: it.experienceYears ?? it.experience_years,
           },
     )
   }
@@ -257,6 +314,26 @@ export const artistService = {
     invalidateArtistProfileCache()
     invalidateCache('artist:profile:')
     return res.data
+  },
+
+  async addExperience(input: ArtistExperience): Promise<ArtistExperience> {
+    const res = await api.post('/artists/profile/experiences', toExperiencePayload(input))
+    invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
+    return normalizeExperience(res.data?.data ?? res.data)
+  },
+
+  async updateExperience(id: number, input: ArtistExperience): Promise<ArtistExperience> {
+    const res = await api.put(`/artists/profile/experiences/${id}`, toExperiencePayload(input))
+    invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
+    return normalizeExperience(res.data?.data ?? res.data)
+  },
+
+  async deleteExperience(id: number): Promise<void> {
+    await api.delete(`/artists/profile/experiences/${id}`)
+    invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
   },
 
   async submitFaceVerification(faceImageUrl: string): Promise<void> {

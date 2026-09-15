@@ -91,6 +91,7 @@ function mapPublicProfile(data: any): ArtistProfile {
                 id: it.id ?? it.artistTypeId,
                 name: it.name ?? it.artistTypeName,
                 displayName: it.displayName || prettify(it.name ?? it.artistTypeName),
+                experienceYears: it.experienceYears ?? it.experience_years,
               },
         )
       }

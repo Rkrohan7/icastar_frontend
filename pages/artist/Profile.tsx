@@ -6,6 +6,13 @@ import artistService from '@/services/artistService'
 import artistDashboardService from '@/services/artistDashboardService'
 import uploadService from '@/services/uploadService'
 import { ImageUpload, DocumentUpload, VideoUpload } from '@/components/FileUpload'
+import ExperienceSection, {
+  experienceYearsByProfession,
+  formatMonths,
+  totalExperienceMonths,
+  totalExperienceYears,
+} from '@/components/experience/ExperienceSection'
+import type { ArtistExperience } from '@/services/artistService'
 
 interface ArtistProfile {
   category: string
@@ -69,7 +76,8 @@ interface ArtistProfile {
       options?: string[]
     }[]
   }
-  professions?: { id?: number; name?: string; displayName: string }[]
+  professions?: { id?: number; name?: string; displayName: string; experienceYears?: number }[]
+  experiences?: ArtistExperience[]
   dynamicFields?: { fieldName: string; value: any }[]
 }
 
@@ -214,6 +222,7 @@ const Profile: React.FC = () => {
         artistTypeId: data.artistType?.id ?? data.artistTypeId,
         artistType: data.artistType,
         professions: data.professions,
+        experiences: data.experiences ?? [],
         dynamicFields: data.dynamicFields ?? [],
       }
       setProfile(normalized)
@@ -303,7 +312,9 @@ const Profile: React.FC = () => {
         idProof: editedProfile.idProof,
         height: editedProfile.height,
         weight: editedProfile.weight,
-        experienceYears: editedProfile.experienceYears ? Number(editedProfile.experienceYears) : undefined,
+        experienceYears: editedProfile.experiences?.length
+          ? totalExperienceYears(editedProfile.experiences)
+          : editedProfile.experienceYears ? Number(editedProfile.experienceYears) : undefined,
         danceVideo: editedProfile.danceVideo,
         hairColor: editedProfile.hairColor,
         hairLength: editedProfile.hairLength,
@@ -340,6 +351,41 @@ const Profile: React.FC = () => {
   const handleInputChange = (field: keyof ArtistProfile, value: any) => {
     if (editedProfile) {
       setEditedProfile({ ...editedProfile, [field]: value })
+    }
+  }
+
+  // Experience entries save immediately (Naukri-style), independent of Edit Profile mode.
+  const applyExperiences = (update: (list: ArtistExperience[]) => ArtistExperience[]) => {
+    setProfile(prev => (prev ? { ...prev, experiences: update(prev.experiences ?? []) } : prev))
+    setEditedProfile(prev => (prev ? { ...prev, experiences: update(prev.experiences ?? []) } : prev))
+  }
+
+  const handleSaveExperience = async (exp: ArtistExperience) => {
+    try {
+      const saved = exp.id != null
+        ? await artistService.updateExperience(exp.id, exp)
+        : await artistService.addExperience(exp)
+      // Keep the profession label from the form if the response omits it
+      const merged = { ...exp, ...saved, artistTypeName: saved.artistTypeName || exp.artistTypeName }
+      applyExperiences(list =>
+        exp.id != null ? list.map(e => (e.id === exp.id ? merged : e)) : [...list, merged],
+      )
+      toast.success(exp.id != null ? 'Experience updated' : 'Experience added')
+    } catch (error) {
+      console.error('Error saving experience:', error)
+      toast.error('Failed to save experience')
+      throw error
+    }
+  }
+
+  const handleDeleteExperience = async (exp: ArtistExperience, index: number) => {
+    try {
+      if (exp.id != null) await artistService.deleteExperience(exp.id)
+      applyExperiences(list => list.filter((e, i) => (exp.id != null ? e.id !== exp.id : i !== index)))
+      toast.success('Experience deleted')
+    } catch (error) {
+      console.error('Error deleting experience:', error)
+      toast.error('Failed to delete experience')
     }
   }
 
@@ -841,7 +887,7 @@ const Profile: React.FC = () => {
       { key: 'dateOfBirth', label: 'Date of Birth', value: profile.dateOfBirth },
       { key: 'bio', label: 'Bio', value: profile.bio },
       { key: 'languages', label: 'Languages', value: profile.languages },
-      { key: 'experienceYears', label: 'Experience', value: profile.experienceYears },
+      { key: 'experienceYears', label: 'Experience', value: profile.experiences?.length ? profile.experiences : profile.experienceYears },
       { key: 'skills', label: 'Skills', value: profile.skills },
       { key: 'height', label: 'Height', value: profile.height },
       { key: 'weight', label: 'Weight', value: profile.weight },
@@ -1047,13 +1093,22 @@ const Profile: React.FC = () => {
                   {currentProfile?.stageName && <p className="text-gray-500 text-sm">({currentProfile.stageName})</p>}
                   {currentProfile?.professions && currentProfile.professions.length > 0 ? (
                     <div className='flex flex-wrap gap-1.5 mt-1'>
-                      {currentProfile.professions.map((p, i) => (
-                        <span
-                          key={p.id ?? p.displayName ?? i}
-                          className='inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium'>
-                          {p.displayName}
-                        </span>
-                      ))}
+                      {currentProfile.professions.map((p, i) => {
+                        // Prefer years derived from experience entries; fall back to the backend value
+                        const years = p.id != null && currentProfile.experiences?.length
+                          ? experienceYearsByProfession(currentProfile.experiences)[String(p.id)]
+                          : p.experienceYears
+                        return (
+                          <span
+                            key={p.id ?? p.displayName ?? i}
+                            className='inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium'>
+                            {p.displayName}
+                            {years != null && years > 0 && (
+                              <span className='ml-1 text-amber-500'>· {years} yrs</span>
+                            )}
+                          </span>
+                        )
+                      })}
                     </div>
                   ) : (
                     <p className='text-amber-600 font-medium'>{currentProfile?.category}</p>
@@ -1316,6 +1371,18 @@ const Profile: React.FC = () => {
               )}
             </div>
 
+            {/* Experience — Naukri-style list, saves each entry immediately */}
+            <div className='bg-white rounded-xl p-6 shadow-sm'>
+              <ExperienceSection
+                experiences={profile.experiences ?? []}
+                professionOptions={(profile.professions ?? [])
+                  .filter(p => p.id != null)
+                  .map(p => ({ id: p.id as number, label: p.displayName }))}
+                onSave={handleSaveExperience}
+                onDelete={handleDeleteExperience}
+              />
+            </div>
+
             {/* Additional Core Details */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
               <h3 className='text-lg font-semibold text-gray-800 mb-4'>Details</h3>
@@ -1397,7 +1464,13 @@ const Profile: React.FC = () => {
                 </div>
                 <div>
                   <label className='text-sm font-medium text-gray-700 block mb-1'>Experience (Years)</label>
-                  {isEditing ? (
+                  {currentProfile?.experiences?.length ? (
+                    // Derived from the Experience section once entries exist
+                    <p className='text-gray-600'>
+                      {formatMonths(totalExperienceMonths(currentProfile.experiences)) || '-'}
+                      <span className='block text-xs text-gray-400'>Calculated from your experience</span>
+                    </p>
+                  ) : isEditing ? (
                     <input
                       type='number'
                       value={currentProfile?.experienceYears || ''}
