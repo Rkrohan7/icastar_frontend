@@ -258,6 +258,76 @@ export interface Job {
   durationDays?: number
   applicationDeadline?: string
   isUrgent?: boolean
+  // Project-wise casting
+  projectId?: number
+  projectName?: string
+  projectType?: AuditionProjectType
+  characterId?: number
+  characterName?: string
+  roleType?: AuditionRoleType
+  selectedArtists?: SelectedArtist[]
+}
+
+// A production (film / series / ad) that a recruiter casts multiple characters for.
+export interface CastingProject {
+  id: number
+  name: string
+  projectType: AuditionProjectType
+  productionHouse?: string
+  director?: string
+  language?: string
+  shootLocation?: string
+  shootStartDate?: string
+  shootEndDate?: string
+  description?: string
+  status?: 'ACTIVE' | 'COMPLETED' | 'ON_HOLD'
+  characters?: CastingCharacter[]
+  createdAt?: string
+}
+
+// A character inside a project; one job is posted per character.
+export interface CastingCharacter {
+  id: number
+  projectId: number
+  name: string
+  roleType: AuditionRoleType
+  gender?: GenderPreference
+  ageMin?: number
+  ageMax?: number
+  description?: string
+  // How many artists are needed for this character (e.g. 10 background dancers)
+  requiredCount?: number
+}
+
+// Artist finalised (hired) for a job / character.
+export interface SelectedArtist {
+  userId: number
+  artistProfileId?: number
+  name: string
+  avatarUrl?: string
+  status?: string
+}
+
+export interface ProjectCastingReport {
+  projectId: number
+  projectName: string
+  projectType?: AuditionProjectType
+  totalCharacters: number
+  castCharacters: number
+  openJobs: number
+  totalJobs: number
+  totalApplications: number
+  hiredCount: number
+  characters: {
+    characterId?: number
+    characterName: string
+    roleType?: AuditionRoleType
+    jobId?: number
+    jobStatus?: string
+    applications: number
+    requiredCount: number
+    selectedArtists: SelectedArtist[]
+  }[]
 }
 
 export enum ArtistCategory {

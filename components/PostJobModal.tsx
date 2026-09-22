@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Job } from '../types';
+import { CastingCharacter, Job } from '../types';
+import { ProjectCastingFields, ProjectCastingValue } from './ProjectCastingFields';
 
 const InputField: React.FC<{ label: string, id: string, value: string | number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, type?: string, placeholder?: string, required?: boolean, min?: number, error?: string }> = ({ label, id, value, onChange, type = 'text', placeholder, required = false, min, error }) => (
     <div>
@@ -96,9 +97,13 @@ interface PostJobModalProps {
     onClose: () => void;
     onSave: (job: Job) => void;
     jobToEdit: Job | null;
+    // Pre-selects a project when adding a job from the project view
+    defaultProject?: { projectId: number; projectName: string; projectType?: Job['projectType'] } | null;
 }
 
 interface FormErrors {
+    projectId?: string;
+    characterId?: string;
     title?: string;
     description?: string;
     requirements?: string;
@@ -110,33 +115,44 @@ interface FormErrors {
     applicationDeadline?: string;
 }
 
-export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onSave, jobToEdit }) => {
+const emptyJob: Partial<Job> = {
+    title: '',
+    type: 'Full-time',
+    description: '',
+    skills: '',
+    experienceLevel: 'Entry Level',
+    isRemote: false,
+    currency: 'USD',
+    isUrgent: false,
+    roleType: 'SUPPORTING',
+};
+
+export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onSave, jobToEdit, defaultProject }) => {
     const [formData, setFormData] = useState<Partial<Job>>({});
     const [errors, setErrors] = useState<FormErrors>({});
+    const [addedCount, setAddedCount] = useState(0);
 
     useEffect(() => {
         if (jobToEdit) {
             setFormData(jobToEdit);
         } else {
-            setFormData({
-                title: '',
-                type: 'Full-time',
-                description: '',
-                skills: '',
-                experienceLevel: 'Entry Level',
-                isRemote: false,
-                currency: 'USD',
-                isUrgent: false
-            });
+            setFormData({ ...emptyJob, ...(defaultProject ?? {}) });
         }
         setErrors({});
-    }, [jobToEdit, isOpen]);
+        setAddedCount(0);
+    }, [jobToEdit, isOpen, defaultProject]);
 
     if (!isOpen) return null;
 
     const validate = (): FormErrors => {
         const newErrors: FormErrors = {};
 
+        if (!formData.projectId) {
+            newErrors.projectId = 'Project is required';
+        }
+        if (!formData.characterId) {
+            newErrors.characterId = 'Casting character is required';
+        }
         if (!formData.title?.trim()) {
             newErrors.title = 'Job Title is required';
         }
@@ -187,15 +203,56 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
         }
     };
 
-    const handleFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCastingChange = (next: ProjectCastingValue, character?: CastingCharacter) => {
+        setFormData(prev => {
+            const updated: Partial<Job> = { ...prev, ...next };
+            // Prefill an empty description from the character brief (title is always typed by the recruiter)
+            if (character && next.characterId !== prev.characterId) {
+                if (!prev.description?.trim() && character.description) {
+                    updated.description = character.description;
+                }
+            }
+            return updated;
+        });
+        setErrors(prev => ({ ...prev, projectId: undefined, characterId: undefined }));
+    };
+
+    const submit = (addNext: boolean) => {
         const validationErrors = validate();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
             return;
         }
         onSave(formData as Job);
-        onClose();
+        if (!addNext) {
+            onClose();
+            return;
+        }
+        // Keep project + shared production details, clear character-specific fields
+        setFormData(prev => ({
+            ...emptyJob,
+            projectId: prev.projectId,
+            projectName: prev.projectName,
+            projectType: prev.projectType,
+            type: prev.type,
+            experienceLevel: prev.experienceLevel,
+            isRemote: prev.isRemote,
+            location: prev.location,
+            currency: prev.currency,
+            budgetMin: prev.budgetMin,
+            budgetMax: prev.budgetMax,
+            durationDays: prev.durationDays,
+            applicationDeadline: prev.applicationDeadline,
+            requirements: prev.requirements,
+            isUrgent: prev.isUrgent,
+        }));
+        setErrors({});
+        setAddedCount(c => c + 1);
+    };
+
+    const handleFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        submit(false);
     };
 
     const isEditing = !!jobToEdit;
@@ -214,6 +271,31 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
 
                 <form id="post-job-form" onSubmit={handleFormSubmit} className="overflow-y-auto">
                     <div className="p-8 space-y-8">
+                        {/* Project & Casting Section */}
+                        <div>
+                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Project & Casting</h3>
+                            {addedCount > 0 && (
+                                <p className="mb-4 rounded-lg bg-green-50 border border-green-100 px-4 py-2 text-sm text-green-800">
+                                    {addedCount} job{addedCount > 1 ? 's' : ''} added to {formData.projectName}. Pick the next character.
+                                </p>
+                            )}
+                            <p className="mb-4 text-xs text-gray-500">
+                                Project details are private to you. Artists only see the job title, description and requirements.
+                            </p>
+                            <ProjectCastingFields
+                                value={{
+                                    projectId: formData.projectId,
+                                    projectName: formData.projectName,
+                                    projectType: formData.projectType,
+                                    characterId: formData.characterId,
+                                    characterName: formData.characterName,
+                                    roleType: formData.roleType,
+                                }}
+                                onChange={handleCastingChange}
+                                errors={{ projectId: errors.projectId, characterId: errors.characterId }}
+                            />
+                        </div>
+
                         {/* Job Details Section */}
                         <div>
                             <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Job Details</h3>
@@ -328,8 +410,17 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                         onClick={onClose}
                         className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
                     >
-                        Cancel
+                        {addedCount > 0 ? 'Done' : 'Cancel'}
                     </button>
+                    {!isEditing && (
+                        <button
+                            type="button"
+                            onClick={() => submit(true)}
+                            className="px-6 py-2.5 border border-primary rounded-lg text-sm font-semibold text-primary hover:bg-primary/5 transition-colors"
+                        >
+                            Save & Add Next Character
+                        </button>
+                    )}
                     <button
                         type="submit"
                         form="post-job-form"

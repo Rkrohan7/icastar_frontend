@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { Card } from '../../components/Card'
-import { Job } from '../../types'
+import { CastingProject, Job, SelectedArtist } from '../../types'
 import { PostJobModal } from '../../components/PostJobModal'
 import { BoostJobModal } from '../../components/BoostJobModal'
 import {
@@ -24,6 +24,12 @@ import {
 } from '@/components/ui/alert-dialog'
 import { toast } from 'react-toastify'
 import ShareLinkModal from '../../components/ShareLinkModal'
+import recruiterProjectsService, {
+  PROJECT_TYPE_LABELS,
+  ROLE_TYPE_LABELS,
+  artistPublicProfileUrl,
+  mapSelectedArtist,
+} from '../../services/recruiterProjectsService'
 
 const getStatusStyles = (status: Job['status']) => {
   switch (status) {
@@ -173,12 +179,116 @@ const initialJobs: Job[] = [
     boosted: false,
   },
 ]
+const UNASSIGNED = 'unassigned'
+
+const SelectedArtistsCell: React.FC<{ artists?: SelectedArtist[] }> = ({ artists }) => {
+  if (!artists || artists.length === 0) {
+    return <span className='text-xs text-gray-400 italic'>Not cast yet</span>
+  }
+  return (
+    <div className='flex flex-col gap-1.5'>
+      {artists.map((a, i) => !a.userId ? (
+        // Guest applicants have no iCastar profile to link to
+        <span key={`guest-${i}`} className='text-sm font-medium text-gray-700'>{a.name}</span>
+      ) : (
+        <a
+          key={a.userId}
+          href={artistPublicProfileUrl(a.userId)}
+          target='_blank'
+          rel='noopener noreferrer'
+          title='Open public profile'
+          className='inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline'>
+          <img
+            src={a.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=random`}
+            alt=''
+            className='h-6 w-6 rounded-full object-cover'
+          />
+          {a.name}
+          <span aria-hidden>↗</span>
+        </a>
+      ))}
+    </div>
+  )
+}
+
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
+}
+
+// Backend splits the stored JSON array on commas, so items can arrive as '"Figma"' or ' "UI"'.
+// Accept an array or a JSON/comma string and return a clean comma-separated list.
+const parseSkills = (raw: unknown): string | undefined => {
+  let items: unknown[] = []
+  if (Array.isArray(raw)) items = raw
+  else if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw)
+      items = Array.isArray(parsed) ? parsed : [raw]
+    } catch {
+      items = raw.split(',')
+    }
+  }
+  const cleaned = items
+    .map(v => String(v).trim().replace(/^[\["']+|[\]"']+$/g, '').trim())
+    .filter(Boolean)
+  return cleaned.length ? cleaned.join(', ') : undefined
+}
+
+const mapJobDtoToUi = (dto: any): Job => {
+  const typeMap: Record<string, Job['type']> = {
+    FULL_TIME: 'Full-time',
+    PART_TIME: 'Part-time',
+    CONTRACT: 'Contract',
+    FREELANCE: 'Freelance',
+    INTERNSHIP: 'Contract',
+    PROJECT_BASED: 'Contract',
+  }
+  const statusMap: Record<string, Job['status']> = {
+    ACTIVE: 'Active',
+    DRAFT: 'Draft',
+    CLOSED: 'Closed',
+  }
+  const expMap: Record<string, string> = {
+    ENTRY_LEVEL: 'Entry Level',
+    MID_LEVEL: 'Mid Level',
+    SENIOR_LEVEL: 'Senior Level',
+    DIRECTOR: 'Director',
+    EXECUTIVE: 'Executive',
+  }
+  const createdAtIso = dto.createdAt ?? new Date().toISOString()
+  return {
+    id: dto.id,
+    title: dto.title,
+    type: typeMap[dto.jobType] ?? 'Contract',
+    applicants: dto.applicationsCount ?? 0,
+    status: statusMap[dto.status] ?? 'Active',
+    postedDate: formatDate(createdAtIso),
+    createdDate: createdAtIso,
+    description: dto.description,
+    skills: Array.isArray(dto.skillsRequired) ? dto.skillsRequired.join(', ') : undefined,
+    boosted: false,
+    experienceLevel: expMap[dto.experienceLevel] ?? 'Entry Level',
+    isRemote: dto.isRemote,
+    location: dto.location,
+    requirements: dto.requirements,
+    budgetMin: dto.budgetMin,
+    budgetMax: dto.budgetMax,
+    currency: dto.currency,
+    durationDays: dto.durationDays,
+    applicationDeadline: dto.applicationDeadline,
+    isUrgent: dto.isUrgent,
+    projectId: dto.projectId ?? dto.project?.id,
+    projectName: dto.projectName ?? dto.project?.name,
+    projectType: dto.projectType ?? dto.project?.projectType,
+    characterId: dto.characterId ?? dto.character?.id,
+    characterName: dto.characterName ?? dto.character?.name,
+    roleType: dto.roleType ?? dto.character?.roleType,
+    selectedArtists: Array.isArray(dto.selectedArtists) ? dto.selectedArtists.map(mapSelectedArtist) : [],
+  }
 }
 
 export const PostJobPage = () => {
@@ -197,77 +307,134 @@ export const PostJobPage = () => {
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
   const [shareJob, setShareJob] = useState<Job | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [projectFilter, setProjectFilter] = useState<string>('All')
+  const [projects, setProjects] = useState<CastingProject[]>([])
+  const [defaultProject, setDefaultProject] = useState<{ projectId: number; projectName: string; projectType?: Job['projectType'] } | null>(null)
   const navigate = useNavigate()
 
-  const ITEMS_PER_PAGE = 5
+  const ITEMS_PER_PAGE = 10
 
   const filteredJobs = useMemo(() => {
+    const term = searchTerm.toLowerCase()
     return jobs.filter(job => {
-      const matchesSearchTerm = job.title
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      const matchesSearchTerm = [job.title, job.projectName, job.characterName]
+        .some(v => v?.toLowerCase().includes(term))
       const matchesStatus =
         statusFilter === 'All' || job.status === statusFilter
       const matchesType = typeFilter === 'All' || job.type === typeFilter
-      return matchesSearchTerm && matchesStatus && matchesType
+      const matchesProject =
+        projectFilter === 'All' ||
+        (projectFilter === UNASSIGNED ? !job.projectId : String(job.projectId) === projectFilter)
+      return matchesSearchTerm && matchesStatus && matchesType && matchesProject
     })
-  }, [jobs, searchTerm, statusFilter, typeFilter])
+  }, [jobs, searchTerm, statusFilter, typeFilter, projectFilter])
+
+  // Projects known from the API plus any referenced by jobs (in case the list call failed)
+  const projectOptions = useMemo(() => {
+    const map = new Map<number, { id: number; name: string; projectType?: Job['projectType']; project?: CastingProject }>()
+    projects.forEach(p => map.set(p.id, { id: p.id, name: p.name, projectType: p.projectType, project: p }))
+    jobs.forEach(j => {
+      if (j.projectId && !map.has(j.projectId)) {
+        map.set(j.projectId, { id: j.projectId, name: j.projectName ?? `Project #${j.projectId}`, projectType: j.projectType })
+      }
+    })
+    return Array.from(map.values())
+  }, [projects, jobs])
+
+  // One table for everything: jobs are ordered project by project (project with the
+  // latest job first) and jobs without a project go last.
+  const groupedJobs = useMemo(() => {
+    const order = new Map<number, number>()
+    filteredJobs.forEach(j => {
+      if (j.projectId && !order.has(j.projectId)) order.set(j.projectId, order.size)
+    })
+    const rank = (j: Job) => (j.projectId ? order.get(j.projectId)! : Number.MAX_SAFE_INTEGER)
+    return [...filteredJobs].sort((a, b) => rank(a) - rank(b))
+  }, [filteredJobs])
+
+  // Casting progress per project, computed from all jobs (not just the filtered ones)
+  const projectStats = useMemo(() => {
+    const stats = new Map<number, { characters: number; cast: number; openJobs: number; applications: number }>()
+    projectOptions.forEach(p => {
+      const projectJobs = jobs.filter(j => j.projectId === p.id)
+      const key = (j: Job) => j.characterId ?? `job-${j.id}`
+      stats.set(p.id, {
+        characters: Math.max(p.project?.characters?.length ?? 0, new Set(projectJobs.map(key)).size),
+        cast: new Set(projectJobs.filter(j => (j.selectedArtists?.length ?? 0) > 0).map(key)).size,
+        openJobs: projectJobs.filter(j => j.status === 'Active').length,
+        applications: projectJobs.reduce((sum, j) => sum + (j.applicants || 0), 0),
+      })
+    })
+    return stats
+  }, [projectOptions, jobs])
+
+  const renderGroupHeader = (job: Job) => {
+    if (!job.projectId) {
+      return (
+        <tr key={`group-none`} className='bg-gray-100'>
+          <td colSpan={7} className='px-6 py-2.5 text-sm font-semibold text-gray-700'>
+            Jobs without a project
+            <span className='ml-2 font-normal text-xs text-gray-500'>Edit a job to link it to a project</span>
+          </td>
+        </tr>
+      )
+    }
+    const option = projectOptions.find(p => p.id === job.projectId)
+    const st = projectStats.get(job.projectId) ?? { characters: 0, cast: 0, openJobs: 0, applications: 0 }
+    const pct = st.characters ? Math.round((st.cast / st.characters) * 100) : 0
+    const meta = [
+      job.projectType && (PROJECT_TYPE_LABELS[job.projectType] ?? job.projectType),
+      option?.project?.language,
+      option?.project?.productionHouse,
+      option?.project?.director && `Dir. ${option.project.director}`,
+    ].filter(Boolean)
+    return (
+      <tr key={`group-${job.projectId}`} className='bg-amber-50/60'>
+        <td colSpan={7} className='px-6 py-3'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <span className='text-sm font-bold text-gray-900'>{job.projectName ?? option?.name}</span>
+              {meta.length > 0 && <span className='ml-2 text-xs text-gray-500'>{meta.join(' · ')}</span>}
+            </div>
+            <div className='flex items-center gap-5 text-xs text-gray-600'>
+              <div className='flex items-center gap-2' title='Characters cast'>
+                <div className='w-24 h-1.5 rounded-full bg-gray-200 overflow-hidden'>
+                  <div className='h-full bg-green-500' style={{ width: `${pct}%` }} />
+                </div>
+                <span className='font-semibold text-gray-800'>{st.cast}/{st.characters}</span> cast
+              </div>
+              <span><span className='font-semibold text-gray-800'>{st.openJobs}</span> open</span>
+              <span><span className='font-semibold text-gray-800'>{st.applications}</span> applications</span>
+              <button
+                onClick={() => handleAddJobForProject({ id: job.projectId!, name: job.projectName ?? option?.name ?? '', projectType: job.projectType })}
+                className='font-semibold text-primary hover:underline'>
+                + Add Character Job
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    )
+  }
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, typeFilter])
+  }, [searchTerm, statusFilter, typeFilter, projectFilter])
+
+  const loadProjects = () => {
+    recruiterProjectsService
+      .listProjects()
+      .then(setProjects)
+      .catch(() => setProjects([]))
+  }
+
+  useEffect(loadProjects, [])
 
   useEffect(() => {
-    const mapJobDtoToUi = (dto: any): Job => {
-      const typeMap: Record<string, Job['type']> = {
-        FULL_TIME: 'Full-time',
-        PART_TIME: 'Part-time',
-        CONTRACT: 'Contract',
-        FREELANCE: 'Freelance',
-        INTERNSHIP: 'Contract',
-        PROJECT_BASED: 'Contract',
-      }
-      const statusMap: Record<string, Job['status']> = {
-        ACTIVE: 'Active',
-        DRAFT: 'Draft',
-        CLOSED: 'Closed',
-      }
-      const expMap: Record<string, string> = {
-        ENTRY_LEVEL: 'Entry Level',
-        MID_LEVEL: 'Mid Level',
-        SENIOR_LEVEL: 'Senior Level',
-        DIRECTOR: 'Director',
-        EXECUTIVE: 'Executive',
-      }
-      const createdAtIso = dto.createdAt ?? new Date().toISOString()
-      return {
-        id: dto.id,
-        title: dto.title,
-        type: typeMap[dto.jobType] ?? 'Contract',
-        applicants: dto.applicationsCount ?? 0,
-        status: statusMap[dto.status] ?? 'Active',
-        postedDate: formatDate(createdAtIso),
-        createdDate: createdAtIso,
-        description: dto.description,
-        skills: Array.isArray(dto.skillsRequired) ? dto.skillsRequired.join(', ') : undefined,
-        boosted: false,
-        experienceLevel: expMap[dto.experienceLevel] ?? 'Entry Level',
-        isRemote: dto.isRemote,
-        location: dto.location,
-        requirements: dto.requirements,
-        budgetMin: dto.budgetMin,
-        budgetMax: dto.budgetMax,
-        currency: dto.currency,
-        durationDays: dto.durationDays,
-        applicationDeadline: dto.applicationDeadline,
-        isUrgent: dto.isUrgent,
-      }
-    }
-
     const fetchJobs = async () => {
       try {
-        const page = await recruiterJobsService.listMyJobs({ page: 0, size: 10 })
+        const page = await recruiterJobsService.listMyJobs({ page: 0, size: 100 })
         const mapped = page.items.map(mapJobDtoToUi)
         setJobs(mapped)
       } catch (err) {
@@ -284,6 +451,13 @@ export const PostJobPage = () => {
 
   const handleOpenCreateModal = () => {
     setEditingJob(null)
+    setDefaultProject(null)
+    setIsModalOpen(true)
+  }
+
+  const handleAddJobForProject = (p: { id: number; name: string; projectType?: Job['projectType'] }) => {
+    setEditingJob(null)
+    setDefaultProject({ projectId: p.id, projectName: p.name, projectType: p.projectType })
     setIsModalOpen(true)
   }
 
@@ -291,6 +465,14 @@ export const PostJobPage = () => {
     setEditingJob(job)
     setIsModalOpen(true)
     setActiveDropdown(null)
+    // The list row can be incomplete (e.g. a job created in this session); fetch the full record
+    recruiterJobsService
+      .getMyJob(job.id)
+      .then(dto => {
+        const full = mapJobDtoToUi(dto)
+        setEditingJob(current => (current?.id === job.id ? { ...job, ...full, boosted: job.boosted } : current))
+      })
+      .catch(() => {})
   }
 
   const handleOpenBoostModal = (job: Job) => {
@@ -347,6 +529,9 @@ export const PostJobPage = () => {
           isUrgent: jobData.isUrgent,
           applicationDeadline: jobData.applicationDeadline,
           skillsRequired: skillsArray,
+          projectId: jobData.projectId,
+          characterId: jobData.characterId,
+          roleType: jobData.roleType,
           status: 'ACTIVE' // Default status update if needed, but usually status is separate. 
           // However based on prompt 'status': 'ACTIVE' is in required parameters. 
           // We might want to keep existing status or default to ACTIVE if not set.
@@ -407,21 +592,25 @@ export const PostJobPage = () => {
           durationDays: jobData.durationDays,
           applicationDeadline: jobData.applicationDeadline, // YYYY-MM-DD format from input=date
           isUrgent: jobData.isUrgent,
+          projectId: jobData.projectId,
+          characterId: jobData.characterId,
+          roleType: jobData.roleType,
         }
         const created = await recruiterJobsService.createJob(payload)
+        const fromServer = mapJobDtoToUi(created)
         const newJob: Job = {
-          id: created.id,
-          title: created.title,
-          type: jobData.type,
-          applicants: created.applicationsCount ?? 0,
-          status: created.status === 'ACTIVE' ? 'Active' : 'Draft',
-          createdDate: created.createdAt ?? new Date().toISOString(),
-          postedDate: created.createdAt ? formatDate(created.createdAt) : 'Just now',
-          description: created.description,
-          skills: Array.isArray(created.skillsRequired) ? created.skillsRequired.join(', ') : jobData.skills,
+          ...jobData,
+          // Server values win, but keep the form's values where the response left a field empty
+          ...Object.fromEntries(Object.entries(fromServer).filter(([, v]) => v !== undefined && v !== null && v !== '')),
+          projectName: fromServer.projectName ?? jobData.projectName,
+          characterName: fromServer.characterName ?? jobData.characterName,
           boosted: false,
-        }
-        setJobs([newJob, ...jobs])
+          selectedArtists: fromServer.selectedArtists ?? [],
+        } as Job
+        // Functional update: "Save & Add Next" can create several jobs back to back
+        setJobs(prev => [newJob, ...prev])
+        toast.success(`Job added${newJob.characterName ? ` for ${newJob.characterName}` : ''}`)
+        loadProjects()
       }
     } catch (e) {
       // Fallback to local add on error
@@ -444,7 +633,7 @@ export const PostJobPage = () => {
         applicationDeadline: jobData.applicationDeadline,
         isUrgent: jobData.isUrgent,
       }
-      setJobs([newJob, ...jobs])
+      setJobs(prev => [newJob, ...prev])
     }
   }
 
@@ -485,6 +674,7 @@ export const PostJobPage = () => {
     setSearchTerm('')
     setStatusFilter('All')
     setTypeFilter('All')
+    setProjectFilter('All')
   }
 
   const handleOpenDeleteModal = (job: Job) => {
@@ -527,7 +717,7 @@ export const PostJobPage = () => {
 
   const indexOfLastJob = currentPage * ITEMS_PER_PAGE
   const indexOfFirstJob = indexOfLastJob - ITEMS_PER_PAGE
-  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob)
+  const currentJobs = groupedJobs.slice(indexOfFirstJob, indexOfLastJob)
 
   return (
     <>
@@ -536,6 +726,7 @@ export const PostJobPage = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveJob}
         jobToEdit={editingJob}
+        defaultProject={defaultProject}
       />
       <BoostJobModal
         isOpen={isBoostModalOpen}
@@ -576,20 +767,22 @@ export const PostJobPage = () => {
       <div>
         <div className='flex justify-between items-center mb-6'>
           <h2 className='text-3xl font-bold text-gray-900'>My Jobs</h2>
+          <div className='flex items-center gap-3'>
           <button
             onClick={handleOpenCreateModal}
             className='inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary'>
             Add Job
           </button>
+          </div>
         </div>
 
         <Card className='mb-6'>
-          <div className='grid grid-cols-1 md:grid-cols-5 gap-4'>
+          <div className='grid grid-cols-1 md:grid-cols-6 gap-4'>
             <div className='md:col-span-2'>
               <label
                 htmlFor='search-jobs'
                 className='block text-sm font-medium text-gray-700'>
-                Search by Title
+                Search by Title, Project or Character
               </label>
               <div className='relative mt-1'>
                 <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
@@ -600,11 +793,30 @@ export const PostJobPage = () => {
                   name='search'
                   id='search-jobs'
                   className='block w-full rounded-lg border-gray-300 bg-white pl-10 shadow-sm transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5'
-                  placeholder='e.g., Product Designer'
+                  placeholder='e.g., Inspector Vikram'
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
+            </div>
+            <div>
+              <label
+                htmlFor='project-filter'
+                className='block text-sm font-medium text-gray-700'>
+                Project
+              </label>
+              <select
+                id='project-filter'
+                name='project'
+                className='mt-1 block w-full rounded-lg border-gray-300 bg-white shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5 pr-10'
+                value={projectFilter}
+                onChange={e => setProjectFilter(e.target.value)}>
+                <option value='All'>All Projects</option>
+                {projectOptions.map(p => (
+                  <option key={p.id} value={String(p.id)}>{p.name}</option>
+                ))}
+                <option value={UNASSIGNED}>No project</option>
+              </select>
             </div>
             <div>
               <label
@@ -666,6 +878,16 @@ export const PostJobPage = () => {
                   <th
                     scope='col'
                     className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                    Character / Role
+                  </th>
+                  <th
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                    Selected Artist
+                  </th>
+                  <th
+                    scope='col'
+                    className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                     Status
                   </th>
                   <th
@@ -685,8 +907,10 @@ export const PostJobPage = () => {
               </thead>
               <tbody className='bg-white divide-y divide-gray-200'>
                 {currentJobs.length > 0 ? (
-                  currentJobs.map(job => (
-                    <tr key={job.id} className='hover:bg-gray-50'>
+                  currentJobs.map((job, idx) => (
+                    <React.Fragment key={job.id}>
+                    {(idx === 0 || currentJobs[idx - 1].projectId !== job.projectId) && renderGroupHeader(job)}
+                    <tr className='hover:bg-gray-50'>
                       <td className='px-6 py-4 whitespace-nowrap'>
                         <div className='flex items-center gap-2'>
                           <div className='text-sm font-semibold text-gray-900'>
@@ -701,6 +925,17 @@ export const PostJobPage = () => {
                           )}
                         </div>
                         <div className='text-sm text-gray-500'>{job.type}</div>
+                      </td>
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <div className='text-sm text-gray-900'>{job.characterName ?? '—'}</div>
+                        {job.roleType && (
+                          <span className='inline-flex mt-0.5 px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-800'>
+                            {ROLE_TYPE_LABELS[job.roleType] ?? job.roleType}
+                          </span>
+                        )}
+                      </td>
+                      <td className='px-6 py-4 whitespace-nowrap'>
+                        <SelectedArtistsCell artists={job.selectedArtists} />
                       </td>
                       <td className='px-6 py-4 whitespace-nowrap'>
                         <select
@@ -784,10 +1019,11 @@ export const PostJobPage = () => {
                         </div>
                       </td>
                     </tr>
+                    </React.Fragment>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className='text-center py-16 px-6'>
+                    <td colSpan={7} className='text-center py-16 px-6'>
                       <SearchIcon className='mx-auto h-12 w-12 text-gray-400' />
                       <h3 className='mt-2 text-lg font-medium text-gray-900'>
                         No Jobs Found

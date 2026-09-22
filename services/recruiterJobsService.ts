@@ -2,6 +2,7 @@ import api from './apiClient'
 import { PaginatedResult } from './types'
 import { JobType, ExperienceLevel } from './jobsService'
 import { cachedGet, buildCacheKey, invalidateCache } from './cache'
+import { AuditionProjectType, AuditionRoleType } from '../types'
 
 // TTLs: lists/details refresh every 60s, stats every 30s. Any create/update/
 // delete/status change wipes the whole `recruiter:jobs:` prefix so the next
@@ -32,6 +33,10 @@ export interface CreateJobInput {
   benefits?: string
   contactEmail?: string
   contactPhone?: string
+  // Project-wise casting
+  projectId?: number
+  characterId?: number
+  roleType?: AuditionRoleType
 }
 
 export interface UpdateJobInput extends Partial<CreateJobInput> {
@@ -71,6 +76,14 @@ export interface RecruiterJobDto {
   contactPhone?: string
   createdAt?: string
   updatedAt?: string
+  projectId?: number
+  projectName?: string
+  projectType?: AuditionProjectType
+  characterId?: number
+  characterName?: string
+  roleType?: AuditionRoleType
+  // Artists hired for this job's character
+  selectedArtists?: any[]
   [key: string]: any
 }
 
@@ -111,10 +124,11 @@ export const recruiterJobsService = {
   async createJob(data: CreateJobInput): Promise<RecruiterJobDto> {
     const response = await api.post('/recruiter/jobs', toBackendPayload(data))
     invalidateCache('recruiter:jobs:')
+    invalidateCache('recruiter:projects:')
     return response.data
   },
 
-  async listMyJobs(params: { page?: number; size?: number; sortBy?: string; sortDir?: 'asc' | 'desc' } = {}): Promise<PaginatedResult<RecruiterJobDto>> {
+  async listMyJobs(params: { page?: number; size?: number; sortBy?: string; sortDir?: 'asc' | 'desc'; projectId?: number } = {}): Promise<PaginatedResult<RecruiterJobDto>> {
     const defaults = { page: 0, size: 20, sortBy: 'createdAt', sortDir: 'desc' as const }
     const merged = { ...defaults, ...params }
     return cachedGet(buildCacheKey('recruiter:jobs:list', merged), async () => {
@@ -133,18 +147,21 @@ export const recruiterJobsService = {
   async updateJob(jobId: number | string, data: UpdateJobInput): Promise<RecruiterJobDto> {
     const response = await api.put(`/recruiter/jobs/${jobId}`, toBackendPayload(data))
     invalidateCache('recruiter:jobs:')
+    invalidateCache('recruiter:projects:')
     return response.data
   },
 
   async deleteJob(jobId: number | string): Promise<{ message: string }> {
     const response = await api.delete(`/recruiter/jobs/${jobId}`)
     invalidateCache('recruiter:jobs:')
+    invalidateCache('recruiter:projects:')
     return response.data
   },
 
   async toggleVisibility(jobId: number | string): Promise<RecruiterJobDto> {
     const response = await api.post(`/recruiter/jobs/${jobId}/toggle-visibility`)
     invalidateCache('recruiter:jobs:')
+    invalidateCache('recruiter:projects:')
     return response.data
   },
 
@@ -162,12 +179,14 @@ export const recruiterJobsService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     invalidateCache('recruiter:jobs:')
+    invalidateCache('recruiter:projects:')
     return response.data
   },
 
   async changeJobStatus(jobId: number | string, data: ChangeJobStatusInput): Promise<RecruiterJobDto> {
     const response = await api.post(`/recruiter/jobs/${jobId}/status`, data)
     invalidateCache('recruiter:jobs:')
+    invalidateCache('recruiter:projects:')
     return response.data
   },
 }

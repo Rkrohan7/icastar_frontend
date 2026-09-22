@@ -32,6 +32,7 @@ import {
   ArrowDownIcon,
 } from '../../components/icons/IconComponents'
 import recruiterDashboardService from '../../services/recruiterDashboardService'
+import { ProjectCastingReport } from '../../components/ProjectCastingReport'
 import { toast } from 'react-toastify'
 
 const StatusBadge: React.FC<{ status: Applicant['status'] }> = ({ status }) => {
@@ -350,6 +351,9 @@ export const RecruiterDashboard = () => {
           })}
         </div>
       </Card>
+
+      {/* Project-wise casting */}
+      <ProjectCastingReport />
 
       {/* Charts Row */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
