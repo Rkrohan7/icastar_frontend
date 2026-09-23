@@ -84,6 +84,7 @@ export interface ArtistProfile {
   // Full list of professions (multi-select). First entry is the primary.
   professions?: { id?: number; name?: string; displayName: string; experienceYears?: number }[]
   experiences?: ArtistExperience[]
+  educations?: ArtistEducation[]
   category?: string
   documents?: any[]
   dynamicFields?: any[]
@@ -107,6 +108,59 @@ export interface ArtistExperience {
   endDate?: string | null // null when isCurrent
   description?: string
 }
+
+export type EducationLevel =
+  | 'SCHOOL_10TH'
+  | 'HIGHER_SECONDARY_12TH'
+  | 'DIPLOMA'
+  | 'GRADUATION'
+  | 'POST_GRADUATION'
+  | 'DOCTORATE'
+  | 'CERTIFICATION'
+  | 'OTHER'
+
+export type EducationCourseType = 'FULL_TIME' | 'PART_TIME' | 'DISTANCE'
+
+// One education entry (Naukri-style). Certifications cover acting / dance /
+// music workshops and training institutes.
+export interface ArtistEducation {
+  id?: number
+  educationLevel: EducationLevel
+  courseName: string // e.g. 'B.A. Theatre Arts', 'Kathak Visharad', 'Acting Workshop'
+  specialization?: string
+  institution: string // school / college / university / training institute
+  courseType?: EducationCourseType
+  isPursuing: boolean
+  startYear?: number | null
+  endYear?: number | null // passing year; null while pursuing
+  grade?: string // e.g. '8.2 CGPA', '75%', 'Distinction'
+  description?: string
+}
+
+export const normalizeEducation = (it: any): ArtistEducation => ({
+  id: it.id ?? it.educationId,
+  educationLevel: it.educationLevel ?? it.level ?? 'OTHER',
+  courseName: it.courseName ?? it.degree ?? it.course ?? '',
+  specialization: it.specialization ?? undefined,
+  institution: it.institution ?? it.instituteName ?? it.university ?? '',
+  courseType: it.courseType ?? undefined,
+  isPursuing: Boolean(it.isPursuing ?? it.pursuing),
+  startYear: it.startYear != null ? Number(it.startYear) : null,
+  endYear: it.endYear != null ? Number(it.endYear) : null,
+  grade: it.grade ?? undefined,
+  description: it.description ?? undefined,
+})
+
+export const normalizeEducations = (raw: any): ArtistEducation[] => {
+  let list = raw
+  if (typeof list === 'string') {
+    try { list = JSON.parse(list) } catch { return [] }
+  }
+  return Array.isArray(list) ? list.map(normalizeEducation) : []
+}
+
+// Request body for create/update — id travels in the URL.
+const toEducationPayload = ({ id, ...rest }: ArtistEducation) => rest
 
 export interface UpdateArtistProfileInput extends Partial<ArtistProfile> { }
 
@@ -231,6 +285,7 @@ const mapResponseToProfile = (responseData: any): ArtistProfile => ({
   // so existing single-profession users keep working.
   professions: normalizeProfessions(responseData),
   experiences: normalizeExperiences(responseData.experiences ?? responseData.workExperiences),
+  educations: normalizeEducations(responseData.educations ?? responseData.education),
   category: responseData.artistTypeName?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
   documents: responseData.documents,
   dynamicFields: responseData.dynamicFields,
@@ -332,6 +387,26 @@ export const artistService = {
 
   async deleteExperience(id: number): Promise<void> {
     await api.delete(`/artists/profile/experiences/${id}`)
+    invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
+  },
+
+  async addEducation(input: ArtistEducation): Promise<ArtistEducation> {
+    const res = await api.post('/artists/profile/educations', toEducationPayload(input))
+    invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
+    return normalizeEducation(res.data?.data ?? res.data)
+  },
+
+  async updateEducation(id: number, input: ArtistEducation): Promise<ArtistEducation> {
+    const res = await api.put(`/artists/profile/educations/${id}`, toEducationPayload(input))
+    invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
+    return normalizeEducation(res.data?.data ?? res.data)
+  },
+
+  async deleteEducation(id: number): Promise<void> {
+    await api.delete(`/artists/profile/educations/${id}`)
     invalidateArtistProfileCache()
     invalidateCache('artist:profile:')
   },

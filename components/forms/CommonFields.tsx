@@ -7,7 +7,8 @@ import { Badge } from '../ui/badge'
 import { onboardingService } from '@/services/onboardingService'
 import { ArtistCategory } from '@/types'
 import ExperienceSection from '@/components/experience/ExperienceSection'
-import type { ArtistExperience } from '@/services/artistService'
+import type { ArtistEducation, ArtistExperience } from '@/services/artistService'
+import EducationSection from '@/components/education/EducationSection'
 
 interface FormErrors {
   fullName?: string
@@ -121,6 +122,20 @@ const CommonFields: React.FC<FormProps> = ({
 
   const deleteExperience = (_exp: ArtistExperience, index: number) => {
     updateFormData({ experiences: experiences.filter((_, i) => i !== index) })
+  }
+
+  // Education entries — kept locally and sent with the onboarding submit.
+  const educations: ArtistEducation[] = Array.isArray(formData.educations) ? formData.educations : []
+
+  const saveEducation = (edu: ArtistEducation, index: number | null) => {
+    const next = [...educations]
+    if (index === null) next.push(edu)
+    else next[index] = edu
+    updateFormData({ educations: next })
+  }
+
+  const deleteEducation = (_edu: ArtistEducation, index: number) => {
+    updateFormData({ educations: educations.filter((_, i) => i !== index) })
   }
 
   return (
@@ -242,6 +257,22 @@ const CommonFields: React.FC<FormProps> = ({
           }))}
           onSave={saveExperience}
           onDelete={deleteExperience}
+        />
+      </div>
+
+      {/* Education — same list + modal pattern as Work Experience */}
+      <div>
+        <h3 className='text-xl font-bold border-b pb-2 mb-2'>
+          Education
+        </h3>
+        <p className='text-xs text-gray-500 mb-4'>
+          Add degrees, drama / dance / music schools and workshops. Optional — you can add it later from your profile.
+        </p>
+        <EducationSection
+          hideHeader
+          educations={educations}
+          onSave={saveEducation}
+          onDelete={deleteEducation}
         />
       </div>
 

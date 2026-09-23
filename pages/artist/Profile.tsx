@@ -12,7 +12,8 @@ import ExperienceSection, {
   totalExperienceMonths,
   totalExperienceYears,
 } from '@/components/experience/ExperienceSection'
-import type { ArtistExperience } from '@/services/artistService'
+import type { ArtistEducation, ArtistExperience } from '@/services/artistService'
+import EducationSection from '@/components/education/EducationSection'
 
 interface ArtistProfile {
   category: string
@@ -78,6 +79,7 @@ interface ArtistProfile {
   }
   professions?: { id?: number; name?: string; displayName: string; experienceYears?: number }[]
   experiences?: ArtistExperience[]
+  educations?: ArtistEducation[]
   dynamicFields?: { fieldName: string; value: any }[]
 }
 
@@ -223,6 +225,7 @@ const Profile: React.FC = () => {
         artistType: data.artistType,
         professions: data.professions,
         experiences: data.experiences ?? [],
+        educations: data.educations ?? [],
         dynamicFields: data.dynamicFields ?? [],
       }
       setProfile(normalized)
@@ -386,6 +389,40 @@ const Profile: React.FC = () => {
     } catch (error) {
       console.error('Error deleting experience:', error)
       toast.error('Failed to delete experience')
+    }
+  }
+
+  // Education entries also save immediately, like experience.
+  const applyEducations = (update: (list: ArtistEducation[]) => ArtistEducation[]) => {
+    setProfile(prev => (prev ? { ...prev, educations: update(prev.educations ?? []) } : prev))
+    setEditedProfile(prev => (prev ? { ...prev, educations: update(prev.educations ?? []) } : prev))
+  }
+
+  const handleSaveEducation = async (edu: ArtistEducation) => {
+    try {
+      const saved = edu.id != null
+        ? await artistService.updateEducation(edu.id, edu)
+        : await artistService.addEducation(edu)
+      const merged = { ...edu, ...saved }
+      applyEducations(list =>
+        edu.id != null ? list.map(e => (e.id === edu.id ? merged : e)) : [...list, merged],
+      )
+      toast.success(edu.id != null ? 'Education updated' : 'Education added')
+    } catch (error) {
+      console.error('Error saving education:', error)
+      toast.error('Failed to save education')
+      throw error
+    }
+  }
+
+  const handleDeleteEducation = async (edu: ArtistEducation, index: number) => {
+    try {
+      if (edu.id != null) await artistService.deleteEducation(edu.id)
+      applyEducations(list => list.filter((e, i) => (edu.id != null ? e.id !== edu.id : i !== index)))
+      toast.success('Education deleted')
+    } catch (error) {
+      console.error('Error deleting education:', error)
+      toast.error('Failed to delete education')
     }
   }
 
@@ -1380,6 +1417,15 @@ const Profile: React.FC = () => {
                   .map(p => ({ id: p.id as number, label: p.displayName }))}
                 onSave={handleSaveExperience}
                 onDelete={handleDeleteExperience}
+              />
+            </div>
+
+            {/* Education — same pattern as Experience, saves each entry immediately */}
+            <div className='bg-white rounded-xl p-6 shadow-sm'>
+              <EducationSection
+                educations={profile.educations ?? []}
+                onSave={handleSaveEducation}
+                onDelete={handleDeleteEducation}
               />
             </div>
 

@@ -79,6 +79,9 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
             : null,
       }))
 
+      // Education entries (optional)
+      payload.educations = Array.isArray(formData.educations) ? formData.educations : []
+
       if (artistTypeIds.length) {
         // Full multi-profession list (numbers)
         payload.artistTypeIds = artistTypeIds.map(id => Number(id))
