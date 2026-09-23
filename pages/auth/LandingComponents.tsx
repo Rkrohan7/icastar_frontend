@@ -9,6 +9,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useNavigate } from 'react-router-dom'
+import { getLandingStats, DEFAULT_LANDING_STATS, LandingStats } from '@/services/publicConfigService'
+import blogService, { BlogPost } from '@/services/blogService'
 
 // --- Mock Data ---
 
@@ -176,7 +178,7 @@ const FEATURED_JOBS = [
     {
         id: 1,
         title: "Lead Actor for Web Series",
-        production: "Netflix Originals",
+        production: "Pentane Studios",
         location: "Mumbai",
         type: "Audition",
         salary: "₹50k - ₹1L per day",
@@ -186,7 +188,7 @@ const FEATURED_JOBS = [
     {
         id: 2,
         title: "Female Model for TVC",
-        production: "Lakme Fashion",
+        production: "Digital Cimble Media Services",
         location: "Delhi",
         type: "Casting Call",
         salary: "₹25k - ₹40k",
@@ -196,7 +198,7 @@ const FEATURED_JOBS = [
     {
         id: 3,
         title: "Voice Artist for Animation",
-        production: "Green Gold TV",
+        production: "Shrihari Studios",
         location: "Remote",
         type: "Project",
         salary: "₹10k - ₹15k per min",
@@ -206,7 +208,7 @@ const FEATURED_JOBS = [
     {
         id: 4,
         title: "Music Composer needed",
-        production: "Indie Film Studio",
+        production: "Creative Karkhana",
         location: "Bangalore",
         type: "Job",
         salary: "₹2L - ₹3L Project",
@@ -660,6 +662,19 @@ export const EventsSection = () => {
 }
 
 export const StatsSection = () => {
+    // Numbers come from Super Admin -> Config; defaults show until they load.
+    const [stats, setStats] = useState<LandingStats>(DEFAULT_LANDING_STATS)
+
+    useEffect(() => {
+        let active = true
+        getLandingStats().then(s => {
+            if (active) setStats(s)
+        })
+        return () => {
+            active = false
+        }
+    }, [])
+
     const StatItem = ({ end, label, color }: { end: number, label: string, color: string }) => {
         const { count, countRef } = useCounter(end)
         return (
@@ -672,14 +687,95 @@ export const StatsSection = () => {
         )
     }
 
+    // Admin can hide the whole section from Super Admin -> Config
+    if (!stats.enabled) return null
+
     return (
         <section className="py-20 bg-white border-y border-gray-100">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-                    <StatItem end={50000} label="Active Artists" color="from-orange-600 to-amber-500" />
-                    <StatItem end={2000} label="Casting Directors" color="from-blue-600 to-purple-500" />
-                    <StatItem end={100000} label="Successful Auditions" color="from-green-600 to-emerald-500" />
-                    <StatItem end={95} label="Success Rate" color="from-red-500 to-pink-500" />
+                    <StatItem end={stats.activeArtists} label="Active Artists" color="from-orange-600 to-amber-500" />
+                    <StatItem end={stats.castingDirectors} label="Casting Directors" color="from-blue-600 to-purple-500" />
+                    <StatItem end={stats.successfulAuditions} label="Successful Auditions" color="from-green-600 to-emerald-500" />
+                    <StatItem end={stats.successRate} label="Success Rate" color="from-red-500 to-pink-500" />
+                </div>
+            </div>
+        </section>
+    )
+}
+
+export const BlogSection = () => {
+    const navigate = useNavigate()
+    const [blogs, setBlogs] = useState<BlogPost[]>([])
+    const [enabled, setEnabled] = useState(true)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        let active = true
+        // The admin can hide this section from Super Admin -> Config
+        Promise.all([getLandingStats(), blogService.getPublicBlogs(3)])
+            .then(([config, posts]) => {
+                if (!active) return
+                setEnabled(config.blogsEnabled)
+                setBlogs(posts)
+            })
+            .catch(() => active && setBlogs([]))
+            .finally(() => active && setLoading(false))
+        return () => {
+            active = false
+        }
+    }, [])
+
+    // Nothing to show while loading, when switched off, or with no published posts
+    if (loading || !enabled || blogs.length === 0) return null
+
+    const formatDate = (iso?: string) =>
+        iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
+
+    return (
+        <section className="py-20 bg-gray-50">
+            <div className="container mx-auto px-4">
+                <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
+                    <div>
+                        <h2 className="text-4xl font-bold mb-2">From our Blog</h2>
+                        <p className="text-xl text-gray-500">Audition tips, casting news and industry stories.</p>
+                    </div>
+                    <Button variant="outline" onClick={() => navigate('/blogs')}>
+                        View all blogs <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                </div>
+
+                <div className="grid gap-8 md:grid-cols-3">
+                    {blogs.map(blog => (
+                        <Card
+                            key={blog.id}
+                            onClick={() => navigate(`/blogs/${blog.slug}`)}
+                            className="overflow-hidden cursor-pointer hover:shadow-xl transition-shadow border-gray-100 flex flex-col">
+                            {blog.coverImageUrl ? (
+                                <img src={blog.coverImageUrl} alt="" className="h-48 w-full object-cover" />
+                            ) : (
+                                <div className="h-48 w-full bg-gradient-to-br from-orange-100 to-amber-50" />
+                            )}
+                            <div className="p-6 flex flex-col flex-1">
+                                {blog.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        {blog.tags.slice(0, 2).map(tag => (
+                                            <span
+                                                key={tag}
+                                                className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 text-xs font-medium">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                <h3 className="text-lg font-bold mb-2">{blog.title}</h3>
+                                {blog.excerpt && <p className="text-sm text-gray-500 line-clamp-3">{blog.excerpt}</p>}
+                                <div className="mt-auto pt-4 text-xs text-gray-400">
+                                    {[blog.authorName, formatDate(blog.publishedAt ?? blog.createdAt)].filter(Boolean).join(' · ')}
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
                 </div>
             </div>
         </section>

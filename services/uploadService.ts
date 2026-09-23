@@ -1,6 +1,6 @@
 import apiClient, { uploadFile as apiUploadFile } from './apiClient'
 
-export type UploadType = 'PROFILE_PHOTO' | 'COVER_PHOTO' | 'ID_PROOF' | 'AUDITION_VIDEO' | 'AUDITION_THUMBNAIL' | 'PORTFOLIO_IMAGE' | 'PORTFOLIO_VIDEO' | 'FACE_VERIFICATION' | 'DANCE_SHOWREEL'
+export type UploadType = 'PROFILE_PHOTO' | 'COVER_PHOTO' | 'ID_PROOF' | 'AUDITION_VIDEO' | 'AUDITION_THUMBNAIL' | 'PORTFOLIO_IMAGE' | 'PORTFOLIO_VIDEO' | 'FACE_VERIFICATION' | 'DANCE_SHOWREEL' | 'BLOG_IMAGE'
 
 export interface PresignedUrlRequest {
   fileName: string

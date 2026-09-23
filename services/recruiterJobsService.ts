@@ -41,6 +41,9 @@ export interface CreateJobInput {
 
 export interface UpdateJobInput extends Partial<CreateJobInput> {
   status?: 'ACTIVE' | 'DRAFT' | 'CLOSED' | 'ARCHIVED'
+  // Unlink an existing job from its project/character (a null projectId is
+  // indistinguishable from "not sent", so this flag makes the intent explicit)
+  clearProject?: boolean
 }
 
 export interface ChangeJobStatusInput {

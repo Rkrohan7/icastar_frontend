@@ -532,6 +532,8 @@ export const PostJobPage = () => {
           projectId: jobData.projectId,
           characterId: jobData.characterId,
           roleType: jobData.roleType,
+          // Job moved back to standalone: ask the backend to drop the old link
+          clearProject: !jobData.projectId,
           status: 'ACTIVE' // Default status update if needed, but usually status is separate. 
           // However based on prompt 'status': 'ACTIVE' is in required parameters. 
           // We might want to keep existing status or default to ACTIVE if not set.
@@ -551,7 +553,9 @@ export const PostJobPage = () => {
 
         // Optimistic update
         const previousJobs = [...jobs]
-        setJobs(jobs.map(j => (j.id === jobData.id ? { ...j, ...jobData } : j)))
+        setJobs(jobs.map(j => (j.id === jobData.id
+          ? { ...j, ...jobData, selectedArtists: j.selectedArtists }
+          : j)))
 
         try {
           await recruiterJobsService.updateJob(jobData.id, payload)

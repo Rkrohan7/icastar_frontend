@@ -447,6 +447,13 @@ export interface SystemConfig {
   smsNotificationsEnabled: boolean
   pushNotificationsEnabled: boolean
   inAppNotificationsEnabled: boolean
+  // Landing page counters — plain numbers the admin sets by hand
+  landingStatsEnabled: boolean
+  landingBlogsEnabled: boolean
+  landingActiveArtists: number
+  landingCastingDirectors: number
+  landingSuccessfulAuditions: number
+  landingSuccessRate: number
 }
 
 export interface ConfigUpdatePayload {

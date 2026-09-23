@@ -5,6 +5,7 @@ import {
   BellIcon,
   BriefcaseIcon,
   CheckCircleIcon,
+  ChartBarIcon,
 } from '../../components/icons/IconComponents'
 import superAdminService, { SystemConfig } from '../../services/superAdminService'
 
@@ -49,6 +50,18 @@ const SECTIONS: { title: string; icon: React.ComponentType<{ className?: string 
       { key: 'maxJobsPerRecruiter', label: 'Max Jobs per Recruiter', type: 'number', category: 'JOB_SETTINGS' },
       { key: 'jobExpirationDays', label: 'Job Expiration (days)', type: 'number', category: 'JOB_SETTINGS' },
       { key: 'maxApplicationsPerArtist', label: 'Max Applications per Artist', type: 'number', category: 'JOB_SETTINGS' },
+    ],
+  },
+  {
+    title: 'Landing Page',
+    icon: ChartBarIcon,
+    fields: [
+      { key: 'landingStatsEnabled', label: 'Show Stats Section', type: 'boolean', category: 'LANDING_STATS', description: 'Turn off to hide the whole counters section from the landing page' },
+      { key: 'landingActiveArtists', label: 'Active Artists', type: 'number', category: 'LANDING_STATS', description: 'Shown on the public landing page as "10,000+"' },
+      { key: 'landingCastingDirectors', label: 'Casting Directors', type: 'number', category: 'LANDING_STATS' },
+      { key: 'landingSuccessfulAuditions', label: 'Successful Auditions', type: 'number', category: 'LANDING_STATS' },
+      { key: 'landingSuccessRate', label: 'Success Rate (%)', type: 'number', category: 'LANDING_STATS' },
+      { key: 'landingBlogsEnabled', label: 'Show Blog Section', type: 'boolean', category: 'LANDING_STATS', description: 'Show the latest blogs on the landing page' },
     ],
   },
   {

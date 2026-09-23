@@ -4,6 +4,8 @@ import AuthPage from '@/pages/auth/AuthPage'
 import Auth from '@/pages/auth/Auth'
 import TermsAndConditionsPage from '@/pages/auth/TermsAndConditionsPage'
 import PrivacyPolicyPage from '@/pages/auth/PrivacyPolicyPage'
+import { BlogsPage, BlogDetailPage } from '@/pages/public/BlogsPage'
+import SuperAdminBlogsPage from '@/pages/admin/SuperAdminBlogsPage'
 import DashLayout from '@/layouts/DashLayout'
 import AdminLayout from '@/layouts/AdminLayout'
 import { PostJobPage } from '@/pages/recruiter/PostJobPage'
@@ -92,6 +94,15 @@ const AppRouter = () =>
           // Public, no-auth job page — anyone can view & apply via shared link
           path: '/jobs/:jobId/public',
           element: <PublicJobPage />,
+        },
+        {
+          // Public blog listing and article pages
+          path: '/blogs',
+          element: <BlogsPage />,
+        },
+        {
+          path: '/blogs/:slug',
+          element: <BlogDetailPage />,
         },
       ],
     },
@@ -209,6 +220,10 @@ const AppRouter = () =>
         {
           path: '/admin/reports',
           element: <SuperAdminReportsPage />,
+        },
+        {
+          path: '/admin/blogs',
+          element: <SuperAdminBlogsPage />,
         },
         {
           path: '/admin/config',

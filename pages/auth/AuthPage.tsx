@@ -11,6 +11,7 @@ import {
   ArtistShowcaseSection,
   HowItWorksSection,
   StatsSection,
+  BlogSection,
   TestimonialsSection,
   EventsSection,
   AboutSection,
@@ -63,6 +64,8 @@ const AuthPage = () => {
       <EventsSection />
 
       <StatsSection />
+
+      <BlogSection />
 
       <TestimonialsSection />
 
@@ -120,7 +123,7 @@ const AuthPage = () => {
               <ul className='space-y-3 text-gray-400 text-sm'>
                 <li><a href="#" className='hover:text-amber-500 transition-colors'>About Us</a></li>
                 <li><a href="#" className='hover:text-amber-500 transition-colors'>Careers</a></li>
-                <li><a href="#" className='hover:text-amber-500 transition-colors'>Blog</a></li>
+                <li><a href="/blogs" className='hover:text-amber-500 transition-colors'>Blog</a></li>
               </ul>
             </div>
 

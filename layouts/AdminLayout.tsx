@@ -99,6 +99,11 @@ export const AdminLayout: React.FC = () => {
       ],
     },
     {
+      name: 'Blog',
+      path: '/admin/blogs',
+      icon: FileTextIcon,
+    },
+    {
       name: 'Reports & Analytics',
       path: '/admin/reports',
       icon: ChartBarIcon,

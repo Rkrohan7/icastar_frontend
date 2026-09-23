@@ -131,6 +131,8 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
     const [formData, setFormData] = useState<Partial<Job>>({});
     const [errors, setErrors] = useState<FormErrors>({});
     const [addedCount, setAddedCount] = useState(0);
+    // A job can either belong to a casting project or stand on its own
+    const [isProjectJob, setIsProjectJob] = useState(true);
 
     useEffect(() => {
         if (jobToEdit) {
@@ -140,6 +142,8 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
         }
         setErrors({});
         setAddedCount(0);
+        // Editing keeps whatever the job already is; new jobs default to project casting
+        setIsProjectJob(jobToEdit ? !!jobToEdit.projectId : true);
     }, [jobToEdit, isOpen, defaultProject]);
 
     if (!isOpen) return null;
@@ -147,11 +151,13 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
     const validate = (): FormErrors => {
         const newErrors: FormErrors = {};
 
-        if (!formData.projectId) {
-            newErrors.projectId = 'Project is required';
-        }
-        if (!formData.characterId) {
-            newErrors.characterId = 'Casting character is required';
+        if (isProjectJob) {
+            if (!formData.projectId) {
+                newErrors.projectId = 'Project is required';
+            }
+            if (!formData.characterId) {
+                newErrors.characterId = 'Casting character is required';
+            }
         }
         if (!formData.title?.trim()) {
             newErrors.title = 'Job Title is required';
@@ -223,7 +229,19 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
             setErrors(validationErrors);
             return;
         }
-        onSave(formData as Job);
+        // Standalone jobs carry no casting data; undefined tells the page to unlink on edit
+        const payload: Job = (isProjectJob
+            ? formData
+            : {
+                ...formData,
+                projectId: undefined,
+                projectName: undefined,
+                projectType: undefined,
+                characterId: undefined,
+                characterName: undefined,
+                roleType: undefined,
+            }) as Job;
+        onSave(payload);
         if (!addNext) {
             onClose();
             return;
@@ -274,26 +292,54 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                         {/* Project & Casting Section */}
                         <div>
                             <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Project & Casting</h3>
-                            {addedCount > 0 && (
-                                <p className="mb-4 rounded-lg bg-green-50 border border-green-100 px-4 py-2 text-sm text-green-800">
-                                    {addedCount} job{addedCount > 1 ? 's' : ''} added to {formData.projectName}. Pick the next character.
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {([
+                                    [true, 'For a project', 'Cast a character of one of your projects'],
+                                    [false, 'Standalone job', 'A one-off job with no project'],
+                                ] as const).map(([mode, label, hint]) => (
+                                    <button
+                                        key={String(mode)}
+                                        type="button"
+                                        title={hint}
+                                        onClick={() => setIsProjectJob(mode)}
+                                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                                            isProjectJob === mode
+                                                ? 'border-primary bg-primary/10 text-primary'
+                                                : 'border-gray-300 text-gray-600 hover:border-gray-400'
+                                        }`}>
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                            {isProjectJob ? (
+                                <>
+                                    {addedCount > 0 && (
+                                        <p className="mb-4 rounded-lg bg-green-50 border border-green-100 px-4 py-2 text-sm text-green-800">
+                                            {addedCount} job{addedCount > 1 ? 's' : ''} added to {formData.projectName}. Pick the next character.
+                                        </p>
+                                    )}
+                                    <p className="mb-4 text-xs text-gray-500">
+                                        Project details are private to you. Artists only see the job title, description and requirements.
+                                    </p>
+                                    <ProjectCastingFields
+                                        value={{
+                                            projectId: formData.projectId,
+                                            projectName: formData.projectName,
+                                            projectType: formData.projectType,
+                                            characterId: formData.characterId,
+                                            characterName: formData.characterName,
+                                            roleType: formData.roleType,
+                                        }}
+                                        onChange={handleCastingChange}
+                                        errors={{ projectId: errors.projectId, characterId: errors.characterId }}
+                                    />
+                                </>
+                            ) : (
+                                <p className="text-sm text-gray-500">
+                                    This job will be posted on its own, without a project or casting character.
+                                    {jobToEdit?.projectId && ' Saving now removes it from ' + jobToEdit.projectName + '.'}
                                 </p>
                             )}
-                            <p className="mb-4 text-xs text-gray-500">
-                                Project details are private to you. Artists only see the job title, description and requirements.
-                            </p>
-                            <ProjectCastingFields
-                                value={{
-                                    projectId: formData.projectId,
-                                    projectName: formData.projectName,
-                                    projectType: formData.projectType,
-                                    characterId: formData.characterId,
-                                    characterName: formData.characterName,
-                                    roleType: formData.roleType,
-                                }}
-                                onChange={handleCastingChange}
-                                errors={{ projectId: errors.projectId, characterId: errors.characterId }}
-                            />
                         </div>
 
                         {/* Job Details Section */}
@@ -412,7 +458,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                     >
                         {addedCount > 0 ? 'Done' : 'Cancel'}
                     </button>
-                    {!isEditing && (
+                    {!isEditing && isProjectJob && (
                         <button
                             type="button"
                             onClick={() => submit(true)}
