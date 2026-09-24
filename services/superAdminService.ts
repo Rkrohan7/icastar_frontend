@@ -769,6 +769,37 @@ const superAdminService = {
     }, { ttl: 60_000 })
   },
 
+  // Artist / recruiter moderation — deactivate, reactivate or delete an account
+  async updateArtistStatus(id: number, status: AccountStatus, reason?: string): Promise<SuperAdminArtist> {
+    const resp = await apiClient.patch(`/super-admin/artists/${id}/status`, { status, reason })
+    invalidateCache('admin:artists')
+    invalidateCache(`admin:artist:${id}`)
+    invalidateCache('admin:dashboard')
+    return unwrap<SuperAdminArtist>(resp)
+  },
+
+  async deleteArtist(id: number, reason?: string): Promise<void> {
+    await apiClient.delete(`/super-admin/artists/${id}`, { params: reason ? { reason } : undefined })
+    invalidateCache('admin:artists')
+    invalidateCache(`admin:artist:${id}`)
+    invalidateCache('admin:dashboard')
+  },
+
+  async updateRecruiterStatus(id: number, status: AccountStatus, reason?: string): Promise<SuperAdminRecruiter> {
+    const resp = await apiClient.patch(`/super-admin/recruiters/${id}/status`, { status, reason })
+    invalidateCache('admin:recruiters')
+    invalidateCache(`admin:recruiter:${id}`)
+    invalidateCache('admin:dashboard')
+    return unwrap<SuperAdminRecruiter>(resp)
+  },
+
+  async deleteRecruiter(id: number, reason?: string): Promise<void> {
+    await apiClient.delete(`/super-admin/recruiters/${id}`, { params: reason ? { reason } : undefined })
+    invalidateCache('admin:recruiters')
+    invalidateCache(`admin:recruiter:${id}`)
+    invalidateCache('admin:dashboard')
+  },
+
   // Jobs
   async getJobs(query: JobsQuery = {}): Promise<PaginatedResponse<SuperAdminJob>> {
     return cachedGet(buildCacheKey('admin:jobs', query as Record<string, unknown>), async () => {
@@ -926,7 +957,7 @@ const superAdminService = {
   },
 
   // Auditions
-  async getAuditions(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: AuditionAdminStatus; type?: string } = {}): Promise<PaginatedResponse<SuperAdminAudition>> {
+  async getAuditions(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: AuditionAdminStatus; type?: string; search?: string } = {}): Promise<PaginatedResponse<SuperAdminAudition>> {
     return cachedGet(buildCacheKey('admin:auditions', query as Record<string, unknown>), async () => {
       const resp = await apiClient.get('/super-admin/auditions', { params: query })
       return parsePaginated<SuperAdminAudition>(resp.data, query.page ?? 0)
@@ -940,7 +971,7 @@ const superAdminService = {
   },
 
   // Job Approvals
-  async getPendingJobs(query: { page?: number; size?: number } = {}): Promise<PaginatedResponse<PendingJob>> {
+  async getPendingJobs(query: { page?: number; size?: number; search?: string } = {}): Promise<PaginatedResponse<PendingJob>> {
     return cachedGet(buildCacheKey('admin:jobs:pending', query as Record<string, unknown>), async () => {
       const resp = await apiClient.get('/super-admin/jobs/pending-approval', { params: query })
       return parsePaginated<PendingJob>(resp.data, query.page ?? 0)
@@ -1011,7 +1042,7 @@ const superAdminService = {
   },
 
   // Job Applications
-  async getJobApplications(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: string } = {}): Promise<PaginatedResponse<JobApplicationItem>> {
+  async getJobApplications(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: string; search?: string } = {}): Promise<PaginatedResponse<JobApplicationItem>> {
     return cachedGet(buildCacheKey('admin:job-applications', query as Record<string, unknown>), async () => {
       const resp = await apiClient.get('/super-admin/job-applications', { params: query })
       return parsePaginated<JobApplicationItem>(resp.data, query.page ?? 0)
@@ -1026,7 +1057,7 @@ const superAdminService = {
   },
 
   // Audition Applications
-  async getAuditionApplications(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: string } = {}): Promise<PaginatedResponse<AuditionApplicationItem>> {
+  async getAuditionApplications(query: { page?: number; size?: number; sortBy?: string; sortDir?: SortDir; status?: string; search?: string } = {}): Promise<PaginatedResponse<AuditionApplicationItem>> {
     return cachedGet(buildCacheKey('admin:audition-applications', query as Record<string, unknown>), async () => {
       const resp = await apiClient.get('/super-admin/audition-applications', { params: query })
       return parsePaginated<AuditionApplicationItem>(resp.data, query.page ?? 0)
@@ -1034,7 +1065,7 @@ const superAdminService = {
   },
 
   // Interviews
-  async getInterviews(query: { page?: number; size?: number; status?: string } = {}): Promise<PaginatedResponse<InterviewItem>> {
+  async getInterviews(query: { page?: number; size?: number; status?: string; search?: string } = {}): Promise<PaginatedResponse<InterviewItem>> {
     return cachedGet(buildCacheKey('admin:interviews', query as Record<string, unknown>), async () => {
       const resp = await apiClient.get('/super-admin/interviews', { params: query })
       return parsePaginated<InterviewItem>(resp.data, query.page ?? 0)
@@ -1050,7 +1081,7 @@ const superAdminService = {
   },
 
   // Report Content
-  async getReportedContent(query: { page?: number; size?: number; status?: ReportStatus; priority?: ReportPriority } = {}): Promise<PaginatedResponse<ReportContentItem>> {
+  async getReportedContent(query: { page?: number; size?: number; status?: ReportStatus; priority?: ReportPriority; search?: string } = {}): Promise<PaginatedResponse<ReportContentItem>> {
     return cachedGet(buildCacheKey('admin:reports', query as Record<string, unknown>), async () => {
       const resp = await apiClient.get('/super-admin/report-content', { params: query })
       return parsePaginated<ReportContentItem>(resp.data, query.page ?? 0)

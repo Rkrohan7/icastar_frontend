@@ -15,6 +15,7 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
+import AdminSearchBox from './AdminSearchBox'
 
 const PAGE_SIZE = 20
 
@@ -42,6 +43,7 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
   const [totalPages, setTotalPages] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const [status, setStatus] = useState<AuditionAdminStatus | ''>(initialStatus || '')
+  const [search, setSearch] = useState('')
   const [type, setType] = useState('')
   const [editing, setEditing] = useState<SuperAdminAudition | null>(null)
 
@@ -50,6 +52,7 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
       setLoading(true)
       setError(null)
       const result = await superAdminService.getAuditions({
+        search: search || undefined,
         page,
         size: PAGE_SIZE,
         sortBy: 'createdAt',
@@ -74,7 +77,7 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, status, type])
+  }, [page, status, type, search])
 
   return (
     <div className='p-6 space-y-4'>
@@ -83,6 +86,14 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
       )}
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
         <div className='flex flex-col md:flex-row gap-3'>
+          <AdminSearchBox
+            value={search}
+            onSearch={(term) => {
+              setPage(0)
+              setSearch(term)
+            }}
+            placeholder='Search by title, project or recruiter...'
+          />
           <div className='flex-1 relative'>
             <SearchIcon className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
             <input

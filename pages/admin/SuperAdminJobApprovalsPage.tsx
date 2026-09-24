@@ -9,6 +9,7 @@ import {
 import superAdminService, { PendingJob } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
+import AdminSearchBox from './AdminSearchBox'
 
 const PAGE_SIZE = 20
 
@@ -26,6 +27,7 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = usePageParam('page', 0)
+  const [search, setSearch] = useState('')
   const [totalPages, setTotalPages] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const [actingId, setActingId] = useState<number | null>(null)
@@ -35,7 +37,7 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
     try {
       setLoading(true)
       setError(null)
-      const result = await superAdminService.getPendingJobs({ page, size: PAGE_SIZE })
+      const result = await superAdminService.getPendingJobs({ page, size: PAGE_SIZE, search: search || undefined })
       setJobs(result.data)
       setTotalPages(result.totalPages)
       setTotalItems(result.totalItems)
@@ -49,7 +51,7 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page])
+  }, [page, search])
 
   const handleApprove = async (job: PendingJob) => {
     if (!confirm(`Approve "${job.title}"?`)) return
@@ -66,11 +68,20 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
 
   return (
     <div className='p-6 space-y-4'>
-      <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center justify-between'>
+      <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-center justify-between gap-3'>
         <div>
           <h2 className='text-lg font-bold text-gray-900'>Jobs Awaiting Approval</h2>
           <p className='text-sm text-gray-500'>{totalItems.toLocaleString()} pending</p>
         </div>
+        <AdminSearchBox
+          value={search}
+          onSearch={(term) => {
+            setPage(0)
+            setSearch(term)
+          }}
+          placeholder='Search by job title or recruiter...'
+          className='max-w-sm'
+        />
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>

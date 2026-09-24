@@ -15,6 +15,7 @@ import superAdminService, {
   SuperAdminRecruiter,
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
+import UserModerationActions from './UserModerationActions'
 
 const STATUS_OPTIONS: { label: string; value: AccountStatus | '' }[] = [
   { label: 'All Statuses', value: '' },
@@ -153,6 +154,7 @@ export const SuperAdminRecruitersPage: React.FC = () => {
                   <Th>Stats</Th>
                   <Th>Status</Th>
                   <Th>Joined</Th>
+                  <Th>Actions</Th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
@@ -220,6 +222,24 @@ export const SuperAdminRecruitersPage: React.FC = () => {
                       </td>
                       <td className='px-4 py-3 text-xs text-gray-500'>
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}
+                      </td>
+                      <td className='px-4 py-3'>
+                        <UserModerationActions
+                          kind='recruiter'
+                          name={r.companyName || `${firstName} ${lastName}`.trim() || 'this recruiter'}
+                          status={r.accountStatus ?? 'ACTIVE'}
+                          onChangeStatus={async (status, reason) => {
+                            const updated = await superAdminService.updateRecruiterStatus(r.id, status, reason)
+                            setRecruiters(prev =>
+                              prev.map(x => (x.id === r.id ? { ...x, ...updated, accountStatus: status } : x)),
+                            )
+                          }}
+                          onDelete={async reason => {
+                            await superAdminService.deleteRecruiter(r.id, reason)
+                            setRecruiters(prev => prev.filter(x => x.id !== r.id))
+                            setTotalItems(t => Math.max(0, t - 1))
+                          }}
+                        />
                       </td>
                     </tr>
                   )

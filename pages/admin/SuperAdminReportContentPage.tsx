@@ -12,6 +12,7 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
+import AdminSearchBox from './AdminSearchBox'
 
 const PAGE_SIZE = 20
 
@@ -69,6 +70,7 @@ export const SuperAdminReportContentPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const [status, setStatus] = useState<ReportStatus | ''>('')
+  const [search, setSearch] = useState('')
   const [priority, setPriority] = useState<ReportPriority | ''>('')
   const [reviewing, setReviewing] = useState<ReportContentItem | null>(null)
 
@@ -77,6 +79,7 @@ export const SuperAdminReportContentPage: React.FC = () => {
       setLoading(true)
       setError(null)
       const result = await superAdminService.getReportedContent({
+        search: search || undefined,
         page,
         size: PAGE_SIZE,
         status: status || undefined,
@@ -95,12 +98,20 @@ export const SuperAdminReportContentPage: React.FC = () => {
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, status, priority])
+  }, [page, status, priority, search])
 
   return (
     <div className='p-6 space-y-4'>
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
         <div className='flex flex-col md:flex-row gap-3'>
+          <AdminSearchBox
+            value={search}
+            onSearch={(term) => {
+              setPage(0)
+              setSearch(term)
+            }}
+            placeholder='Search by reporter, reported user or reason...'
+          />
           <select
             value={status}
             onChange={(e) => {

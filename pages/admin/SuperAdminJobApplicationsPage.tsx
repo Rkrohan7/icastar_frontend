@@ -10,6 +10,7 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
+import AdminSearchBox from './AdminSearchBox'
 
 const PAGE_SIZE = 20
 
@@ -32,6 +33,7 @@ export const SuperAdminJobApplicationsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const [status, setStatus] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -39,6 +41,7 @@ export const SuperAdminJobApplicationsPage: React.FC = () => {
         setLoading(true)
         setError(null)
         const result = await superAdminService.getJobApplications({
+          search: search || undefined,
           page,
           size: PAGE_SIZE,
           sortBy: 'appliedAt',
@@ -59,12 +62,20 @@ export const SuperAdminJobApplicationsPage: React.FC = () => {
       }
     }
     load()
-  }, [page, status])
+  }, [page, status, search])
 
   return (
     <div className='p-6 space-y-4'>
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
-        <div className='flex gap-3'>
+        <div className='flex flex-wrap gap-3'>
+          <AdminSearchBox
+            value={search}
+            onSearch={(term) => {
+              setPage(0)
+              setSearch(term)
+            }}
+            placeholder='Search by artist, job or company...'
+          />
           <select
             value={status}
             onChange={(e) => {

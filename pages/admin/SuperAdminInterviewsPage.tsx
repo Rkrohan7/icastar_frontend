@@ -7,6 +7,7 @@ import {
 import superAdminService, { InterviewItem } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
+import AdminSearchBox from './AdminSearchBox'
 
 const PAGE_SIZE = 20
 
@@ -26,6 +27,7 @@ export const SuperAdminInterviewsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const [status, setStatus] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -33,7 +35,7 @@ export const SuperAdminInterviewsPage: React.FC = () => {
         setLoading(true)
         setError(null)
         const result = await superAdminService.getInterviews({
-          page, size: PAGE_SIZE, status: status || undefined,
+          page, size: PAGE_SIZE, status: status || undefined, search: search || undefined,
         })
         setList(result.data)
         setTotalPages(result.totalPages)
@@ -49,11 +51,19 @@ export const SuperAdminInterviewsPage: React.FC = () => {
       }
     }
     load()
-  }, [page, status])
+  }, [page, status, search])
 
   return (
     <div className='p-6 space-y-4'>
-      <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4'>
+      <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap gap-3'>
+        <AdminSearchBox
+          value={search}
+          onSearch={(term) => {
+            setPage(0)
+            setSearch(term)
+          }}
+          placeholder='Search by artist, job or recruiter...'
+        />
         <select
           value={status}
           onChange={(e) => {

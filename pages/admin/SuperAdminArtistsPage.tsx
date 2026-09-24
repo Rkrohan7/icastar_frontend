@@ -15,6 +15,7 @@ import superAdminService, {
   SuperAdminArtist,
 } from '../../services/superAdminService'
 import { Pagination, StatusBadge } from './SuperAdminRecruitersPage'
+import UserModerationActions from './UserModerationActions'
 import usePageParam from '../../hooks/usePageParam'
 
 const STATUS_OPTIONS: { label: string; value: AccountStatus | '' }[] = [
@@ -238,6 +239,24 @@ export const SuperAdminArtistsPage: React.FC = () => {
                         className='text-xs text-[#E36A3A] hover:underline whitespace-nowrap'>
                         View Portfolio
                       </button>
+                      <div className='mt-2'>
+                        <UserModerationActions
+                          kind='artist'
+                          name={a.stageName || fullName}
+                          status={a.accountStatus ?? 'ACTIVE'}
+                          onChangeStatus={async (status, reason) => {
+                            const updated = await superAdminService.updateArtistStatus(a.id, status, reason)
+                            setArtists(prev =>
+                              prev.map(x => (x.id === a.id ? { ...x, ...updated, accountStatus: status } : x)),
+                            )
+                          }}
+                          onDelete={async reason => {
+                            await superAdminService.deleteArtist(a.id, reason)
+                            setArtists(prev => prev.filter(x => x.id !== a.id))
+                            setTotalItems(t => Math.max(0, t - 1))
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
                   )
