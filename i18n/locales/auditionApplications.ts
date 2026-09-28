@@ -1,0 +1,76 @@
+import { defineMessages } from '../defineMessages'
+
+export default defineMessages({
+  en: {
+    loading: 'Loading applications...',
+    back: '← Back to Auditions',
+    fallbackTitle: 'Audition Applications',
+    totalApplications: '{{count}} Total Applications',
+    info: {
+      submissionDeadline: 'Submission Deadline',
+      auditionMode: 'Audition Mode',
+      status: 'Status',
+      compensation: 'Compensation',
+    },
+    filterByStatus: 'Filter by status:',
+    selectedCount: '{{count}} selected',
+    actions: {
+      shortlist: 'Shortlist',
+      accept: 'Accept',
+      viewPortfolio: 'View Portfolio',
+    },
+    empty: {
+      title: 'No applications yet',
+      allMessage: 'Applications will appear here once artists apply',
+      noStatus: 'No {{status}} applications',
+    },
+    selectAll: 'Select All ({{count}} applications)',
+    appliedOn: 'Applied {{date}}',
+    moreSkills: '+{{count}} more',
+    toast: {
+      auditionLoadFailed: 'Failed to load audition details',
+      loadFailed: 'Failed to load applications',
+      statusUpdated: 'Application {{status}} successfully',
+      statusUpdateFailed: 'Failed to update application status',
+      selectAtLeastOne: 'Please select at least one application',
+      bulkUpdated: '{{count}} applications updated successfully',
+      bulkUpdateFailed: 'Failed to update applications',
+    },
+  },
+  mr: {
+    loading: 'अर्ज लोड होत आहेत...',
+    back: '← ऑडिशन्सकडे परत जा',
+    fallbackTitle: 'ऑडिशन अर्ज',
+    totalApplications: 'एकूण {{count}} अर्ज',
+    info: {
+      submissionDeadline: 'सबमिशनची अंतिम तारीख',
+      auditionMode: 'ऑडिशन पद्धत',
+      status: 'स्थिती',
+      compensation: 'मोबदला',
+    },
+    filterByStatus: 'स्थितीनुसार फिल्टर करा:',
+    selectedCount: '{{count}} निवडले',
+    actions: {
+      shortlist: 'शॉर्टलिस्ट करा',
+      accept: 'स्वीकारा',
+      viewPortfolio: 'पोर्टफोलिओ पहा',
+    },
+    empty: {
+      title: 'अद्याप कोणतेही अर्ज नाहीत',
+      allMessage: 'कलाकारांनी अर्ज केल्यावर अर्ज येथे दिसतील',
+      noStatus: '"{{status}}" स्थितीतील कोणतेही अर्ज नाहीत',
+    },
+    selectAll: 'सर्व निवडा ({{count}} अर्ज)',
+    appliedOn: 'अर्ज केला: {{date}}',
+    moreSkills: '+{{count}} अधिक',
+    toast: {
+      auditionLoadFailed: 'ऑडिशनचा तपशील लोड करता आला नाही',
+      loadFailed: 'अर्ज लोड करता आले नाहीत',
+      statusUpdated: 'अर्जाची स्थिती यशस्वीरित्या अपडेट झाली: {{status}}',
+      statusUpdateFailed: 'अर्जाची स्थिती अपडेट करता आली नाही',
+      selectAtLeastOne: 'कृपया किमान एक अर्ज निवडा',
+      bulkUpdated: '{{count}} अर्ज यशस्वीरित्या अपडेट झाले',
+      bulkUpdateFailed: 'अर्ज अपडेट करता आले नाहीत',
+    },
+  },
+})

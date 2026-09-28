@@ -1,4 +1,5 @@
 import { Artist } from '../types'
+import { translate } from '@/i18n'
 
 export interface ArtistProfileApi {
   id?: number
@@ -17,7 +18,7 @@ export interface ArtistProfileApi {
 
 const toArtist = (api: ArtistProfileApi): Artist => ({
   id: api.id ?? 0,
-  name: api.name ?? api.fullName ?? 'Unknown Artist',
+  name: api.name ?? api.fullName ?? translate('services.fallback.unknownArtist'),
   avatarUrl: api.avatarUrl ?? api.profileImageUrl ?? '',
   bio: api.bio ?? api.about ?? '',
   skills: api.skills ?? api.topSkills ?? [],
@@ -28,7 +29,7 @@ const toArtist = (api: ArtistProfileApi): Artist => ({
 export const getArtistProfileById = async (id: number): Promise<Artist> => {
   const resp = await fetch(`/api/artists/profile/${id}`)
   if (!resp.ok) {
-    throw new Error(`Failed to fetch artist profile: ${resp.status}`)
+    throw new Error(translate('services.artistProfile.fetchFailed', { status: resp.status }))
   }
   const data: ArtistProfileApi = await resp.json()
   return toArtist(data)

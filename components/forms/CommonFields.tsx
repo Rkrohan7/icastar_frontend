@@ -9,6 +9,7 @@ import { ArtistCategory } from '@/types'
 import ExperienceSection from '@/components/experience/ExperienceSection'
 import type { ArtistEducation, ArtistExperience } from '@/services/artistService'
 import EducationSection from '@/components/education/EducationSection'
+import { useTranslation } from '@/i18n'
 
 interface FormErrors {
   fullName?: string
@@ -53,6 +54,7 @@ const CommonFields: React.FC<FormProps> = ({
   const [loadingCategories, setLoadingCategories] = useState(true)
   const [categorySearchOpen, setCategorySearchOpen] = useState(false)
   const [categorySearchQuery, setCategorySearchQuery] = useState('')
+  const { t, tEnum } = useTranslation()
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -143,15 +145,15 @@ const CommonFields: React.FC<FormProps> = ({
       {/* Artist Category Selection */}
       <div>
         <h3 className='text-xl font-bold border-b pb-2 mb-6'>
-          Artist Category
+          {t('commonFields.category.heading')}
         </h3>
         <div className='grid grid-cols-1 gap-6'>
           <div>
             <label htmlFor='category' className='block text-sm font-medium mb-2'>
-              Select Your Profession(s) <span className='text-red-500'>*</span>
+              {t('commonFields.category.selectLabel')} <span className='text-red-500'>*</span>
             </label>
             <p className='text-xs text-gray-500 mb-2'>
-              You can choose more than one — e.g. Dancer, Model and Actor.
+              {t('commonFields.category.hint')}
             </p>
             <Popover open={categorySearchOpen} onOpenChange={setCategorySearchOpen}>
               <PopoverTrigger asChild>
@@ -162,10 +164,10 @@ const CommonFields: React.FC<FormProps> = ({
                   disabled={loadingCategories}
                   className={`h-11 w-full justify-between px-3 ${errors.category ? 'border-red-500' : ''}`}>
                   {loadingCategories
-                    ? 'Loading professions...'
+                    ? t('commonFields.category.loading')
                     : selectedCategories.length > 0
-                    ? `${selectedCategories.length} profession${selectedCategories.length > 1 ? 's' : ''} selected`
-                    : 'Select Profession(s)'}
+                    ? t('commonFields.category.selected', { count: selectedCategories.length })
+                    : t('commonFields.category.selectPlaceholder')}
                   <span className='ml-2 text-gray-400'>▾</span>
                 </Button>
               </PopoverTrigger>
@@ -173,7 +175,7 @@ const CommonFields: React.FC<FormProps> = ({
                 <div className='p-3 border-b'>
                   <input
                     type='text'
-                    placeholder='Search professions...'
+                    placeholder={t('commonFields.category.searchPlaceholder')}
                     value={categorySearchQuery}
                     onChange={(e) => setCategorySearchQuery(e.target.value)}
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition'
@@ -183,7 +185,7 @@ const CommonFields: React.FC<FormProps> = ({
                 <div className='max-h-64 overflow-y-auto'>
                   {filteredCategories.length === 0 ? (
                     <div className='p-4 text-center text-gray-500 text-sm'>
-                      No professions found
+                      {t('commonFields.category.noResults')}
                     </div>
                   ) : (
                     filteredCategories.map((category) => {
@@ -219,12 +221,12 @@ const CommonFields: React.FC<FormProps> = ({
                 {selectedCategories.map((cat, idx) => (
                   <Badge key={cat.id} variant='secondary' className='flex items-center gap-1 py-1 pl-2.5 pr-1.5'>
                     {(cat.displayName || cat.name)}
-                    {idx === 0 && <span className='text-[10px] text-primary font-semibold'>(Primary)</span>}
+                    {idx === 0 && <span className='text-[10px] text-primary font-semibold'>{t('commonFields.category.primary')}</span>}
                     <button
                       type='button'
                       onClick={() => toggleCategory(cat.id)}
                       className='ml-0.5 rounded-full hover:bg-black/10 w-4 h-4 flex items-center justify-center text-gray-500'
-                      aria-label={`Remove ${cat.displayName || cat.name}`}>
+                      aria-label={t('commonFields.category.removeAria', { name: cat.displayName || cat.name })}>
                       ×
                     </button>
                   </Badge>
@@ -243,10 +245,10 @@ const CommonFields: React.FC<FormProps> = ({
       {/* Work Experience — Naukri-style list with add / edit modal */}
       <div>
         <h3 className='text-xl font-bold border-b pb-2 mb-2'>
-          Work Experience
+          {t('commonFields.workExperience.heading')}
         </h3>
         <p className='text-xs text-gray-500 mb-4'>
-          Add each role or project separately. New to the industry? You can skip this and add it later from your profile.
+          {t('commonFields.workExperience.hint')}
         </p>
         <ExperienceSection
           hideHeader
@@ -263,10 +265,10 @@ const CommonFields: React.FC<FormProps> = ({
       {/* Education — same list + modal pattern as Work Experience */}
       <div>
         <h3 className='text-xl font-bold border-b pb-2 mb-2'>
-          Education
+          {t('common.labels.education')}
         </h3>
         <p className='text-xs text-gray-500 mb-4'>
-          Add degrees, drama / dance / music schools and workshops. Optional — you can add it later from your profile.
+          {t('commonFields.education.hint')}
         </p>
         <EducationSection
           hideHeader
@@ -279,15 +281,15 @@ const CommonFields: React.FC<FormProps> = ({
       {/* Location & Demographics */}
       <div>
         <h3 className='text-xl font-bold border-b pb-2 mb-6'>
-          Location & Demographics
+          {t('commonFields.location.heading')}
         </h3>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
           <div>
-            <label htmlFor='city' className='block text-sm font-medium mb-2'>City</label>
+            <label htmlFor='city' className='block text-sm font-medium mb-2'>{t('common.labels.city')}</label>
             <input
               id='city'
               type='text'
-              placeholder='City'
+              placeholder={t('common.labels.city')}
               value={formData.city || ''}
               onChange={e => updateFormData({ city: e.target.value })}
               className='h-11 px-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-primary focus:border-transparent transition'
@@ -297,17 +299,17 @@ const CommonFields: React.FC<FormProps> = ({
             )}
           </div>
           <div>
-            <label htmlFor='gender' className='block text-sm font-medium mb-2'>Gender</label>
+            <label htmlFor='gender' className='block text-sm font-medium mb-2'>{t('common.labels.gender')}</label>
             <select
               id='gender'
               className='h-11 px-3 border border-gray-300 rounded-lg w-full bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition'
               value={formData.gender || ''}
               onChange={e => updateFormData({ gender: e.target.value })}>
-              <option value=''>Select Gender</option>
-              <option value='MALE'>Male</option>
-              <option value='FEMALE'>Female</option>
-              <option value='OTHER'>Other</option>
-              <option value='PREFER_NOT_TO_SAY'>Prefer not to say</option>
+              <option value=''>{t('commonFields.location.selectGender')}</option>
+              <option value='MALE'>{tEnum('MALE')}</option>
+              <option value='FEMALE'>{tEnum('FEMALE')}</option>
+              <option value='OTHER'>{tEnum('OTHER')}</option>
+              <option value='PREFER_NOT_TO_SAY'>{tEnum('PREFER_NOT_TO_SAY')}</option>
             </select>
             {errors.gender && (
               <p className='text-red-500 text-sm mt-1'>{errors.gender}</p>
@@ -315,10 +317,10 @@ const CommonFields: React.FC<FormProps> = ({
           </div>
 
           <div>
-            <label htmlFor='dateOfBirth' className='block text-sm font-medium mb-2'>Date of Birth</label>
+            <label htmlFor='dateOfBirth' className='block text-sm font-medium mb-2'>{t('commonFields.location.dateOfBirth')}</label>
             <input
               type='date'
-              placeholder='Date of Birth'
+              placeholder={t('commonFields.location.dateOfBirth')}
               value={formData.dateOfBirth || ''}
               onChange={e => updateFormData({ dateOfBirth: e.target.value })}
               className='h-11 px-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-primary focus:border-transparent transition'
@@ -333,11 +335,12 @@ const CommonFields: React.FC<FormProps> = ({
       {/* Skills & Experience */}
       <div>
         <h3 className='text-xl font-bold border-b pb-2 mb-6'>
-          Skills & Experience
+          {t('commonFields.skills.heading')}
         </h3>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
           <div>
             {(() => {
+              // Values are stored as-is (English); only the displayed name is translated
               const availableLanguages = [
                 'English',
                 'Hindi',
@@ -361,18 +364,20 @@ const CommonFields: React.FC<FormProps> = ({
                     .split(',')
                     .map((s: string) => s.trim())
                     .filter(Boolean)
+              const languageLabel = (lang: string) =>
+                availableLanguages.includes(lang) ? t(`commonFields.languageNames.${lang}`) : lang
 
               return (
                 <div>
-                  <label className='block text-sm font-medium mb-2'>Languages Known</label>
+                  <label className='block text-sm font-medium mb-2'>{t('commonFields.skills.languagesKnown')}</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant='outline'
                         className='h-11 w-full justify-between px-3'>
                         {selectedLanguages.length > 0
-                          ? `${selectedLanguages.length} selected`
-                          : 'Languages Known'}
+                          ? t('commonFields.skills.languagesSelected', { count: selectedLanguages.length })
+                          : t('commonFields.skills.languagesKnown')}
                         <span className='ml-2 text-gray-400'>▾</span>
                       </Button>
                     </PopoverTrigger>
@@ -391,7 +396,7 @@ const CommonFields: React.FC<FormProps> = ({
                                 updateFormData({ languages: next })
                               }}
                             />
-                            <span className='text-sm'>{lang}</span>
+                            <span className='text-sm'>{languageLabel(lang)}</span>
                           </label>
                         )
                       })}
@@ -400,7 +405,7 @@ const CommonFields: React.FC<FormProps> = ({
                   {selectedLanguages.length > 0 && (
                     <div className='flex flex-wrap gap-2 mt-2'>
                       {selectedLanguages.map(lang => (
-                        <Badge variant='secondary'>{lang}</Badge>
+                        <Badge variant='secondary'>{languageLabel(lang)}</Badge>
                       ))}
                     </div>
                   )}

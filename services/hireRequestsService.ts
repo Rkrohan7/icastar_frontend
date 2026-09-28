@@ -10,6 +10,7 @@ import {
   ApiResponse,
   HireRequestStats,
 } from '../types'
+import { translate } from '@/i18n'
 
 // Cache reads for 60s; any create/status-change/withdraw/remind clears the
 // whole `recruiter:hire-requests:` prefix so lists/stats reflect the change.
@@ -77,7 +78,7 @@ export const createHireRequest = async (
     return response.data.data
   }
 
-  throw new Error(response.data.error || 'Failed to create hire request')
+  throw new Error(response.data.error || translate('services.hireRequests.createFailed'))
 }
 
 /**
@@ -97,7 +98,7 @@ export const updateHireRequestStatus = async (
     return response.data.data
   }
 
-  throw new Error(response.data.error || 'Failed to update hire request status')
+  throw new Error(response.data.error || translate('services.hireRequests.updateStatusFailed'))
 }
 
 /**
@@ -109,7 +110,7 @@ export const withdrawHireRequest = async (id: number): Promise<void> => {
   )
 
   if (!response.data.success) {
-    throw new Error(response.data.error || 'Failed to withdraw hire request')
+    throw new Error(response.data.error || translate('services.hireRequests.withdrawFailed'))
   }
   invalidateCache('recruiter:hire-requests:')
 }
@@ -127,7 +128,7 @@ export const sendReminderEmail = async (id: number): Promise<HireRequest> => {
     return response.data.data
   }
 
-  throw new Error(response.data.error || 'Failed to send reminder')
+  throw new Error(response.data.error || translate('services.hireRequests.reminderFailed'))
 }
 
 /**

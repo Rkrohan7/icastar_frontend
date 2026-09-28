@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
-import uploadService, { UploadType } from '@/services/uploadService'
+import uploadService, { UploadType, UPLOAD_LIMITS_MB } from '@/services/uploadService'
 import Icon from '@/components/Icon'
+import { useTranslation } from '@/i18n'
 
 interface ImageUploadProps {
   currentImageUrl?: string
@@ -18,8 +19,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   label,
   onUploadSuccess,
   aspectRatio = 'square',
-  maxSizeMB = 5,
+  maxSizeMB = UPLOAD_LIMITS_MB.image,
 }) => {
+  const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImageUrl)
@@ -66,11 +68,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         )
       }
 
-      toast.success('Image uploaded successfully!')
+      toast.success(t('fileUpload.image.uploadSuccess'))
       onUploadSuccess(fileUrl)
     } catch (error) {
       console.error('Upload failed:', error)
-      toast.error('Failed to upload image. Please try again.')
+      toast.error(t('fileUpload.image.uploadFailed'))
       setPreviewUrl(currentImageUrl) // Revert to original
     } finally {
       setUploading(false)
@@ -100,13 +102,22 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     <div className="space-y-3">
       <label className="block text-sm font-semibold text-gray-700">{label}</label>
 
+      <p className="flex items-start gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-left">
+        <Icon name="Info" size={14} className="mt-0.5 flex-shrink-0" />
+        <span>
+          {t('fileUpload.image.hintBefore')}
+          <strong>{t('fileUpload.image.hintSize', { size: maxSizeMB })}</strong>
+          {t('fileUpload.image.hintAfter')}
+        </span>
+      </p>
+
       <div className="flex items-center gap-4">
         {/* Preview */}
         <div className={`relative ${getContainerClass()} border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50`}>
           {previewUrl ? (
             <img
               src={previewUrl}
-              alt="Preview"
+              alt={t('fileUpload.image.previewAlt')}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -142,7 +153,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             disabled={uploading}
             className="px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            {previewUrl ? 'Change Image' : 'Upload Image'}
+            {previewUrl ? t('fileUpload.image.change') : t('fileUpload.image.upload')}
           </button>
 
           {previewUrl && (
@@ -152,15 +163,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               disabled={uploading}
               className="px-4 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
             >
-              Remove
+              {t('common.actions.remove')}
             </button>
           )}
         </div>
       </div>
-
-      <p className="text-xs text-gray-500">
-        Supported: JPEG, PNG, WebP • Max size: {maxSizeMB}MB
-      </p>
     </div>
   )
 }

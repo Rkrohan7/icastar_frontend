@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { toast } from 'react-toastify'
 import Icon from '@/components/Icon'
+import { useTranslation } from '@/i18n'
 
 interface ShareLinkModalProps {
   open: boolean
@@ -16,10 +17,13 @@ const ShareLinkModal: React.FC<ShareLinkModalProps> = ({
   open,
   onClose,
   link,
-  title = 'Share',
-  description = 'Anyone with this link can open it — no login needed.',
+  title: titleProp,
+  description: descriptionProp,
 }) => {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
+  const title = titleProp ?? t('common.actions.share')
+  const description = descriptionProp ?? t('shareLinkModal.description')
 
   if (!open) return null
 
@@ -28,10 +32,10 @@ const ShareLinkModal: React.FC<ShareLinkModalProps> = ({
     try {
       await navigator.clipboard.writeText(link)
       setCopied(true)
-      toast.success('Link copied!')
+      toast.success(t('shareLinkModal.linkCopied'))
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('Could not copy link')
+      toast.error(t('shareLinkModal.copyFailed'))
     }
   }
 
@@ -52,7 +56,7 @@ const ShareLinkModal: React.FC<ShareLinkModalProps> = ({
           <button
             onClick={onClose}
             className='text-gray-400 hover:text-gray-600 transition-colors'
-            aria-label='Close'
+            aria-label={t('common.actions.close')}
           >
             <Icon name='X' size={20} />
           </button>
@@ -76,7 +80,7 @@ const ShareLinkModal: React.FC<ShareLinkModalProps> = ({
               }`}
             >
               <Icon name={copied ? 'Check' : 'Copy'} size={16} />
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('shareLinkModal.copied') : t('common.actions.copy')}
             </button>
           </div>
         </div>

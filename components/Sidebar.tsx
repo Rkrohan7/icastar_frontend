@@ -16,46 +16,48 @@ import {
 } from './icons/IconComponents'
 import logo from '../assets/icaster.png'
 import { UserRole } from '@/types/types'
+import { useTranslation } from '@/i18n'
 
 interface SidebarProps {
   isOpen: boolean
   setIsOpen: (isOpen: boolean) => void
 }
 
-// Define role-wise nav items
+// Define role-wise nav items (labelKey is the i18n key shown in the menu)
 const roleBasedNavItems: Record<
   string,
-  { page: Page; icon: any; path: string }[]
+  { page: Page; labelKey: string; icon: any; path: string }[]
 > = {
   [UserRole.RECRUITER]: [
-    { page: Page.Dashboard, icon: DashboardIcon, path: '/dashboard' },
-    { page: Page.Jobs, icon: BriefcaseIcon, path: '/my-jobs' },
-    { page: Page.Auditions, icon: MicVocal, path: '/recruiter/auditions' },
-    { page: Page.BrowseArtists, icon: SearchIcon, path: '/artists' },
-    { page: Page.Candidates, icon: Users, path: '/candidates' },
-    { page: Page.PastHires, icon: HistoryIcon, path: '/hires' },
+    { page: Page.Dashboard, labelKey: 'common.nav.dashboard', icon: DashboardIcon, path: '/dashboard' },
+    { page: Page.Jobs, labelKey: 'common.nav.jobs', icon: BriefcaseIcon, path: '/my-jobs' },
+    { page: Page.Auditions, labelKey: 'common.nav.auditions', icon: MicVocal, path: '/recruiter/auditions' },
+    { page: Page.BrowseArtists, labelKey: 'sidebar.nav.browseArtists', icon: SearchIcon, path: '/artists' },
+    { page: Page.Candidates, labelKey: 'sidebar.nav.candidates', icon: Users, path: '/candidates' },
+    { page: Page.PastHires, labelKey: 'sidebar.nav.pastHires', icon: HistoryIcon, path: '/hires' },
   ],
   [UserRole.ARTIST]: [
-    { page: Page.Dashboard, icon: DashboardIcon, path: '/dashboard' },
-    { page: Page.Jobs, icon: BriefcaseIcon, path: '/jobs' },
-    { page: Page.Bookmarks, icon: Bookmark, path: '/bookmarks' },
+    { page: Page.Dashboard, labelKey: 'common.nav.dashboard', icon: DashboardIcon, path: '/dashboard' },
+    { page: Page.Jobs, labelKey: 'common.nav.jobs', icon: BriefcaseIcon, path: '/jobs' },
+    { page: Page.Bookmarks, labelKey: 'common.nav.bookmarks', icon: Bookmark, path: '/bookmarks' },
     // {
     //   page: Page.VerifiedBadge,
     //   icon: BadgeCheck,
     //   path: '/verified-badge',
     // },
-    { page: Page.Auditions, icon: MicVocal, path: '/auditions' },
-    { page: Page.Applications, icon: FileText, path: '/applications' },
+    { page: Page.Auditions, labelKey: 'common.nav.auditions', icon: MicVocal, path: '/auditions' },
+    { page: Page.Applications, labelKey: 'common.nav.applications', icon: FileText, path: '/applications' },
     // { page: Page.Messages, icon: MessageSquare, path: '/messages' },
   ],
   [UserRole.ADMIN]: [
-    { page: Page.Dashboard, icon: DashboardIcon, path: '/dashboard' },
-    { page: Page.BrowseArtists, icon: SearchIcon, path: '/artists' },
-    { page: Page.Jobs, icon: BriefcaseIcon, path: '/jobs' },
+    { page: Page.Dashboard, labelKey: 'common.nav.dashboard', icon: DashboardIcon, path: '/dashboard' },
+    { page: Page.BrowseArtists, labelKey: 'sidebar.nav.browseArtists', icon: SearchIcon, path: '/artists' },
+    { page: Page.Jobs, labelKey: 'common.nav.jobs', icon: BriefcaseIcon, path: '/jobs' },
   ],
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const role = localStorage.getItem('role')
@@ -86,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         <button
           onClick={() => setIsOpen(false)}
           className='lg:hidden p-1 text-gray-500 hover:text-gray-800'
-          aria-label='Close menu'>
+          aria-label={t('sidebar.closeMenu')}>
           <XIcon className='h-6 w-6' />
         </button>
       </div>
@@ -116,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                       isActive ? 'text-primary' : 'text-gray-400'
                     }`}
                   />
-                  {item.page}
+                  {t(item.labelKey)}
                 </button>
               </li>
             )
@@ -128,12 +130,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       {role === UserRole.RECRUITER && (
         <div className='p-4 shrink-0'>
           <div className='bg-primary-light rounded-lg p-4 text-center'>
-            <h3 className='font-semibold text-gray-800'>Upgrade your Plan</h3>
+            <h3 className='font-semibold text-gray-800'>{t('sidebar.upgrade.title')}</h3>
             <p className='text-sm text-gray-600 mt-1 mb-3'>
-              Get access to premium features.
+              {t('sidebar.upgrade.description')}
             </p>
             <button className='w-full bg-primary text-white py-2 rounded-lg text-sm font-semibold hover:bg-primary-hover transition-colors'>
-              Upgrade Now
+              {t('sidebar.upgrade.button')}
             </button>
           </div>
         </div>

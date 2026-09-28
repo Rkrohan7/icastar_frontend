@@ -1,6 +1,7 @@
 import { api } from './apiClient'
 import { Artist } from '../types'
 import { cachedGet, buildCacheKey } from './cache'
+import { translate } from '@/i18n'
 
 // Read-only browse/suggestion/audience data — safe to cache briefly. Header +
 // list page + suggestions widget used to re-fetch the same query independently.
@@ -123,8 +124,8 @@ const toArtist = (dto: ArtistSuggestionDto): Artist => ({
     : (dto.portfolioItems && dto.portfolioItems.length > 0) ? dto.portfolioItems[0] : undefined,
   videoUrl: na(dto.videoUrl),
   profileCompletionPercentage: dto.profileCompletionPercentage,
-  category: dto.artistCategory || dto.artistType || 'Artist',
-  location: na(dto.location) || na(dto.workLocation) || 'Unknown',
+  category: dto.artistCategory || dto.artistType || translate('services.fallback.artist'),
+  location: na(dto.location) || na(dto.workLocation) || translate('services.fallback.unknown'),
   experienceYears: dto.experienceYears,
   experienceLevel: na(dto.experienceLevel),
   recruiterId: dto.recruiterId,

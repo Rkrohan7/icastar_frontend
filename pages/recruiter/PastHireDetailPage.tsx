@@ -9,11 +9,13 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Artist } from '../../types'
 import { getArtistProfileById } from '@/services/artistProfileService'
+import { useTranslation } from '@/i18n'
 
 const formatDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—'
 
 export const PastHireDetailPage = () => {
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const hire = location.state.hire
@@ -25,15 +27,15 @@ export const PastHireDetailPage = () => {
     return (
       <div className='text-center py-16'>
         <h3 className='text-lg font-medium text-gray-900'>
-          No Hire Details Found
+          {t('pastHireDetail.notFound.title')}
         </h3>
         <p className='mt-1 text-sm text-gray-500'>
-          Please go back and select a past hire to view details.
+          {t('pastHireDetail.notFound.description')}
         </p>
         <button
           onClick={() => navigate(-1)}
           className='mt-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover'>
-          Go to Past Hires
+          {t('pastHireDetail.notFound.button')}
         </button>
       </div>
     )
@@ -48,7 +50,7 @@ export const PastHireDetailPage = () => {
         const profile = await getArtistProfileById(hire.artistId)
         setArtistProfile(profile)
       } catch (e: any) {
-        setError(e?.message || 'Failed to load artist profile')
+        setError(e?.message || t('pastHireDetail.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -62,7 +64,7 @@ export const PastHireDetailPage = () => {
         <button
           onClick={() => navigate(-1)}
           className='text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors'
-          aria-label='Back to Past Hires'>
+          aria-label={t('pastHireDetail.backToPastHires')}>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='24'
@@ -77,7 +79,7 @@ export const PastHireDetailPage = () => {
             <path d='m12 19-7-7 7-7' />
           </svg>
         </button>
-        <h2 className='text-3xl font-bold text-gray-900'>Past Hire Details</h2>
+        <h2 className='text-3xl font-bold text-gray-900'>{t('pastHireDetail.title')}</h2>
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
@@ -97,10 +99,10 @@ export const PastHireDetailPage = () => {
               )}
               <div className='pt-2'>
                 <h3 className='text-2xl font-bold text-gray-900'>
-                  {artistProfile?.name || hire.artistName || 'Unknown Artist'}
+                  {artistProfile?.name || hire.artistName || t('pastHireDetail.unknownArtist')}
                 </h3>
                 <p className='text-md text-gray-600 leading-relaxed mt-2'>
-                  {artistProfile?.bio || 'No biography provided.'}
+                  {artistProfile?.bio || t('pastHireDetail.noBio')}
                 </p>
                 {error && (
                   <p className='text-sm text-red-600 mt-2'>{error}</p>
@@ -110,7 +112,7 @@ export const PastHireDetailPage = () => {
           </Card>
 
           <Card>
-            <h4 className='text-lg font-semibold text-gray-800 mb-4'>Skills</h4>
+            <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('common.labels.skills')}</h4>
             <div className='flex flex-wrap gap-2'>
               {(artistProfile?.skills || []).length > 0 ? (
                 (artistProfile?.skills || []).map(skill => (
@@ -121,7 +123,7 @@ export const PastHireDetailPage = () => {
                   </span>
                 ))
               ) : (
-                <span className='text-sm text-gray-500'>No skills listed.</span>
+                <span className='text-sm text-gray-500'>{t('pastHireDetail.noSkills')}</span>
               )}
             </div>
           </Card>
@@ -130,13 +132,13 @@ export const PastHireDetailPage = () => {
         <div className='lg:col-span-1 space-y-8'>
           <Card>
             <h4 className='text-lg font-semibold text-gray-800 mb-4'>
-              Hire Information
+              {t('pastHireDetail.hireInfo')}
             </h4>
             <ul className='space-y-4 text-sm'>
               <li className='flex items-start'>
                 <BriefcaseIcon className='h-5 w-5 text-gray-400 mr-3 mt-1 flex-shrink-0' />
                 <div>
-                  <span className='text-gray-500'>Hired for</span>
+                  <span className='text-gray-500'>{t('pastHireDetail.hiredFor')}</span>
                   <br />
                   <span className='text-gray-800 font-semibold'>
                     {hire.jobTitle}
@@ -146,7 +148,7 @@ export const PastHireDetailPage = () => {
               <li className='flex items-start'>
                 <CalendarIcon className='h-5 w-5 text-gray-400 mr-3 mt-1 flex-shrink-0' />
                 <div>
-                  <span className='text-gray-500'>Hired on</span>
+                  <span className='text-gray-500'>{t('pastHireDetail.hiredOn')}</span>
                   <br />
                   <span className='text-gray-800 font-semibold'>
                     {formatDate(hire.hiredAt)}
@@ -157,7 +159,7 @@ export const PastHireDetailPage = () => {
           </Card>
           <Card>
             <h4 className='text-lg font-semibold text-gray-800 mb-4'>
-              Contact & Links
+              {t('pastHireDetail.contactLinks')}
             </h4>
             <ul className='space-y-3 text-sm'>
               {(artistProfile?.email || hire.artistEmail) && (

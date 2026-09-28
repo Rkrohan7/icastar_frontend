@@ -7,6 +7,7 @@ import { Pagination } from '../../components/Pagination'
 import { useNavigate } from 'react-router-dom'
 import { browseArtists } from '../../services/recruiterArtistsService'
 import usePageParam from '../../hooks/usePageParam'
+import { useTranslation } from '@/i18n'
 
 // Remote data
 const ITEMS_PER_PAGE = 6
@@ -14,38 +15,42 @@ const ITEMS_PER_PAGE = 6
 const ArtistCard: React.FC<{ artist: Artist; onViewProfile: () => void }> = ({
   artist,
   onViewProfile,
-}) => (
-  <Card className='flex flex-col text-center items-center hover:-translate-y-1 transition-transform'>
-    <img
-      className='w-24 h-24 rounded-full mb-4 object-cover ring-2 ring-offset-2 ring-gray-100'
-      src={artist.avatarUrl}
-      alt={artist.name}
-    />
-    <div className="flex items-center gap-1">
-      <h3 className='text-lg font-bold text-gray-900'>{artist.name}</h3>
-      {artist.isVerified && <CheckCircleIcon className="h-4 w-4 text-blue-500" />}
-    </div>
-    <p className="text-sm font-medium text-primary mt-1">{artist.category || 'Artist'}</p>
+}) => {
+  const { t } = useTranslation()
+  return (
+    <Card className='flex flex-col text-center items-center hover:-translate-y-1 transition-transform'>
+      <img
+        className='w-24 h-24 rounded-full mb-4 object-cover ring-2 ring-offset-2 ring-gray-100'
+        src={artist.avatarUrl}
+        alt={artist.name}
+      />
+      <div className="flex items-center gap-1">
+        <h3 className='text-lg font-bold text-gray-900'>{artist.name}</h3>
+        {artist.isVerified && <CheckCircleIcon className="h-4 w-4 text-blue-500" />}
+      </div>
+      <p className="text-sm font-medium text-primary mt-1">{artist.category || t('browseArtists.card.artistFallback')}</p>
 
-    <div className="mt-4 w-full space-y-2 text-sm text-gray-600">
-      <div className="flex items-center justify-center gap-2">
-        <MapPinIcon className="h-4 w-4 text-gray-400" />
-        <span>{artist.location || 'Location not set'}</span>
+      <div className="mt-4 w-full space-y-2 text-sm text-gray-600">
+        <div className="flex items-center justify-center gap-2">
+          <MapPinIcon className="h-4 w-4 text-gray-400" />
+          <span>{artist.location || t('browseArtists.card.locationNotSet')}</span>
+        </div>
+        <div className="flex items-center justify-center gap-2">
+          <BriefcaseIcon className="h-4 w-4 text-gray-400" />
+          <span>{artist.experienceYears ? t('browseArtists.card.yearsExperience', { count: artist.experienceYears }) : t('browseArtists.card.experienceNotSpecified')}</span>
+        </div>
       </div>
-      <div className="flex items-center justify-center gap-2">
-        <BriefcaseIcon className="h-4 w-4 text-gray-400" />
-        <span>{artist.experienceYears ? `${artist.experienceYears} Years Experience` : 'Experience not specified'}</span>
-      </div>
-    </div>
-    <button
-      onClick={onViewProfile}
-      className='mt-6 w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
-      View Profile
-    </button>
-  </Card>
-)
+      <button
+        onClick={onViewProfile}
+        className='mt-6 w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
+        {t('common.actions.viewProfile')}
+      </button>
+    </Card>
+  )
+}
 
 export const BrowseArtistsPage = () => {
+  const { t } = useTranslation()
   const [currentPage, setCurrentPage] = usePageParam('page', 1)
   const [artists, setArtists] = useState<Artist[]>([])
   const [totalItems, setTotalItems] = useState(0)
@@ -104,7 +109,7 @@ export const BrowseArtistsPage = () => {
         setTotalItems(res.totalElements)
       } catch (e) {
         console.error('Failed to fetch artists', e)
-        setError('Failed to load artists')
+        setError('browseArtists.loadFailed') // translation key, rendered with t()
         setArtists([])
         setTotalItems(0)
       } finally {
@@ -118,7 +123,7 @@ export const BrowseArtistsPage = () => {
     <div>
       <div className='flex flex-col gap-4 mb-6'>
         <div className='flex flex-col md:flex-row justify-between md:items-center gap-4'>
-          <h2 className='text-3xl font-bold text-gray-900'>Browse Artists</h2>
+          <h2 className='text-3xl font-bold text-gray-900'>{t('browseArtists.title')}</h2>
           <div className='flex gap-2 items-center'>
             <div className='relative w-full md:max-w-xs'>
               <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
@@ -127,7 +132,7 @@ export const BrowseArtistsPage = () => {
               <input
                 type='text'
                 className='block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary'
-                placeholder='Search by skill...'
+                placeholder={t('browseArtists.searchPlaceholder')}
                 value={filters.skills}
                 onChange={e => handleFilterChange('skills', e.target.value)}
               />
@@ -137,7 +142,7 @@ export const BrowseArtistsPage = () => {
               className={`px-4 py-2 border rounded-lg text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-colors ${showFilters ? 'bg-primary text-white border-primary' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
             >
               <FilterIcon className="w-4 h-4" />
-              Filters
+              {t('common.actions.filters')}
             </button>
           </div>
         </div>
@@ -146,38 +151,38 @@ export const BrowseArtistsPage = () => {
         {showFilters && (
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Category</label>
+              <label className="text-sm font-medium text-gray-700">{t('common.labels.category')}</label>
               <select
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border"
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
               >
-                <option value="">All Categories</option>
+                <option value="">{t('browseArtists.filters.allCategories')}</option>
                 {Object.entries(ArtistCategory).map(([key, label]) => (
-                  <option key={key} value={label}>{label}</option>
+                  <option key={key} value={label}>{t(`browseArtists.categories.${key}`)}</option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Experience Level</label>
+              <label className="text-sm font-medium text-gray-700">{t('browseArtists.filters.experienceLevel')}</label>
               <select
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border"
                 value={filters.experienceLevel}
                 onChange={(e) => handleFilterChange('experienceLevel', e.target.value)}
               >
-                <option value="">Any Experience</option>
-                <option value="Entry Level">Entry Level (0-2 years)</option>
-                <option value="Mid Level">Mid Level (2-5 years)</option>
-                <option value="Senior Level">Senior Level (5+ years)</option>
+                <option value="">{t('browseArtists.filters.anyExperience')}</option>
+                <option value="Entry Level">{t('browseArtists.filters.entryLevel')}</option>
+                <option value="Mid Level">{t('browseArtists.filters.midLevel')}</option>
+                <option value="Senior Level">{t('browseArtists.filters.seniorLevel')}</option>
               </select>
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Location</label>
+              <label className="text-sm font-medium text-gray-700">{t('common.labels.location')}</label>
               <input
                 type="text"
-                placeholder="City, State"
+                placeholder={t('browseArtists.filters.locationPlaceholder')}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border"
                 value={filters.location}
                 onChange={(e) => handleFilterChange('location', e.target.value)}
@@ -193,20 +198,20 @@ export const BrowseArtistsPage = () => {
                   checked={filters.isVerified}
                   onChange={(e) => handleFilterChange('isVerified', e.target.checked)}
                 />
-                <label htmlFor="verifiedOnly" className="text-sm text-gray-700">Verified Artists Only</label>
+                <label htmlFor="verifiedOnly" className="text-sm text-gray-700">{t('browseArtists.filters.verifiedOnly')}</label>
               </div>
               <button
                 onClick={clearFilters}
                 className="text-sm text-red-600 hover:text-red-800 font-medium text-left"
               >
-                Clear all filters
+                {t('browseArtists.filters.clearAll')}
               </button>
             </div>
           </div>
         )}
       </div>
       {error && (
-        <div className='text-red-600 text-sm mb-4'>{error}</div>
+        <div className='text-red-600 text-sm mb-4'>{t(error)}</div>
       )}
       <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
         {artists.map(artist => (
@@ -217,10 +222,10 @@ export const BrowseArtistsPage = () => {
           />
         ))}
         {loading && (
-          <div className='col-span-full text-center text-gray-500'>Loading...</div>
+          <div className='col-span-full text-center text-gray-500'>{t('common.status.loading')}</div>
         )}
         {!loading && artists.length === 0 && (
-          <div className='col-span-full text-center text-gray-500'>No artists found</div>
+          <div className='col-span-full text-center text-gray-500'>{t('browseArtists.empty')}</div>
         )}
       </div>
       <Pagination

@@ -14,11 +14,13 @@ import { Card } from './Card'
 import { ProjectCastingReport as Report } from '../types'
 import recruiterProjectsService, {
   PROJECT_TYPE_LABELS,
-  ROLE_TYPE_LABELS,
   artistPublicProfileUrl,
   mapSelectedArtist,
 } from '../services/recruiterProjectsService'
 import recruiterJobsService from '../services/recruiterJobsService'
+import { translate, useTranslation } from '@/i18n'
+
+const TABLE_HEADER_KEYS = ['project', 'progress', 'openJobs', 'applications', 'artistsSelected'] as const
 
 // Builds the report from the recruiter's jobs when the report endpoint is not available.
 const buildReportFromJobs = async (): Promise<Report[]> => {
@@ -31,7 +33,7 @@ const buildReportFromJobs = async (): Promise<Report[]> => {
     if (!r) {
       r = {
         projectId,
-        projectName: job.projectName ?? job.project?.name ?? `Project #${projectId}`,
+        projectName: job.projectName ?? job.project?.name ?? translate('projectCastingReport.projectFallback', { id: projectId }),
         projectType: job.projectType ?? job.project?.projectType,
         totalCharacters: 0,
         castCharacters: 0,
@@ -68,6 +70,7 @@ const buildReportFromJobs = async (): Promise<Report[]> => {
 
 export const ProjectCastingReport: React.FC = () => {
   const navigate = useNavigate()
+  const { t, tEnum } = useTranslation()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<number | null>(null)
@@ -101,38 +104,38 @@ export const ProjectCastingReport: React.FC = () => {
     <Card>
       <div className='flex items-center justify-between mb-4'>
         <div>
-          <h3 className='text-lg font-semibold text-gray-900'>Project-wise Casting Report</h3>
-          <p className='text-sm text-gray-500 mt-1'>How many characters are cast in each project</p>
+          <h3 className='text-lg font-semibold text-gray-900'>{t('projectCastingReport.title')}</h3>
+          <p className='text-sm text-gray-500 mt-1'>{t('projectCastingReport.subtitle')}</p>
         </div>
         <button
           onClick={() => navigate('/my-jobs')}
           className='text-sm font-medium text-amber-600 hover:text-amber-700'>
-          Manage Projects →
+          {t('projectCastingReport.manageProjects')}
         </button>
       </div>
 
       {loading ? (
-        <p className='py-10 text-center text-sm text-gray-500'>Loading report...</p>
+        <p className='py-10 text-center text-sm text-gray-500'>{t('projectCastingReport.loading')}</p>
       ) : reports.length === 0 ? (
         <div className='py-10 text-center'>
-          <p className='text-sm text-gray-500'>No project-wise jobs yet.</p>
+          <p className='text-sm text-gray-500'>{t('projectCastingReport.empty')}</p>
           <button
             onClick={() => navigate('/my-jobs')}
             className='mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700'>
-            Post a job for a project
+            {t('projectCastingReport.emptyCta')}
           </button>
         </div>
       ) : (
         <>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-6'>
-            {[
-              ['Projects', totals.projects],
-              ['Characters', totals.characters],
-              ['Characters Cast', `${totals.cast}/${totals.characters}`],
-              ['Applications', totals.applications],
-            ].map(([label, val]) => (
-              <div key={label} className='rounded-lg bg-gray-50 px-4 py-3'>
-                <p className='text-xs font-medium text-gray-500 uppercase tracking-wide'>{label}</p>
+            {([
+              ['projects', totals.projects],
+              ['characters', totals.characters],
+              ['charactersCast', `${totals.cast}/${totals.characters}`],
+              ['applications', totals.applications],
+            ] as const).map(([key, val]) => (
+              <div key={key} className='rounded-lg bg-gray-50 px-4 py-3'>
+                <p className='text-xs font-medium text-gray-500 uppercase tracking-wide'>{t(`projectCastingReport.stats.${key}`)}</p>
                 <p className='text-xl font-bold text-gray-900 mt-1'>{val}</p>
               </div>
             ))}
@@ -146,8 +149,8 @@ export const ProjectCastingReport: React.FC = () => {
                 <YAxis type='category' dataKey='project' stroke='#9ca3af' fontSize={12} width={120} />
                 <Tooltip cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey='Cast' stackId='c' fill='#10B981' maxBarSize={24} />
-                <Bar dataKey='Pending' stackId='c' fill='#E5E7EB' radius={[0, 6, 6, 0]} maxBarSize={24} />
+                <Bar dataKey='Cast' name={t('projectCastingReport.chart.cast')} stackId='c' fill='#10B981' maxBarSize={24} />
+                <Bar dataKey='Pending' name={t('projectCastingReport.chart.pending')} stackId='c' fill='#E5E7EB' radius={[0, 6, 6, 0]} maxBarSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -156,8 +159,8 @@ export const ProjectCastingReport: React.FC = () => {
             <table className='min-w-full divide-y divide-gray-200'>
               <thead className='bg-gray-50'>
                 <tr>
-                  {['Project', 'Casting Progress', 'Open Jobs', 'Applications', 'Artists Selected', ''].map(h => (
-                    <th key={h} className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>{h}</th>
+                  {[...TABLE_HEADER_KEYS, ''].map(h => (
+                    <th key={h} className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>{h && t(`projectCastingReport.table.${h}`)}</th>
                   ))}
                 </tr>
               </thead>
@@ -171,7 +174,7 @@ export const ProjectCastingReport: React.FC = () => {
                         <td className='px-4 py-3 whitespace-nowrap'>
                           <div className='text-sm font-semibold text-gray-900'>{r.projectName}</div>
                           {r.projectType && (
-                            <div className='text-xs text-gray-500'>{PROJECT_TYPE_LABELS[r.projectType] ?? r.projectType}</div>
+                            <div className='text-xs text-gray-500'>{PROJECT_TYPE_LABELS[r.projectType] ? t(`projectCastingFields.projectTypes.${r.projectType}`) : r.projectType}</div>
                           )}
                         </td>
                         <td className='px-4 py-3 whitespace-nowrap'>
@@ -189,7 +192,7 @@ export const ProjectCastingReport: React.FC = () => {
                           <button
                             onClick={() => setExpanded(isOpen ? null : r.projectId)}
                             className='text-sm font-medium text-amber-600 hover:text-amber-700'>
-                            {isOpen ? 'Hide' : 'Characters'}
+                            {isOpen ? t('projectCastingReport.table.hide') : t('projectCastingReport.table.characters')}
                           </button>
                         </td>
                       </tr>
@@ -201,14 +204,14 @@ export const ProjectCastingReport: React.FC = () => {
                                 <li key={c.characterId ?? c.jobId ?? i} className='py-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm'>
                                   <span className='font-semibold text-gray-900 min-w-[10rem]'>{c.characterName}</span>
                                   <span className='text-gray-500 min-w-[6rem]'>
-                                    {c.roleType ? ROLE_TYPE_LABELS[c.roleType] ?? c.roleType : '—'}
+                                    {c.roleType ? tEnum(c.roleType) : '—'}
                                   </span>
                                   <span className='text-gray-500 min-w-[7rem]'>
-                                    {c.jobId ? `${c.applications ?? 0} applications` : 'No job posted'}
+                                    {c.jobId ? t('projectCastingReport.character.applications', { count: c.applications ?? 0 }) : t('projectCastingReport.character.noJob')}
                                   </span>
                                   <span className='flex flex-wrap gap-3'>
                                     {c.selectedArtists.length === 0 ? (
-                                      <span className='text-xs italic text-gray-400'>Not cast yet</span>
+                                      <span className='text-xs italic text-gray-400'>{t('projectCastingReport.character.notCastYet')}</span>
                                     ) : (
                                       c.selectedArtists.map((a, i) => !a.userId ? (
                                         <span key={`guest-${i}`} className='font-medium text-gray-700'>{a.name}</span>

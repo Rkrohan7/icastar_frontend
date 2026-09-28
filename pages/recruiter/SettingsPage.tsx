@@ -3,6 +3,7 @@ import { Card } from '../../components/Card'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import api from '../../services/apiClient'
+import { useTranslation } from '@/i18n'
 
 interface InputFieldProps {
   label: string
@@ -71,6 +72,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ label, enabled, setEnabled,
 )
 
 export const SettingsPage = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState({
     newApplicants: true,
@@ -100,23 +102,23 @@ export const SettingsPage = () => {
     const errors: Record<string, string> = {}
 
     if (!passwordForm.currentPassword) {
-      errors.currentPassword = 'Current password is required'
+      errors.currentPassword = t('settings.errors.currentRequired')
     }
 
     if (!passwordForm.newPassword) {
-      errors.newPassword = 'New password is required'
+      errors.newPassword = t('settings.errors.newRequired')
     } else if (passwordForm.newPassword.length < 8) {
-      errors.newPassword = 'Password must be at least 8 characters'
+      errors.newPassword = t('settings.errors.minLength', { count: 8 })
     }
 
     if (!passwordForm.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your new password'
+      errors.confirmPassword = t('settings.errors.confirmRequired')
     } else if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match'
+      errors.confirmPassword = t('settings.errors.mismatch')
     }
 
     if (passwordForm.currentPassword === passwordForm.newPassword && passwordForm.newPassword) {
-      errors.newPassword = 'New password must be different from current password'
+      errors.newPassword = t('settings.errors.sameAsCurrent')
     }
 
     setPasswordErrors(errors)
@@ -135,7 +137,7 @@ export const SettingsPage = () => {
       })
 
       if (response.data?.success) {
-        toast.success(response.data.message || 'Password changed successfully')
+        toast.success(response.data.message || t('settings.toast.passwordChanged'))
         setPasswordForm({
           currentPassword: '',
           newPassword: '',
@@ -143,7 +145,7 @@ export const SettingsPage = () => {
         })
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to change password'
+      const errorMessage = error.response?.data?.message || t('settings.toast.passwordChangeFailed')
       toast.error(errorMessage)
 
       // Set specific field errors based on API response
@@ -158,7 +160,7 @@ export const SettingsPage = () => {
   }
 
   const handleSave = () => {
-    toast.success('Settings saved successfully!')
+    toast.success(t('settings.toast.saved'))
   }
 
   const handleCancel = () => {
@@ -167,20 +169,19 @@ export const SettingsPage = () => {
 
   return (
     <div className='max-w-4xl mx-auto'>
-      <h2 className='text-3xl font-bold text-gray-900 mb-6'>Settings</h2>
+      <h2 className='text-3xl font-bold text-gray-900 mb-6'>{t('common.nav.settings')}</h2>
 
       <div className='space-y-8'>
         <Card>
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>
-            Change Password
+            {t('settings.password.title')}
           </h3>
           <p className='text-sm text-gray-500 mb-6'>
-            For your security, we recommend using a strong password that you're
-            not using anywhere else.
+            {t('settings.password.description')}
           </p>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
             <InputField
-              label='Current Password'
+              label={t('settings.password.current')}
               id='currentPassword'
               type='password'
               value={passwordForm.currentPassword}
@@ -190,7 +191,7 @@ export const SettingsPage = () => {
             />
             <div></div>
             <InputField
-              label='New Password'
+              label={t('settings.password.new')}
               id='newPassword'
               type='password'
               value={passwordForm.newPassword}
@@ -199,7 +200,7 @@ export const SettingsPage = () => {
               error={passwordErrors.newPassword}
             />
             <InputField
-              label='Confirm New Password'
+              label={t('settings.password.confirm')}
               id='confirmPassword'
               type='password'
               value={passwordForm.confirmPassword}
@@ -212,38 +213,38 @@ export const SettingsPage = () => {
                 onClick={handleUpdatePassword}
                 disabled={isChangingPassword}
                 className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-lg shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed'>
-                {isChangingPassword ? 'Updating...' : 'Update Password'}
+                {isChangingPassword ? t('common.actions.updating') : t('settings.password.update')}
               </button>
             </div>
           </div>
         </Card>
         <Card>
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>
-            Email Notifications
+            {t('settings.emailNotifications.title')}
           </h3>
           <p className='text-sm text-gray-500 mb-6'>
-            Manage how you receive notifications to your email address.
+            {t('settings.emailNotifications.description')}
           </p>
           <div className='space-y-6'>
             <ToggleSwitch
-              label='New Applicants'
-              description='When a new candidate applies to one of your jobs.'
+              label={t('settings.emailNotifications.newApplicants.label')}
+              description={t('settings.emailNotifications.newApplicants.description')}
               enabled={notifications.newApplicants}
               setEnabled={val =>
                 setNotifications(p => ({ ...p, newApplicants: val }))
               }
             />
             <ToggleSwitch
-              label='Direct Messages'
-              description='For new chat messages from artists.'
+              label={t('settings.emailNotifications.directMessages.label')}
+              description={t('settings.emailNotifications.directMessages.description')}
               enabled={notifications.messages}
               setEnabled={val =>
                 setNotifications(p => ({ ...p, messages: val }))
               }
             />
             <ToggleSwitch
-              label='Weekly Summary'
-              description='A weekly report of your job performance and applicants.'
+              label={t('settings.emailNotifications.weeklySummary.label')}
+              description={t('settings.emailNotifications.weeklySummary.description')}
               enabled={notifications.weeklySummary}
               setEnabled={val =>
                 setNotifications(p => ({ ...p, weeklySummary: val }))
@@ -257,12 +258,12 @@ export const SettingsPage = () => {
         <button
           onClick={handleCancel}
           className='px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
-          Cancel
+          {t('common.actions.cancel')}
         </button>
         <button
           onClick={handleSave}
           className='inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-lg shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary'>
-          Save Settings
+          {t('settings.saveSettings')}
         </button>
       </div>
     </div>

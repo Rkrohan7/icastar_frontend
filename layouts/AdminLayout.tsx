@@ -20,9 +20,12 @@ import {
 } from '../components/icons/IconComponents'
 import { toast } from 'react-toastify'
 import userService from '../services/userService'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useTranslation } from '@/i18n'
 
 interface AdminNavItem {
-  name: string
+  // Translation key for the display name; also used as the item's stable id
+  labelKey: string
   path: string
   icon: React.ComponentType<{ className?: string }>
   badge?: string | number
@@ -30,6 +33,7 @@ interface AdminNavItem {
 }
 
 export const AdminLayout: React.FC = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -37,86 +41,86 @@ export const AdminLayout: React.FC = () => {
 
   const navItems: AdminNavItem[] = [
     {
-      name: 'Dashboard',
+      labelKey: 'common.nav.dashboard',
       path: '/admin/dashboard',
       icon: DashboardIcon,
     },
     {
-      name: 'User Management',
+      labelKey: 'adminLayout.nav.userManagement',
       path: '/admin/users',
       icon: UsersIcon,
       children: [
-        { name: 'Recruiters', path: '/admin/recruiters', icon: BriefcaseIcon },
-        { name: 'Artists', path: '/admin/artists', icon: MicVocal },
+        { labelKey: 'adminLayout.nav.recruiters', path: '/admin/recruiters', icon: BriefcaseIcon },
+        { labelKey: 'adminLayout.nav.artists', path: '/admin/artists', icon: MicVocal },
       ],
     },
     {
-      name: 'Jobs Management',
+      labelKey: 'adminLayout.nav.jobsManagement',
       path: '/admin/jobs-mgmt',
       icon: BriefcaseIcon,
       children: [
-        { name: 'All Jobs', path: '/admin/jobs', icon: BriefcaseIcon },
-        { name: 'Job Approvals', path: '/admin/jobs/approvals', icon: ShieldCheckIcon },
-        { name: 'Job Categories', path: '/admin/jobs/categories', icon: FileTextIcon },
+        { labelKey: 'adminLayout.nav.allJobs', path: '/admin/jobs', icon: BriefcaseIcon },
+        { labelKey: 'adminLayout.nav.jobApprovals', path: '/admin/jobs/approvals', icon: ShieldCheckIcon },
+        { labelKey: 'adminLayout.nav.jobCategories', path: '/admin/jobs/categories', icon: FileTextIcon },
       ],
     },
     {
-      name: 'Auditions',
+      labelKey: 'common.nav.auditions',
       path: '/admin/auditions',
       icon: MicVocal,
       children: [
-        { name: 'All Auditions', path: '/admin/auditions/all', icon: MicVocal },
-        { name: 'Audition Approvals', path: '/admin/auditions/approvals', icon: ShieldCheckIcon },
+        { labelKey: 'adminLayout.nav.allAuditions', path: '/admin/auditions/all', icon: MicVocal },
+        { labelKey: 'adminLayout.nav.auditionApprovals', path: '/admin/auditions/approvals', icon: ShieldCheckIcon },
       ],
     },
     {
-      name: 'Applications',
+      labelKey: 'common.nav.applications',
       path: '/admin/applications',
       icon: FileTextIcon,
       children: [
-        { name: 'Job Applications', path: '/admin/applications/jobs', icon: BriefcaseIcon },
-        { name: 'Audition Applications', path: '/admin/applications/auditions', icon: MicVocal },
-        { name: 'Interviews', path: '/admin/applications/interviews', icon: CalendarIcon },
+        { labelKey: 'adminLayout.nav.jobApplications', path: '/admin/applications/jobs', icon: BriefcaseIcon },
+        { labelKey: 'adminLayout.nav.auditionApplications', path: '/admin/applications/auditions', icon: MicVocal },
+        { labelKey: 'adminLayout.nav.interviews', path: '/admin/applications/interviews', icon: CalendarIcon },
       ],
     },
     {
-      name: 'Content Moderation',
+      labelKey: 'adminLayout.nav.contentModeration',
       path: '/admin/content',
       icon: ImageIcon,
       children: [
-        { name: 'Artist Portfolios', path: '/admin/artists', icon: ImageIcon },
-        { name: 'Reported Content', path: '/admin/content/reports', icon: ShieldCheckIcon },
+        { labelKey: 'adminLayout.nav.artistPortfolios', path: '/admin/artists', icon: ImageIcon },
+        { labelKey: 'adminLayout.nav.reportedContent', path: '/admin/content/reports', icon: ShieldCheckIcon },
       ],
     },
     {
-      name: 'Payments & Credits',
+      labelKey: 'adminLayout.nav.paymentsCredits',
       path: '/admin/payments',
       icon: CreditCardIcon,
       children: [
-        { name: 'Transactions', path: '/admin/payments/transactions', icon: CreditCardIcon },
-        { name: 'Credits Usage', path: '/admin/payments/credits', icon: CreditCardIcon },
-        { name: 'Payouts', path: '/admin/payments/payouts', icon: CreditCardIcon },
+        { labelKey: 'adminLayout.nav.transactions', path: '/admin/payments/transactions', icon: CreditCardIcon },
+        { labelKey: 'adminLayout.nav.creditsUsage', path: '/admin/payments/credits', icon: CreditCardIcon },
+        { labelKey: 'adminLayout.nav.payouts', path: '/admin/payments/payouts', icon: CreditCardIcon },
       ],
     },
     {
-      name: 'Blog',
+      labelKey: 'adminLayout.nav.blog',
       path: '/admin/blogs',
       icon: FileTextIcon,
     },
     {
-      name: 'Reports & Analytics',
+      labelKey: 'adminLayout.nav.reportsAnalytics',
       path: '/admin/reports',
       icon: ChartBarIcon,
     },
     {
-      name: 'Settings',
+      labelKey: 'common.nav.settings',
       path: '/admin/settings',
       icon: SettingsIcon,
       children: [
-        { name: 'Platform Config', path: '/admin/config', icon: SettingsIcon },
-        { name: 'Roles & Permissions', path: '/admin/settings/roles', icon: ShieldCheckIcon },
-        { name: 'Categories', path: '/admin/settings/categories', icon: FileTextIcon },
-        { name: 'Skills', path: '/admin/settings/skills', icon: FileTextIcon },
+        { labelKey: 'adminLayout.nav.platformConfig', path: '/admin/config', icon: SettingsIcon },
+        { labelKey: 'adminLayout.nav.rolesPermissions', path: '/admin/settings/roles', icon: ShieldCheckIcon },
+        { labelKey: 'adminLayout.nav.categories', path: '/admin/settings/categories', icon: FileTextIcon },
+        { labelKey: 'common.labels.skills', path: '/admin/settings/skills', icon: FileTextIcon },
       ],
     },
   ]
@@ -147,9 +151,9 @@ export const AdminLayout: React.FC = () => {
           {sidebarOpen ? (
             <div>
               <h1 className='text-xl font-bold text-[#E36A3A]'>
-                iCastar Admin
+                {t('adminLayout.brand')}
               </h1>
-              <p className='text-xs text-gray-500 mt-0.5'>System Control Panel</p>
+              <p className='text-xs text-gray-500 mt-0.5'>{t('adminLayout.controlPanel')}</p>
             </div>
           ) : (
             <ShieldCheckIcon className='h-8 w-8 text-[#E36A3A]' />
@@ -168,7 +172,7 @@ export const AdminLayout: React.FC = () => {
               <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
               <input
                 type='text'
-                placeholder='Search...'
+                placeholder={t('adminLayout.searchPlaceholder')}
                 className='w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#E36A3A] text-sm'
               />
             </div>
@@ -178,11 +182,11 @@ export const AdminLayout: React.FC = () => {
         {/* Navigation */}
         <nav className='flex-1 overflow-y-auto px-2 py-4 space-y-1'>
           {navItems.map((item) => (
-            <div key={item.name}>
+            <div key={item.labelKey}>
               <button
                 onClick={() => {
                   if (item.children) {
-                    toggleSection(item.name)
+                    toggleSection(item.labelKey)
                   } else {
                     navigate(item.path)
                   }
@@ -194,7 +198,7 @@ export const AdminLayout: React.FC = () => {
                 }`}>
                 <div className='flex items-center gap-3'>
                   <item.icon className='h-5 w-5 flex-shrink-0' />
-                  {sidebarOpen && <span className='text-sm font-medium'>{item.name}</span>}
+                  {sidebarOpen && <span className='text-sm font-medium'>{t(item.labelKey)}</span>}
                 </div>
                 {sidebarOpen && (
                   <div className='flex items-center gap-2'>
@@ -206,7 +210,7 @@ export const AdminLayout: React.FC = () => {
                     {item.children && (
                       <svg
                         className={`h-4 w-4 transition-transform ${
-                          expandedSections.includes(item.name) ? 'rotate-180' : ''
+                          expandedSections.includes(item.labelKey) ? 'rotate-180' : ''
                         }`}
                         fill='none'
                         viewBox='0 0 24 24'
@@ -219,11 +223,11 @@ export const AdminLayout: React.FC = () => {
               </button>
 
               {/* Submenu */}
-              {item.children && sidebarOpen && expandedSections.includes(item.name) && (
+              {item.children && sidebarOpen && expandedSections.includes(item.labelKey) && (
                 <div className='ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-2'>
                   {item.children.map((child) => (
                     <button
-                      key={child.name}
+                      key={child.labelKey}
                       onClick={() => navigate(child.path)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
                         isActive(child.path)
@@ -232,7 +236,7 @@ export const AdminLayout: React.FC = () => {
                       }`}>
                       <div className='flex items-center gap-2'>
                         <child.icon className='h-4 w-4' />
-                        <span>{child.name}</span>
+                        <span>{t(child.labelKey)}</span>
                       </div>
                       {child.badge && (
                         <span className='bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full'>
@@ -255,8 +259,8 @@ export const AdminLayout: React.FC = () => {
                 AD
               </div>
               <div className='flex-1'>
-                <p className='text-sm font-medium text-gray-800'>Admin User</p>
-                <p className='text-xs text-gray-500'>Super Admin</p>
+                <p className='text-sm font-medium text-gray-800'>{t('adminLayout.user.name')}</p>
+                <p className='text-xs text-gray-500'>{t('adminLayout.user.role')}</p>
               </div>
             </div>
           ) : (
@@ -270,13 +274,13 @@ export const AdminLayout: React.FC = () => {
               // Clears tokens/localStorage and wipes the API response cache,
               // so the next session can't read the previous admin's data.
               userService.logout()
-              toast.success('You have been logged out successfully')
+              toast.success(t('adminLayout.loggedOut'))
               navigate('/auth', { replace: true })
             }}
-            title='Logout'
+            title={t('common.actions.logout')}
             className='w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium text-white'>
             <LogOutIcon className='h-4 w-4' />
-            {sidebarOpen && <span>Logout</span>}
+            {sidebarOpen && <span>{t('common.actions.logout')}</span>}
           </button>
         </div>
       </aside>
@@ -287,14 +291,18 @@ export const AdminLayout: React.FC = () => {
         <header className='bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm'>
           <div>
             <h2 className='text-2xl font-bold text-gray-900'>
-              {navItems
-                .flatMap((item) => [item, ...(item.children || [])])
-                .find((item) => item.path === location.pathname)?.name || 'Dashboard'}
+              {t(
+                navItems
+                  .flatMap((item) => [item, ...(item.children || [])])
+                  .find((item) => item.path === location.pathname)?.labelKey || 'common.nav.dashboard'
+              )}
             </h2>
-            <p className='text-sm text-gray-500 mt-0.5'>Manage and monitor your platform</p>
+            <p className='text-sm text-gray-500 mt-0.5'>{t('adminLayout.headerSubtitle')}</p>
           </div>
 
           <div className='flex items-center gap-4'>
+            <LanguageSwitcher />
+
             {/* Notifications */}
             <button className='relative p-2 hover:bg-gray-100 rounded-lg transition-colors'>
               <BellIcon className='h-6 w-6 text-gray-600' />
@@ -304,7 +312,7 @@ export const AdminLayout: React.FC = () => {
             {/* Quick Actions */}
             <button className='px-4 py-2 bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] transition-colors font-medium text-sm flex items-center gap-2'>
               <ShieldCheckIcon className='h-4 w-4' />
-              Quick Action
+              {t('adminLayout.quickAction')}
             </button>
           </div>
         </header>

@@ -5,7 +5,9 @@ import { UsersIcon } from '../../components/icons/IconComponents'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { recruiterApplicantsService } from '../../services/recruiterApplicantsService'
 import { toast } from 'react-toastify'
+import { useTranslation } from '@/i18n'
 const StatusBadge: React.FC<{ status: Applicant['status'] }> = ({ status }) => {
+  const { tEnum } = useTranslation()
   const baseClasses =
     'px-2.5 py-1 text-xs font-semibold rounded-full inline-block'
   const statusClasses = {
@@ -16,11 +18,12 @@ const StatusBadge: React.FC<{ status: Applicant['status'] }> = ({ status }) => {
     Rejected: 'bg-red-100 text-red-800',
   }
   return (
-    <span className={`${baseClasses} ${statusClasses[status]}`}>{status}</span>
+    <span className={`${baseClasses} ${statusClasses[status]}`}>{tEnum(status)}</span>
   )
 }
 
 export const ApplicantsPage = () => {
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const [applicants, setApplicants] = useState<Applicant[]>([])
@@ -42,8 +45,8 @@ export const ApplicantsPage = () => {
         setApplicants(data as Applicant[])
       } catch (err: any) {
         console.error('Failed to fetch applicants:', err)
-        setError(err?.message || 'Failed to load applicants')
-        toast.error('Failed to load applicants. Please try again.')
+        setError(err?.message || t('applicants.loadFailed'))
+        toast.error(t('applicants.loadFailedToast'))
       } finally {
         setLoading(false)
       }
@@ -55,11 +58,11 @@ export const ApplicantsPage = () => {
   if (!job) {
     return (
       <div className='text-center py-16'>
-        <p className='text-gray-500'>No job selected</p>
+        <p className='text-gray-500'>{t('applicants.noJobSelected')}</p>
         <button
           onClick={() => navigate(-1)}
           className='mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90'>
-          Go Back
+          {t('common.actions.goBack')}
         </button>
       </div>
     )
@@ -77,7 +80,7 @@ export const ApplicantsPage = () => {
         <button
           onClick={() => navigate(-1)}
           className='text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors'
-          aria-label='Back to Jobs'>
+          aria-label={t('applicants.backToJobs')}>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='24'
@@ -93,7 +96,7 @@ export const ApplicantsPage = () => {
           </svg>
         </button>
         <h2 className='text-3xl font-bold text-gray-900'>
-          Applicants for "{job.title}"
+          {t('applicants.title', { title: job.title })}
         </h2>
       </div>
       {error && (
@@ -151,7 +154,7 @@ export const ApplicantsPage = () => {
                           {applicant.name}
                         </div>
                         <div className='text-xs text-gray-500'>
-                          Applied {applicant.appliedDate}
+                          {t('applicants.appliedOn', { date: applicant.appliedDate })}
                         </div>
                       </div>
                     </div>
@@ -159,7 +162,7 @@ export const ApplicantsPage = () => {
                   </div>
 
                   <div className='mb-3'>
-                    <div className='text-xs font-medium text-gray-500 mb-2'>Skills</div>
+                    <div className='text-xs font-medium text-gray-500 mb-2'>{t('common.labels.skills')}</div>
                     <div className='flex flex-wrap gap-1.5'>
                       {applicant.skills.slice(0, 3).map(skill => (
                         <span
@@ -179,7 +182,7 @@ export const ApplicantsPage = () => {
                   <button
                     onClick={() => handleViewProfile(applicant)}
                     className='w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
-                    View Profile
+                    {t('common.actions.viewProfile')}
                   </button>
                 </div>
               ))}
@@ -193,20 +196,20 @@ export const ApplicantsPage = () => {
                     <th
                       scope='col'
                       className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Candidate
+                      {t('applicants.candidate')}
                     </th>
                     <th
                       scope='col'
                       className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Skills
+                      {t('common.labels.skills')}
                     </th>
                     <th
                       scope='col'
                       className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Status
+                      {t('common.labels.status')}
                     </th>
                     <th scope='col' className='relative px-6 py-3'>
-                      <span className='sr-only'>View</span>
+                      <span className='sr-only'>{t('common.actions.view')}</span>
                     </th>
                   </tr>
                 </thead>
@@ -227,7 +230,7 @@ export const ApplicantsPage = () => {
                               {applicant.name}
                             </div>
                             <div className='text-sm text-gray-500'>
-                              Applied {applicant.appliedDate}
+                              {t('applicants.appliedOn', { date: applicant.appliedDate })}
                             </div>
                           </div>
                         </div>
@@ -255,7 +258,7 @@ export const ApplicantsPage = () => {
                         <button
                           onClick={() => handleViewProfile(applicant)}
                           className='px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
-                          View Profile
+                          {t('common.actions.viewProfile')}
                         </button>
                       </td>
                     </tr>
@@ -268,10 +271,10 @@ export const ApplicantsPage = () => {
           <div className='text-center py-16'>
             <UsersIcon className='mx-auto h-12 w-12 text-gray-400' />
             <h3 className='mt-2 text-lg font-medium text-gray-900'>
-              No Applicants Yet
+              {t('applicants.empty.title')}
             </h3>
             <p className='mt-1 text-sm text-gray-500'>
-              Check back later or boost this job to attract more candidates.
+              {t('applicants.empty.description')}
             </p>
           </div>
         )}

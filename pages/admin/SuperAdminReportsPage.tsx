@@ -9,6 +9,7 @@ import superAdminService, {
   JobReport,
   UserReport,
 } from '../../services/superAdminService'
+import { useTranslation } from '@/i18n'
 
 type Tab = 'users' | 'jobs'
 
@@ -24,6 +25,7 @@ function defaultRange(): { start: string; end: string } {
 }
 
 export const SuperAdminReportsPage: React.FC = () => {
+  const { t } = useTranslation()
   const initial = defaultRange()
   const [tab, setTab] = useState<Tab>('users')
   const [startDate, setStartDate] = useState(initial.start)
@@ -49,13 +51,13 @@ export const SuperAdminReportsPage: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to load report:', err)
-        setError('Unable to load report. Please try again.')
+        setError(t('adminReports.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
     fetch()
-  }, [tab, appliedStart, appliedEnd])
+  }, [tab, appliedStart, appliedEnd, t])
 
   const applyDates = () => {
     setAppliedStart(startDate)
@@ -69,10 +71,10 @@ export const SuperAdminReportsPage: React.FC = () => {
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-4'>
           <div className='flex gap-2'>
             <TabButton active={tab === 'users'} onClick={() => setTab('users')} icon={UsersIcon}>
-              User Report
+              {t('adminReports.tabs.users')}
             </TabButton>
             <TabButton active={tab === 'jobs'} onClick={() => setTab('jobs')} icon={BriefcaseIcon}>
-              Job Report
+              {t('adminReports.tabs.jobs')}
             </TabButton>
           </div>
           <div className='flex flex-wrap items-center gap-2'>
@@ -83,7 +85,7 @@ export const SuperAdminReportsPage: React.FC = () => {
               onChange={(e) => setStartDate(e.target.value)}
               className='px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
-            <span className='text-sm text-gray-500'>to</span>
+            <span className='text-sm text-gray-500'>{t('adminReports.dateRangeTo')}</span>
             <input
               type='date'
               value={endDate}
@@ -93,7 +95,7 @@ export const SuperAdminReportsPage: React.FC = () => {
             <button
               onClick={applyDates}
               className='px-4 py-1.5 bg-[#E36A3A] text-white text-sm font-medium rounded-lg hover:bg-[#C95428] transition-colors'>
-              Apply
+              {t('adminReports.apply')}
             </button>
           </div>
         </div>
@@ -101,7 +103,7 @@ export const SuperAdminReportsPage: React.FC = () => {
 
       {loading ? (
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>
-          Loading report...
+          {t('adminReports.loading')}
         </div>
       ) : error ? (
         <div className='bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl'>
@@ -150,20 +152,23 @@ const DistributionList: React.FC<{
   title: string
   data: Record<string, number>
   colorClass?: string
-}> = ({ title, data, colorClass = 'bg-gradient-to-r from-[#E36A3A] to-[#F6A57A]' }) => {
+  // Keys are backend enum values (job type, application status) → show translated labels
+  enumKeys?: boolean
+}> = ({ title, data, colorClass = 'bg-gradient-to-r from-[#E36A3A] to-[#F6A57A]', enumKeys = false }) => {
+  const { t, tEnum } = useTranslation()
   const entries = Object.entries(data) as [string, number][]
   const max = Math.max(...entries.map(([, v]) => v), 1)
   return (
     <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
       <h3 className='text-lg font-bold text-gray-900 mb-4'>{title}</h3>
       {entries.length === 0 ? (
-        <p className='text-sm text-gray-400 text-center py-4'>No data</p>
+        <p className='text-sm text-gray-400 text-center py-4'>{t('adminReports.noData')}</p>
       ) : (
         <div className='space-y-3'>
           {entries.map(([key, val]) => (
             <div key={key}>
               <div className='flex justify-between text-sm mb-1'>
-                <span className='text-gray-700'>{key.replace(/_/g, ' ')}</span>
+                <span className='text-gray-700'>{enumKeys ? tEnum(key) : key.replace(/_/g, ' ')}</span>
                 <span className='font-semibold text-gray-900'>{(val ?? 0).toLocaleString()}</span>
               </div>
               <div className='w-full h-2 bg-gray-100 rounded-full overflow-hidden'>
@@ -180,114 +185,126 @@ const DistributionList: React.FC<{
 const num = (v: number | null | undefined): string => (v ?? 0).toLocaleString()
 const fx = (v: number | null | undefined, d = 1): string => (v ?? 0).toFixed(d)
 
-const UserReportView: React.FC<{ report: UserReport }> = ({ report }) => (
-  <div className='space-y-4'>
-    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-      <StatTile label='Total New Users' value={num(report.totalNewUsers)} />
-      <StatTile label='New Artists' value={num(report.newArtists)} />
-      <StatTile label='New Recruiters' value={num(report.newRecruiters)} />
-      <StatTile
-        label='Avg Profile Completion'
-        value={`${fx(report.averageProfileCompletionRate)}%`}
-      />
-      <StatTile label='Active Users' value={num(report.activeUsers)} />
-      <StatTile label='Verified Users' value={num(report.verifiedUsers)} />
-      <StatTile label='Suspended' value={num(report.suspendedUsers)} />
-      <StatTile label='Banned' value={num(report.bannedUsers)} />
+const UserReportView: React.FC<{ report: UserReport }> = ({ report }) => {
+  const { t } = useTranslation()
+  return (
+    <div className='space-y-4'>
+      <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+        <StatTile label={t('adminReports.users.totalNewUsers')} value={num(report.totalNewUsers)} />
+        <StatTile label={t('adminReports.users.newArtists')} value={num(report.newArtists)} />
+        <StatTile label={t('adminReports.users.newRecruiters')} value={num(report.newRecruiters)} />
+        <StatTile
+          label={t('adminReports.users.avgProfileCompletion')}
+          value={`${fx(report.averageProfileCompletionRate)}%`}
+        />
+        <StatTile label={t('adminReports.users.activeUsers')} value={num(report.activeUsers)} />
+        <StatTile label={t('adminReports.users.verifiedUsers')} value={num(report.verifiedUsers)} />
+        <StatTile label={t('adminReports.users.suspended')} value={num(report.suspendedUsers)} />
+        <StatTile label={t('adminReports.users.banned')} value={num(report.bannedUsers)} />
+      </div>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+        <DistributionList title={t('adminReports.users.byLocation')} data={report.usersByLocation || {}} />
+        <DistributionList title={t('adminReports.users.byArtistType')} data={report.usersByArtistType || {}} />
+        <DistributionList
+          title={t('adminReports.users.recruitersByCategory')}
+          data={report.usersByRecruiterCategory || {}}
+          colorClass='bg-gradient-to-r from-blue-500 to-blue-300'
+        />
+        <DailyChart
+          title={t('adminReports.users.dailyRegistrations')}
+          data={report.dailyRegistrations || {}}
+          colorClass='bg-gradient-to-t from-[#E36A3A] to-[#F6A57A]'
+        />
+      </div>
+      <p className='text-xs text-gray-400 text-right'>
+        {t('adminReports.generated', {
+          date: report.generatedAt ? new Date(report.generatedAt).toLocaleString() : '—',
+        })}
+      </p>
     </div>
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-      <DistributionList title='Users by Location' data={report.usersByLocation || {}} />
-      <DistributionList title='Users by Artist Type' data={report.usersByArtistType || {}} />
-      <DistributionList
-        title='Recruiters by Category'
-        data={report.usersByRecruiterCategory || {}}
-        colorClass='bg-gradient-to-r from-blue-500 to-blue-300'
-      />
-      <DailyChart
-        title='Daily Registrations'
-        data={report.dailyRegistrations || {}}
-        colorClass='bg-gradient-to-t from-[#E36A3A] to-[#F6A57A]'
-      />
-    </div>
-    <p className='text-xs text-gray-400 text-right'>
-      Generated: {report.generatedAt ? new Date(report.generatedAt).toLocaleString() : '—'}
-    </p>
-  </div>
-)
+  )
+}
 
-const JobReportView: React.FC<{ report: JobReport }> = ({ report }) => (
-  <div className='space-y-4'>
-    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-      <StatTile label='Jobs Posted' value={num(report.totalJobsPosted)} />
-      <StatTile label='Active Jobs' value={num(report.activeJobs)} />
-      <StatTile label='Applications' value={num(report.totalApplicationsReceived)} />
-      <StatTile label='Avg Apps/Job' value={fx(report.averageApplicationsPerJob)} />
-      <StatTile label='Hires Made' value={num(report.totalHiresMade)} />
-      <StatTile label='Conversion' value={`${fx(report.conversionRate)}%`} />
-      <StatTile label='Featured' value={num(report.featuredJobs)} />
-      <StatTile
-        label='Closed/Expired'
-        value={num((report.closedJobs ?? 0) + (report.expiredJobs ?? 0))}
-      />
-    </div>
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-      <DistributionList title='Jobs by Type' data={report.jobsByType || {}} />
-      <DistributionList title='Jobs by Location' data={report.jobsByLocation || {}} />
-      <DistributionList
-        title='Applications by Status'
-        data={report.applicationsByStatus || {}}
-        colorClass='bg-gradient-to-r from-green-500 to-green-300'
-      />
-      <DailyChart
-        title='Daily Job Postings'
-        data={report.dailyJobPostings || {}}
-        colorClass='bg-gradient-to-t from-blue-500 to-blue-300'
-      />
-    </div>
+const JobReportView: React.FC<{ report: JobReport }> = ({ report }) => {
+  const { t } = useTranslation()
+  return (
+    <div className='space-y-4'>
+      <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+        <StatTile label={t('adminReports.jobs.jobsPosted')} value={num(report.totalJobsPosted)} />
+        <StatTile label={t('adminReports.jobs.activeJobs')} value={num(report.activeJobs)} />
+        <StatTile label={t('adminReports.jobs.applications')} value={num(report.totalApplicationsReceived)} />
+        <StatTile label={t('adminReports.jobs.avgAppsPerJob')} value={fx(report.averageApplicationsPerJob)} />
+        <StatTile label={t('adminReports.jobs.hiresMade')} value={num(report.totalHiresMade)} />
+        <StatTile label={t('adminReports.jobs.conversion')} value={`${fx(report.conversionRate)}%`} />
+        <StatTile label={t('adminReports.jobs.featured')} value={num(report.featuredJobs)} />
+        <StatTile
+          label={t('adminReports.jobs.closedExpired')}
+          value={num((report.closedJobs ?? 0) + (report.expiredJobs ?? 0))}
+        />
+      </div>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+        <DistributionList title={t('adminReports.jobs.byType')} data={report.jobsByType || {}} enumKeys />
+        <DistributionList title={t('adminReports.jobs.byLocation')} data={report.jobsByLocation || {}} />
+        <DistributionList
+          title={t('adminReports.jobs.applicationsByStatus')}
+          data={report.applicationsByStatus || {}}
+          colorClass='bg-gradient-to-r from-green-500 to-green-300'
+          enumKeys
+        />
+        <DailyChart
+          title={t('adminReports.jobs.dailyPostings')}
+          data={report.dailyJobPostings || {}}
+          colorClass='bg-gradient-to-t from-blue-500 to-blue-300'
+        />
+      </div>
 
-    <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-      <h3 className='text-lg font-bold text-gray-900 mb-4'>Top Performing Jobs</h3>
-      {(!report.topPerformingJobs || report.topPerformingJobs.length === 0) ? (
-        <p className='text-sm text-gray-400 text-center py-4'>No data</p>
-      ) : (
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead className='bg-gray-50 border-b border-gray-200'>
-              <tr>
-                <th className='text-left px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>Job</th>
-                <th className='text-left px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>Recruiter</th>
-                <th className='text-right px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>Apps</th>
-                <th className='text-right px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>Views</th>
-                <th className='text-right px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>Hires</th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-gray-100'>
-              {report.topPerformingJobs.map((j) => (
-                <tr key={j.jobId} className='hover:bg-gray-50'>
-                  <td className='px-4 py-3 font-medium text-gray-900'>{j.jobTitle || '—'}</td>
-                  <td className='px-4 py-3 text-gray-700'>{j.recruiterName || '—'}</td>
-                  <td className='px-4 py-3 text-right text-gray-700'>{j.applicationCount ?? 0}</td>
-                  <td className='px-4 py-3 text-right text-gray-700'>{num(j.viewCount)}</td>
-                  <td className='px-4 py-3 text-right text-gray-700'>{j.hireCount ?? 0}</td>
+      <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+        <h3 className='text-lg font-bold text-gray-900 mb-4'>{t('adminReports.jobs.topPerforming')}</h3>
+        {(!report.topPerformingJobs || report.topPerformingJobs.length === 0) ? (
+          <p className='text-sm text-gray-400 text-center py-4'>{t('adminReports.noData')}</p>
+        ) : (
+          <div className='overflow-x-auto'>
+            <table className='w-full text-sm'>
+              <thead className='bg-gray-50 border-b border-gray-200'>
+                <tr>
+                  <th className='text-left px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>{t('adminReports.table.job')}</th>
+                  <th className='text-left px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>{t('adminReports.table.recruiter')}</th>
+                  <th className='text-right px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>{t('adminReports.table.apps')}</th>
+                  <th className='text-right px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>{t('adminReports.table.views')}</th>
+                  <th className='text-right px-4 py-2 text-xs font-semibold text-gray-600 uppercase'>{t('adminReports.table.hires')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+              </thead>
+              <tbody className='divide-y divide-gray-100'>
+                {report.topPerformingJobs.map((j) => (
+                  <tr key={j.jobId} className='hover:bg-gray-50'>
+                    <td className='px-4 py-3 font-medium text-gray-900'>{j.jobTitle || '—'}</td>
+                    <td className='px-4 py-3 text-gray-700'>{j.recruiterName || '—'}</td>
+                    <td className='px-4 py-3 text-right text-gray-700'>{j.applicationCount ?? 0}</td>
+                    <td className='px-4 py-3 text-right text-gray-700'>{num(j.viewCount)}</td>
+                    <td className='px-4 py-3 text-right text-gray-700'>{j.hireCount ?? 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-    <p className='text-xs text-gray-400 text-right'>
-      Generated: {report.generatedAt ? new Date(report.generatedAt).toLocaleString() : '—'}
-    </p>
-  </div>
-)
+      <p className='text-xs text-gray-400 text-right'>
+        {t('adminReports.generated', {
+          date: report.generatedAt ? new Date(report.generatedAt).toLocaleString() : '—',
+        })}
+      </p>
+    </div>
+  )
+}
 
 const DailyChart: React.FC<{
   title: string
   data: Record<string, number>
   colorClass: string
 }> = ({ title, data, colorClass }) => {
+  const { t } = useTranslation()
   const entries = (Object.entries(data) as [string, number][]).sort(([a], [b]) =>
     a.localeCompare(b),
   )
@@ -298,7 +315,7 @@ const DailyChart: React.FC<{
         <ChartBarIcon className='h-5 w-5 text-[#E36A3A]' /> {title}
       </h3>
       {entries.length === 0 ? (
-        <p className='text-sm text-gray-400 text-center py-4'>No data</p>
+        <p className='text-sm text-gray-400 text-center py-4'>{t('adminReports.noData')}</p>
       ) : (
         <div className='h-40 flex items-end gap-1'>
           {entries.map(([day, val]) => (

@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
-import uploadService, { UploadType } from '@/services/uploadService'
+import uploadService, { UPLOAD_LIMITS_MB, UploadType } from '@/services/uploadService'
 import Icon from '@/components/Icon'
+import { useTranslation } from '@/i18n'
 
 interface VideoUploadProps {
   currentVideoUrl?: string
@@ -20,8 +21,9 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
   description,
   onUploadSuccess,
   auditionId,
-  maxSizeMB = 100,
+  maxSizeMB = UPLOAD_LIMITS_MB.video,
 }) => {
+  const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [videoUrl, setVideoUrl] = useState<string | undefined>(currentVideoUrl)
@@ -62,11 +64,11 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
       URL.revokeObjectURL(previewUrl)
       setVideoUrl(fileUrl)
 
-      toast.success('Video uploaded successfully!')
+      toast.success(t('fileUpload.video.uploadSuccess'))
       onUploadSuccess(fileUrl)
     } catch (error) {
       console.error('Upload failed:', error)
-      toast.error('Failed to upload video. Please try again.')
+      toast.error(t('fileUpload.video.uploadFailed'))
       URL.revokeObjectURL(previewUrl)
       setVideoUrl(currentVideoUrl)
       setFileName(currentVideoUrl?.split('/').pop())
@@ -93,6 +95,15 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
       <label className="block text-sm font-semibold text-gray-700">{label}</label>
       {description && <p className="text-xs text-gray-500">{description}</p>}
 
+      <p className="flex items-start gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <Icon name="Info" size={14} className="mt-0.5 flex-shrink-0" />
+        <span>
+          {t('fileUpload.video.hintBefore')}
+          <strong>{t('fileUpload.video.hintSize', { size: maxSizeMB })}</strong>
+          {t('fileUpload.video.hintAfter')}
+        </span>
+      </p>
+
       <div className="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50">
         {videoUrl ? (
           // Video preview
@@ -108,7 +119,7 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
               <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
                 <div className="text-white text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-3"></div>
-                  <p className="text-sm font-semibold">Uploading video...</p>
+                  <p className="text-sm font-semibold">{t('fileUpload.video.uploading')}</p>
                   <div className="mt-3 w-64 mx-auto">
                     <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                       <div
@@ -132,7 +143,7 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
                     <p className="text-sm font-semibold text-gray-900 truncate max-w-xs">
                       {fileName}
                     </p>
-                    <p className="text-xs text-green-600 font-medium">✓ Uploaded</p>
+                    <p className="text-xs text-green-600 font-medium">{t('fileUpload.uploaded')}</p>
                   </div>
                 </div>
 
@@ -142,14 +153,14 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
                     onClick={() => fileInputRef.current?.click()}
                     className="px-3 py-2 text-sm font-semibold text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                   >
-                    Replace
+                    {t('fileUpload.replace')}
                   </button>
                   <button
                     type="button"
                     onClick={handleRemove}
                     className="px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
-                    Remove
+                    {t('common.actions.remove')}
                   </button>
                 </div>
               </div>
@@ -167,12 +178,8 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
               disabled={uploading}
               className="inline-block px-6 py-3 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              Upload Video
+              {t('fileUpload.video.upload')}
             </button>
-            <p className="text-xs text-gray-500 mt-3">
-              Supported: MP4, MOV, AVI, WebM
-            </p>
-            <p className="text-xs text-gray-400 mt-1">Max size: {maxSizeMB}MB</p>
           </div>
         )}
 

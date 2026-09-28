@@ -1,0 +1,56 @@
+import { defineMessages } from '../defineMessages'
+
+export default defineMessages({
+  en: {
+    bulkUpload: 'Bulk Upload Jobs',
+    searchPlaceholder: 'Search by title or description...',
+    allStatuses: 'All Statuses',
+    allTypes: 'All Types',
+    showing: 'Showing {{shown}} of {{total}} jobs',
+    empty: 'No jobs found',
+    columns: {
+      job: 'Job',
+      recruiter: 'Recruiter',
+      activity: 'Activity',
+      posted: 'Posted',
+    },
+    remote: 'Remote',
+    featured: 'Featured',
+    urgent: 'Urgent',
+    budgetTo: 'to {{amount}}',
+    apps: '{{count}} apps',
+    views: '{{count}} views',
+    errors: {
+      unauthorized: 'Unauthorized — please log in as an admin.',
+      accessDenied: 'Access denied — admin role required.',
+      notFound: 'Endpoint not found — check backend route /super-admin/jobs.',
+      loadFailed: 'Unable to load jobs.',
+    },
+  },
+  mr: {
+    bulkUpload: 'नोकऱ्या बल्क अपलोड करा',
+    searchPlaceholder: 'शीर्षक किंवा वर्णनाने शोधा...',
+    allStatuses: 'सर्व स्थिती',
+    allTypes: 'सर्व प्रकार',
+    showing: '{{total}} पैकी {{shown}} नोकऱ्या दाखवत आहे',
+    empty: 'कोणत्याही नोकऱ्या सापडल्या नाहीत',
+    columns: {
+      job: 'नोकरी',
+      recruiter: 'रिक्रूटर',
+      activity: 'क्रियाकलाप',
+      posted: 'पोस्ट केले',
+    },
+    remote: 'रिमोट',
+    featured: 'वैशिष्ट्यीकृत',
+    urgent: 'तातडीचे',
+    budgetTo: 'ते {{amount}}',
+    apps: '{{count}} अर्ज',
+    views: '{{count}} व्ह्यूज',
+    errors: {
+      unauthorized: 'अनधिकृत — कृपया ॲडमिन म्हणून लॉग इन करा.',
+      accessDenied: 'प्रवेश नाकारला — ॲडमिन भूमिका आवश्यक आहे.',
+      notFound: 'एंडपॉइंट सापडला नाही — बॅकएंड रूट /super-admin/jobs तपासा.',
+      loadFailed: 'नोकऱ्या लोड करता आल्या नाहीत.',
+    },
+  },
+})

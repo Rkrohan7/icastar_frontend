@@ -10,19 +10,21 @@ import superAdminService, { PendingJob } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
+import { useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
-const errMsg = (err: any, fallback: string): string => {
+const errMsg = (err: any, fallback: string, t: (key: string) => string): string => {
   const s = err?.response?.status
   const m = err?.response?.data?.message
-  if (s === 401) return 'Unauthorized — log in as admin.'
-  if (s === 403) return 'Access denied — admin role required.'
-  if (s === 404) return 'Endpoint not found.'
+  if (s === 401) return t('adminJobApprovals.errors.unauthorized')
+  if (s === 403) return t('adminJobApprovals.errors.accessDenied')
+  if (s === 404) return t('adminJobApprovals.errors.notFound')
   return m || err?.message || fallback
 }
 
 export const SuperAdminJobApprovalsPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [jobs, setJobs] = useState<PendingJob[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +44,7 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
       setTotalPages(result.totalPages)
       setTotalItems(result.totalItems)
     } catch (err: any) {
-      setError(errMsg(err, 'Unable to load pending jobs.'))
+      setError(errMsg(err, t('adminJobApprovals.errors.loadFailed'), t))
     } finally {
       setLoading(false)
     }
@@ -54,13 +56,13 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
   }, [page, search])
 
   const handleApprove = async (job: PendingJob) => {
-    if (!confirm(`Approve "${job.title}"?`)) return
+    if (!confirm(t('adminJobApprovals.confirmApprove', { title: job.title }))) return
     try {
       setActingId(job.id)
       await superAdminService.approveJob(job.id)
       load()
     } catch (e: any) {
-      alert(errMsg(e, 'Failed to approve'))
+      alert(errMsg(e, t('adminJobApprovals.errors.approveFailed'), t))
     } finally {
       setActingId(null)
     }
@@ -70,8 +72,8 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
     <div className='p-6 space-y-4'>
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <h2 className='text-lg font-bold text-gray-900'>Jobs Awaiting Approval</h2>
-          <p className='text-sm text-gray-500'>{totalItems.toLocaleString()} pending</p>
+          <h2 className='text-lg font-bold text-gray-900'>{t('adminJobApprovals.title')}</h2>
+          <p className='text-sm text-gray-500'>{t('adminJobApprovals.pendingCount', { count: totalItems.toLocaleString() })}</p>
         </div>
         <AdminSearchBox
           value={search}
@@ -79,20 +81,20 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
             setPage(0)
             setSearch(term)
           }}
-          placeholder='Search by job title or recruiter...'
+          placeholder={t('adminJobApprovals.searchPlaceholder')}
           className='max-w-sm'
         />
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <div className='py-16 text-center text-gray-500'>Loading...</div>
+          <div className='py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
         ) : error ? (
           <div className='py-16 text-center text-red-600'>{error}</div>
         ) : jobs.length === 0 ? (
           <div className='py-16 text-center text-gray-500'>
             <CheckCircleIcon className='h-10 w-10 text-green-500 mx-auto mb-2' />
-            All clear — no jobs pending approval
+            {t('adminJobApprovals.empty')}
           </div>
         ) : (
           <div className='divide-y divide-gray-100'>
@@ -117,11 +119,11 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
                       )}
                       {j.jobType && (
                         <span className='px-2 py-0.5 bg-blue-50 text-blue-700 rounded'>
-                          {j.jobType.replace(/_/g, ' ')}
+                          {tEnum(j.jobType)}
                         </span>
                       )}
                       {j.submittedAt && (
-                        <span>Submitted {new Date(j.submittedAt).toLocaleDateString()}</span>
+                        <span>{t('adminJobApprovals.submitted', { date: new Date(j.submittedAt).toLocaleDateString() })}</span>
                       )}
                     </div>
                   </div>
@@ -130,13 +132,13 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
                       onClick={() => handleApprove(j)}
                       disabled={actingId === j.id}
                       className='flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 disabled:opacity-50'>
-                      <CheckCircleIcon className='h-4 w-4' /> Approve
+                      <CheckCircleIcon className='h-4 w-4' /> {t('common.actions.approve')}
                     </button>
                     <button
                       onClick={() => setRejectFor(j)}
                       disabled={actingId === j.id}
                       className='flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-700 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50'>
-                      <XCircleIcon className='h-4 w-4' /> Reject
+                      <XCircleIcon className='h-4 w-4' /> {t('common.actions.reject')}
                     </button>
                   </div>
                 </div>
@@ -169,13 +171,14 @@ const RejectModal: React.FC<{
   onClose: () => void
   onDone: () => void
 }> = ({ job, onClose, onDone }) => {
+  const { t } = useTranslation()
   const [reason, setReason] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
   const submit = async () => {
     if (!reason.trim()) {
-      setErr('Reason is required')
+      setErr(t('adminJobApprovals.errors.reasonRequired'))
       return
     }
     try {
@@ -184,7 +187,7 @@ const RejectModal: React.FC<{
       await superAdminService.rejectJob(job.id, { reason: reason.trim() })
       onDone()
     } catch (e: any) {
-      setErr(errMsg(e, 'Failed to reject'))
+      setErr(errMsg(e, t('adminJobApprovals.errors.rejectFailed'), t))
     } finally {
       setSaving(false)
     }
@@ -194,30 +197,30 @@ const RejectModal: React.FC<{
     <div className='fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4' onClick={onClose}>
       <div className='bg-white rounded-xl shadow-xl max-w-md w-full p-6' onClick={(e) => e.stopPropagation()}>
         <div className='flex items-center justify-between mb-4'>
-          <h2 className='text-lg font-bold text-gray-900'>Reject Job</h2>
+          <h2 className='text-lg font-bold text-gray-900'>{t('adminJobApprovals.rejectModal.title')}</h2>
           <button onClick={onClose} className='p-1 hover:bg-gray-100 rounded'>
             <XIcon className='h-5 w-5' />
           </button>
         </div>
         <p className='text-sm text-gray-600 mb-4'>{job.title}</p>
-        <label className='text-xs font-medium text-gray-600'>Reason *</label>
+        <label className='text-xs font-medium text-gray-600'>{t('adminJobApprovals.rejectModal.reasonLabel')}</label>
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={4}
-          placeholder='Explain why this job is being rejected...'
+          placeholder={t('adminJobApprovals.rejectModal.reasonPlaceholder')}
           className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
         />
         {err && <div className='mt-2 text-sm text-red-600 bg-red-50 p-2 rounded'>{err}</div>}
         <div className='mt-4 flex justify-end gap-2'>
           <button onClick={onClose} className='px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50'>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={submit}
             disabled={saving || !reason.trim()}
             className='px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50'>
-            {saving ? 'Rejecting...' : 'Reject'}
+            {saving ? t('adminJobApprovals.rejectModal.rejecting') : t('common.actions.reject')}
           </button>
         </div>
       </div>

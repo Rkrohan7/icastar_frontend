@@ -11,28 +11,30 @@ import { Progress } from '@/components/ui/progress'
 import { useNavigate } from 'react-router-dom'
 import { getLandingStats, DEFAULT_LANDING_STATS, LandingStats } from '@/services/publicConfigService'
 import blogService, { BlogPost } from '@/services/blogService'
+import { useTranslation } from '@/i18n'
 
 // --- Mock Data ---
 
+// Display text lives in i18n/locales/landing.ts; these hold translation keys.
 const POPULAR_ROLES = [
-    { title: "Actor / Actress", count: "2.3k+", label: "Open Auditions", icon: Star },
-    { title: "Voice Artist", count: "1.2k+", label: "Opportunities", icon: Music },
-    { title: "Director", count: "450+", label: "Projects", icon: Video },
-    { title: "Choreographer", count: "800+", label: "Opportunities", icon: Users },
-    { title: "Musician", count: "1.1k+", label: "Auditions", icon: Music },
-    { title: "Model", count: "900+", label: "Projects", icon: Camera },
-    { title: "Scriptwriter", count: "350+", label: "Openings", icon: Briefcase },
-    { title: "Cinematographer", count: "200+", label: "Jobs", icon: Video },
-    { title: "Makeup Artist", count: "500+", label: "Opportunities", icon: Star },
-    { title: "Casting Director", count: "100+", label: "Roles", icon: Users }
+    { titleKey: 'landing.roles.actorActress', count: "2.3k+", labelKey: 'landing.roleCounts.openAuditions', icon: Star },
+    { titleKey: 'landing.roles.voiceArtist', count: "1.2k+", labelKey: 'landing.roleCounts.opportunities', icon: Music },
+    { titleKey: 'landing.roles.director', count: "450+", labelKey: 'landing.roleCounts.projects', icon: Video },
+    { titleKey: 'landing.roles.choreographer', count: "800+", labelKey: 'landing.roleCounts.opportunities', icon: Users },
+    { titleKey: 'landing.roles.musician', count: "1.1k+", labelKey: 'landing.roleCounts.auditions', icon: Music },
+    { titleKey: 'landing.roles.model', count: "900+", labelKey: 'landing.roleCounts.projects', icon: Camera },
+    { titleKey: 'landing.roles.scriptwriter', count: "350+", labelKey: 'landing.roleCounts.openings', icon: Briefcase },
+    { titleKey: 'landing.roles.cinematographer', count: "200+", labelKey: 'landing.roleCounts.jobs', icon: Video },
+    { titleKey: 'landing.roles.makeupArtist', count: "500+", labelKey: 'landing.roleCounts.opportunities', icon: Star },
+    { titleKey: 'landing.roles.castingDirector', count: "100+", labelKey: 'landing.roleCounts.roles', icon: Users }
 ]
 
 const TOP_ARTISTS = [
     {
         id: 101,
         name: 'RJ Komal',
-        role: 'Anchor',
-        location: 'Navi Mumbai',
+        roleKey: 'landing.roles.anchor',
+        locationKey: 'landing.places.naviMumbai',
         rating: 5.0,
         image: '/talent/rj-komal.png',
         completion: 100,
@@ -41,8 +43,8 @@ const TOP_ARTISTS = [
     {
         id: 102,
         name: 'Sagar Sapkale',
-        role: 'Music Director',
-        location: 'Mumbai',
+        roleKey: 'landing.roles.musicDirector',
+        locationKey: 'landing.places.mumbai',
         rating: 5.0,
         image: '/talent/sagar-sapkale.png',
         completion: 100,
@@ -51,8 +53,8 @@ const TOP_ARTISTS = [
     {
         id: 103,
         name: 'Shivani Kulkarni',
-        role: 'Singer',
-        location: 'Pune',
+        roleKey: 'landing.roles.singer',
+        locationKey: 'landing.places.pune',
         rating: 5.0,
         image: '/talent/shivani-kulkarni.png',
         completion: 100,
@@ -61,8 +63,8 @@ const TOP_ARTISTS = [
     {
         id: 104,
         name: 'Mohika Gadare',
-        role: 'Actress / Model',
-        location: 'Pune',
+        roleKey: 'landing.roles.actressModel',
+        locationKey: 'landing.places.pune',
         rating: 5.0,
         image: '/talent/mohika-gadare.jpg',
         completion: 100,
@@ -74,24 +76,24 @@ const TESTIMONIALS = [
     {
         id: 1,
         name: 'Shivani Baokar',
-        role: 'Actress',
+        roleKey: 'landing.roles.actress',
         // Initials avatar — using a stock photo would misrepresent a real person.
         image: 'https://ui-avatars.com/api/?name=Shivani+Baokar&background=E36A3A&color=fff&size=128&bold=true',
-        quote: "As an artist, getting the right opportunities and reaching the right audience is crucial. iCastar is a great concept that brings artists, casting directors, and production houses together on a single platform. iCastar's effort to provide a proper platform for talent—especially for upcoming and rural artists—is truly commendable. I feel every artist should connect with iCastar through their profile and talent."
+        quoteKey: 'landing.testimonials.quotes.shivani'
     },
     {
         id: 2,
         name: 'Jeevan Bharati',
-        role: 'Writer & Director',
+        roleKey: 'landing.roles.writerDirector',
         image: 'https://ui-avatars.com/api/?name=Jeevan+Bharati&background=E36A3A&color=fff&size=128&bold=true',
-        quote: "Finding local artists while shooting at various locations is always a challenging task. iCastar has made this job very simple. I have personally selected artists through iCastar, and the experience was great. The platform is easy to use and can certainly be useful for the entire entertainment industry. Here, you can hire not just actors, but also writers, directors, and other industry professionals. iCastar's initiative to connect artists and industry professionals on a single platform is truly commendable."
+        quoteKey: 'landing.testimonials.quotes.jeevan'
     },
     {
         id: 3,
         name: 'Shailesh More',
-        role: 'Makeup Artist',
+        roleKey: 'landing.roles.makeupArtist',
         image: 'https://ui-avatars.com/api/?name=Shailesh+More&background=E36A3A&color=fff&size=128&bold=true',
-        quote: "There are plenty of opportunities for makeup artists, but relying solely on personal references and contacts isn't enough to find them. If you want access to more work, registering on iCastar is a must—I personally prefer iCastar too."
+        quoteKey: 'landing.testimonials.quotes.shailesh'
     }
 ]
 
@@ -128,13 +130,14 @@ function useCounter(end: number, duration: number = 2000) {
 
 export const HeroSection = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     return (
         <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden bg-slate-900">
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0">
                 <img
                     src="https://images.unsplash.com/photo-1485846234645-a62644f84728?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"
-                    alt="Film Set and Casting Background"
+                    alt={t('landing.hero.backgroundAlt')}
                     className="w-full h-full object-cover opacity-40 animate-in zoom-in-150 duration-[20s] ease-linear"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-slate-900/40"></div>
@@ -145,18 +148,18 @@ export const HeroSection = () => {
 
             <div className="relative z-10 container mx-auto px-4 text-center mt-12 md:mt-0">
                 <Badge className="mb-6 bg-orange-500/10 text-orange-400 border-orange-500/20 px-4 py-1 text-sm uppercase tracking-widest font-semibold backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    The #1 Artist Job Portal
+                    {t('landing.hero.badge')}
                 </Badge>
 
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100 drop-shadow-2xl">
-                    Find Your <br />
+                    {t('landing.hero.titleLine1')} <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-200 to-orange-400 animate-gradient-x bg-[length:200%_auto]">
-                        Dream Role Now
+                        {t('landing.hero.titleLine2')}
                     </span>
                 </h1>
 
                 <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 font-light leading-relaxed">
-                    Thousands of auditions and projects waiting for you
+                    {t('landing.hero.subtitle')}
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-5 justify-center animate-in fade-in zoom-in-50 duration-1000 delay-500">
@@ -165,7 +168,7 @@ export const HeroSection = () => {
                         className="text-lg px-10 py-6 h-auto bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-bold rounded-full shadow-lg hover:shadow-orange-500/50 hover:-translate-y-1 transition-all duration-300"
                         onClick={() => navigate('/auth')}
                     >
-                        Explore Opportunities
+                        {t('landing.hero.cta')}
                     </Button>
                 </div>
             </div>
@@ -177,48 +180,49 @@ export const HeroSection = () => {
 const FEATURED_JOBS = [
     {
         id: 1,
-        title: "Lead Actor for Web Series",
+        titleKey: 'landing.featured.jobs.j1.title',
         production: "Pentane Studios",
-        location: "Mumbai",
-        type: "Audition",
+        locationKey: 'landing.places.mumbai',
+        typeKey: 'landing.featured.types.audition',
         salary: "₹50k - ₹1L per day",
-        tags: ["Acting", "Drama"],
-        posted: "2d ago"
+        tags: ["acting", "drama"],
+        postedKey: 'landing.featured.jobs.j1.posted'
     },
     {
         id: 2,
-        title: "Female Model for TVC",
+        titleKey: 'landing.featured.jobs.j2.title',
         production: "Digital Cimble Media Services",
-        location: "Delhi",
-        type: "Casting Call",
+        locationKey: 'landing.places.delhi',
+        typeKey: 'landing.featured.types.castingCall',
         salary: "₹25k - ₹40k",
-        tags: ["Modeling", "Commercial"],
-        posted: "5h ago"
+        tags: ["modeling", "commercial"],
+        postedKey: 'landing.featured.jobs.j2.posted'
     },
     {
         id: 3,
-        title: "Voice Artist for Animation",
+        titleKey: 'landing.featured.jobs.j3.title',
         production: "Shrihari Studios",
-        location: "Remote",
-        type: "Project",
+        locationKey: 'landing.places.remote',
+        typeKey: 'landing.featured.types.project',
         salary: "₹10k - ₹15k per min",
-        tags: ["Voiceover", "Kids"],
-        posted: "1d ago"
+        tags: ["voiceover", "kids"],
+        postedKey: 'landing.featured.jobs.j3.posted'
     },
     {
         id: 4,
-        title: "Music Composer needed",
+        titleKey: 'landing.featured.jobs.j4.title',
         production: "Creative Karkhana",
-        location: "Bangalore",
-        type: "Job",
+        locationKey: 'landing.places.bangalore',
+        typeKey: 'landing.featured.types.job',
         salary: "₹2L - ₹3L Project",
-        tags: ["Music", "Composition"],
-        posted: "3d ago"
+        tags: ["music", "composition"],
+        postedKey: 'landing.featured.jobs.j4.posted'
     }
 ]
 
 export const SearchRolesSection = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     return (
         <section className="py-12 bg-white -mt-10 relative z-20">
             <div className="container mx-auto px-4">
@@ -229,10 +233,10 @@ export const SearchRolesSection = () => {
                     <div className="flex-1 px-6 py-3 flex items-center gap-3">
                         <Search className="w-5 h-5 text-gray-400" />
                         <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Role / Talent</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('landing.search.roleLabel')}</label>
                             <Input
                                 type="text"
-                                placeholder="Actor, Model, Voice Artist..."
+                                placeholder={t('landing.search.rolePlaceholder')}
                                 className="border-0 p-0 h-auto shadow-none focus-visible:ring-0 text-gray-900 placeholder:text-gray-300 font-medium"
                             />
                         </div>
@@ -242,12 +246,12 @@ export const SearchRolesSection = () => {
                     <div className="flex-1 px-6 py-3 flex items-center gap-3">
                         <Star className="w-5 h-5 text-gray-400" />
                         <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Experience</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('common.labels.experience')}</label>
                             <select className="w-full border-0 p-0 text-sm font-medium text-gray-900 focus:ring-0 bg-transparent outline-none cursor-pointer">
-                                <option>Any Experience</option>
-                                <option>Beginner (0-2 yrs)</option>
-                                <option>Intermediate (2-5 yrs)</option>
-                                <option>Expert (5+ yrs)</option>
+                                <option>{t('landing.search.experienceAny')}</option>
+                                <option>{t('landing.search.experienceBeginner')}</option>
+                                <option>{t('landing.search.experienceIntermediate')}</option>
+                                <option>{t('landing.search.experienceExpert')}</option>
                             </select>
                         </div>
                     </div>
@@ -256,10 +260,10 @@ export const SearchRolesSection = () => {
                     <div className="flex-1 px-6 py-3 flex items-center gap-3">
                         <MapPin className="w-5 h-5 text-gray-400" />
                         <div className="flex-1 hidden md:block">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Location</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('common.labels.location')}</label>
                             <Input
                                 type="text"
-                                placeholder="Mumbai, Remote..."
+                                placeholder={t('landing.search.locationPlaceholder')}
                                 className="border-0 p-0 h-auto shadow-none focus-visible:ring-0 text-gray-900 placeholder:text-gray-300 font-medium"
                             />
                         </div>
@@ -271,7 +275,7 @@ export const SearchRolesSection = () => {
                             className="w-full md:w-auto h-full rounded-full px-8 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 transition-all font-sans text-base"
                             onClick={() => navigate('/auth')}
                         >
-                            Search Auditions
+                            {t('landing.search.button')}
                         </Button>
                     </div>
                 </div>
@@ -280,11 +284,11 @@ export const SearchRolesSection = () => {
                 <div className="max-w-6xl mx-auto mb-16">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-2xl font-bold text-gray-900">Featured Auditions</h3>
-                            <p className="text-gray-500 text-sm">Curated opportunities just for you</p>
+                            <h3 className="text-2xl font-bold text-gray-900">{t('landing.featured.title')}</h3>
+                            <p className="text-gray-500 text-sm">{t('landing.featured.subtitle')}</p>
                         </div>
                         <Button variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-semibold" onClick={() => navigate('/auth')}>
-                            See All <ChevronRight className="w-4 h-4 ml-1" />
+                            {t('landing.featured.seeAll')} <ChevronRight className="w-4 h-4 ml-1" />
                         </Button>
                     </div>
 
@@ -299,21 +303,21 @@ export const SearchRolesSection = () => {
                                     <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 font-bold text-xs">
                                         {job.production.substring(0, 2).toUpperCase()}
                                     </div>
-                                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 hover:bg-blue-100">{job.type}</Badge>
+                                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 hover:bg-blue-100">{t(job.typeKey)}</Badge>
                                 </div>
 
-                                <h4 className="font-bold text-gray-900 line-clamp-1 mb-1 group-hover:text-blue-600 transition-colors">{job.title}</h4>
+                                <h4 className="font-bold text-gray-900 line-clamp-1 mb-1 group-hover:text-blue-600 transition-colors">{t(job.titleKey)}</h4>
                                 <p className="text-sm text-gray-500 mb-4 font-medium">{job.production}</p>
 
                                 <div className="flex flex-wrap gap-2 mb-4">
                                     {job.tags.map(tag => (
-                                        <span key={tag} className="text-[10px] px-2 py-1 bg-gray-50 text-gray-500 rounded border border-gray-100">{tag}</span>
+                                        <span key={tag} className="text-[10px] px-2 py-1 bg-gray-50 text-gray-500 rounded border border-gray-100">{t(`landing.tags.${tag}`)}</span>
                                     ))}
                                 </div>
 
                                 <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {job.location}</span>
-                                    <span>{job.posted}</span>
+                                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {t(job.locationKey)}</span>
+                                    <span>{t(job.postedKey)}</span>
                                 </div>
                             </Card>
                         ))}
@@ -322,7 +326,7 @@ export const SearchRolesSection = () => {
 
                 {/* Role Pills Grid */}
                 <div className="max-w-6xl mx-auto">
-                    <p className="text-center text-gray-500 mb-6 text-sm font-medium uppercase tracking-widest">Trending Categories</p>
+                    <p className="text-center text-gray-500 mb-6 text-sm font-medium uppercase tracking-widest">{t('landing.featured.trendingCategories')}</p>
                     <div className="flex flex-wrap justify-center gap-4">
                         {POPULAR_ROLES.map((role, idx) => (
                             <Button
@@ -332,7 +336,7 @@ export const SearchRolesSection = () => {
                                 onClick={() => navigate('/auth')}
                             >
                                 <role.icon className="w-4 h-4 mr-2 text-orange-500" />
-                                {role.title}
+                                {t(role.titleKey)}
                             </Button>
                         ))}
                     </div>
@@ -344,6 +348,7 @@ export const SearchRolesSection = () => {
 
 export const PopularRolesSection = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     return (
         <section className="py-20 bg-white">
             <div className="container mx-auto px-4">
@@ -354,7 +359,7 @@ export const PopularRolesSection = () => {
                         <div className="w-48 h-48 bg-gray-100 rounded-full mx-auto lg:mx-0 flex items-center justify-center mb-6">
                             <img
                                 src="https://cdni.iconscout.com/illustration/premium/thumb/job-search-illustration-download-in-svg-png-gif-file-formats--online-business-hiring-pack-people-illustrations-3682977.png"
-                                alt="Roles Illustration"
+                                alt={t('landing.popular.illustrationAlt')}
                                 className="w-40 h-40 object-contain mix-blend-multiply"
                                 onError={(e) => {
                                     e.currentTarget.style.display = 'none';
@@ -363,10 +368,10 @@ export const PopularRolesSection = () => {
                             />
                         </div>
                         <h2 className="text-4xl font-black text-gray-900 leading-tight text-center lg:text-left">
-                            Discover Opportunities <br /> Across Popular Roles
+                            {t('landing.popular.titleLine1')} <br /> {t('landing.popular.titleLine2')}
                         </h2>
                         <p className="text-gray-600 text-lg text-center lg:text-left">
-                            Find auditions and projects in the roles that match your talent. Select a role to explore curated opportunities!
+                            {t('landing.popular.description')}
                         </p>
                     </div>
 
@@ -381,8 +386,8 @@ export const PopularRolesSection = () => {
                                         onClick={() => navigate('/auth')}
                                     >
                                         <div>
-                                            <h4 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-sm md:text-base">{role.title}</h4>
-                                            <p className="text-gray-500 text-sm mt-1 font-medium">{role.count} {role.label}</p>
+                                            <h4 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-sm md:text-base">{t(role.titleKey)}</h4>
+                                            <p className="text-gray-500 text-sm mt-1 font-medium">{t(role.labelKey, { value: role.count })}</p>
                                         </div>
                                         <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-orange-50 group-hover:text-orange-600 transition-colors">
                                             <ChevronRight className="w-4 h-4" />
@@ -407,19 +412,20 @@ export const PopularRolesSection = () => {
 
 export const ChoosePathSection = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const paths = [
-        { icon: Star, title: "Actor", desc: "Film, TV, & Theater roles" },
-        { icon: Music, title: "Musician", desc: "Bands, Solo, & Orchestras" },
-        { icon: Video, title: "Director", desc: "Film, Commercial, & Music Video" },
-        { icon: Briefcase, title: "Crew", desc: "Production, Editing, & Sound" }
+        { icon: Star, title: t('landing.roles.actor'), desc: t('landing.choosePath.descs.actor') },
+        { icon: Music, title: t('landing.roles.musician'), desc: t('landing.choosePath.descs.musician') },
+        { icon: Video, title: t('landing.roles.director'), desc: t('landing.choosePath.descs.director') },
+        { icon: Briefcase, title: t('landing.roles.crew'), desc: t('landing.choosePath.descs.crew') }
     ]
 
     return (
         <section id="roles" className="py-20 bg-gray-50">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-16 animate-in slide-in-from-bottom-5 duration-700 fade-in">
-                    <h2 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Path</h2>
-                    <p className="text-lg text-gray-600">Select your role to access personalized features.</p>
+                    <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('landing.choosePath.title')}</h2>
+                    <p className="text-lg text-gray-600">{t('landing.choosePath.subtitle')}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {paths.map((path, idx) => (
@@ -434,7 +440,7 @@ export const ChoosePathSection = () => {
                             <h3 className="text-xl font-bold text-gray-900 mb-2">{path.title}</h3>
                             <p className="text-sm text-gray-500 mb-6">{path.desc}</p>
                             <div className="mt-auto opacity-0 group-hover:opacity-100 transition-opacity text-orange-600 font-medium flex items-center gap-1 text-sm">
-                                Explore <ChevronRight className="w-4 h-4" />
+                                {t('landing.choosePath.explore')} <ChevronRight className="w-4 h-4" />
                             </div>
                         </Card>
                     ))}
@@ -448,16 +454,17 @@ export const ChoosePathSection = () => {
 
 export const ArtistShowcaseSection = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     return (
         <section className="py-20 bg-white relative">
             <div className="container mx-auto px-4">
                 <div className="flex flex-col md:flex-row justify-between items-end mb-12">
                     <div className="max-w-2xl">
-                        <h2 className="text-4xl font-bold text-gray-900 mb-4">Meet Top Talent</h2>
-                        <p className="text-lg text-gray-600">Connect with the most promising artists ready for their next role.</p>
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('landing.showcase.title')}</h2>
+                        <p className="text-lg text-gray-600">{t('landing.showcase.subtitle')}</p>
                     </div>
                     <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50" onClick={() => navigate('/auth')}>
-                        View All Artists <ChevronRight className="w-4 h-4 ml-1" />
+                        {t('landing.showcase.viewAll')} <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                 </div>
 
@@ -478,13 +485,13 @@ export const ArtistShowcaseSection = () => {
                                         {artist.name}
                                         {artist.verified && <CheckCircle className="w-4 h-4 text-blue-400 fill-blue-400 bg-white rounded-full" />}
                                     </h4>
-                                    <p className="text-sm text-white/90 font-medium">{artist.role}</p>
-                                    <p className="text-xs text-white/70 flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" /> {artist.location}</p>
+                                    <p className="text-sm text-white/90 font-medium">{t(artist.roleKey)}</p>
+                                    <p className="text-xs text-white/70 flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" /> {t(artist.locationKey)}</p>
                                 </div>
                             </div>
                             {/* Hover Overlay CTA */}
                             <div className="absolute inset-0 bg-orange-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm">
-                                <Button className="bg-white text-orange-600 hover:bg-gray-100 rounded-full font-bold">View Profile</Button>
+                                <Button className="bg-white text-orange-600 hover:bg-gray-100 rounded-full font-bold">{t('common.actions.viewProfile')}</Button>
                             </div>
                         </div>
                     ))}
@@ -495,17 +502,18 @@ export const ArtistShowcaseSection = () => {
 }
 
 export const HowItWorksSection = () => {
+    const { t } = useTranslation()
     const steps = [
-        { icon: UserPlus, title: "Create Your Profile", desc: "Build your professional portfolio with photos, videos, and performance reels." },
-        { icon: Send, title: "Connect & Audition", desc: "Find casting calls, submit auditions, and connect with casting directors worldwide." },
-        { icon: Trophy, title: "Land Your Dream Role", desc: "Get hired for amazing opportunities and track your success with tools & analytics." }
+        { icon: UserPlus, title: t('landing.howItWorks.steps.profile.title'), desc: t('landing.howItWorks.steps.profile.desc') },
+        { icon: Send, title: t('landing.howItWorks.steps.connect.title'), desc: t('landing.howItWorks.steps.connect.desc') },
+        { icon: Trophy, title: t('landing.howItWorks.steps.land.title'), desc: t('landing.howItWorks.steps.land.desc') }
     ]
     return (
         <section className="py-20 bg-gray-50">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl font-bold text-gray-900 mb-4">How iCastar Works</h2>
-                    <p className="text-lg text-gray-600">Get started in three simple steps.</p>
+                    <h2 className="text-4xl font-bold text-gray-900 mb-4">{t('landing.howItWorks.title')}</h2>
+                    <p className="text-lg text-gray-600">{t('landing.howItWorks.subtitle')}</p>
                 </div>
                 <div className="grid md:grid-cols-3 gap-8 relative">
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 hidden md:block -z-0"></div>
@@ -531,40 +539,41 @@ export const HowItWorksSection = () => {
 const EVENTS = [
     {
         id: 1,
-        title: 'Mastering the Monologue: Emotional Depth',
+        titleKey: 'landing.events.items.e1.title',
         organizer: 'Drama School of Mumbai',
-        type: 'Workshop',
-        tags: ['Acting', 'Technique'],
-        date: '18 Dec, 5:00 PM',
+        typeKey: 'landing.events.types.workshop',
+        tags: ['acting', 'technique'],
+        dateKey: 'landing.events.items.e1.date',
         enrolled: 120,
         image: 'https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-        closesIn: '12h'
+        closesInKey: 'landing.events.items.e1.closesIn'
     },
     {
         id: 2,
-        title: 'Voice Acting 101: Animation & Commercials',
+        titleKey: 'landing.events.items.e2.title',
         organizer: 'Voice Box Studio',
-        type: 'Webinar',
-        tags: ['Voiceover', 'Career'],
-        date: '20 Dec, 2:00 PM',
+        typeKey: 'landing.events.types.webinar',
+        tags: ['voiceover', 'career'],
+        dateKey: 'landing.events.items.e2.date',
         enrolled: 450,
         image: 'https://images.unsplash.com/photo-1478737270239-2f02b77ac6d5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-        closesIn: '2d'
+        closesInKey: 'landing.events.items.e2.closesIn'
     },
     {
         id: 3,
-        title: '30-Day Self-Tape Audition Challenge',
+        titleKey: 'landing.events.items.e3.title',
         organizer: 'Casting Directors Guild',
-        type: 'Challenge',
-        tags: ['Audition', 'Challenge'],
-        date: '01 Jan, 10:00 AM',
+        typeKey: 'landing.events.types.challenge',
+        tags: ['audition', 'challenge'],
+        dateKey: 'landing.events.items.e3.date',
         enrolled: 890,
         image: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-        closesIn: '5h'
+        closesInKey: 'landing.events.items.e3.closesIn'
     }
 ]
 
 export const EventsSection = () => {
+    const { t } = useTranslation()
     return (
         <section className="py-20 bg-white border-b border-gray-100 overflow-hidden">
             <div className="container mx-auto px-4">
@@ -573,13 +582,13 @@ export const EventsSection = () => {
                     {/* Left Side: Header & Illustration */}
                     <div className="lg:w-1/3 text-center lg:text-left flex flex-col items-center lg:items-start shrink-0">
                         <h2 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                            Upcoming events <br className="hidden lg:block" /> and challenges
+                            {t('landing.events.titleLine1')} <br className="hidden lg:block" /> {t('landing.events.titleLine2')}
                         </h2>
                         <div className="relative w-64 h-64 bg-orange-50 rounded-full flex items-center justify-center mb-8">
                             {/* Abstract Illustration Placeholder */}
                             <img
                                 src="https://img.freepik.com/free-vector/hand-drawn-business-people-illustration_52683-66806.jpg?w=740&t=st=1700000000~exp=1700000000~hmac=dummy" // Using a generic illustration style URL or fallback to icon 
-                                alt="Events Illustration"
+                                alt={t('landing.events.illustrationAlt')}
                                 className="w-56 h-56 object-contain opacity-90 mix-blend-multiply"
                                 onError={(e) => {
                                     e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/747/747376.png" // Fallback icon
@@ -588,10 +597,10 @@ export const EventsSection = () => {
                             />
                         </div>
                         <p className="text-gray-600 text-lg max-w-xs mb-6">
-                            Boost your skills with workshops, webinars, and challenges hosted by industry experts.
+                            {t('landing.events.description')}
                         </p>
                         <Button variant="link" className="text-orange-600 font-bold p-0 h-auto hover:text-orange-700">
-                            See all events <ChevronRight className="w-4 h-4 ml-1" />
+                            {t('landing.events.seeAll')} <ChevronRight className="w-4 h-4 ml-1" />
                         </Button>
                     </div>
 
@@ -601,12 +610,12 @@ export const EventsSection = () => {
                             <Card key={event.id} className="min-w-[320px] max-w-[320px] snap-center shrink-0 border-gray-200 hover:shadow-xl transition-shadow duration-300 overflow-hidden group bg-white rounded-2xl">
                                 {/* Card Header Image */}
                                 <div className="relative h-40 bg-gray-100">
-                                    <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
+                                    <img src={event.image} alt={t(event.titleKey)} className="w-full h-full object-cover" />
                                     <div className="absolute top-0 left-0 bg-black/60 text-white text-xs font-bold px-3 py-1 rounded-br-lg backdrop-blur-sm">
-                                        Entry closes in {event.closesIn}
+                                        {t('landing.events.entryClosesIn', { time: t(event.closesInKey) })}
                                     </div>
                                     <div className="absolute top-2 right-2 bg-white/90 text-gray-800 text-xs font-bold px-2 py-1 rounded shadow-sm">
-                                        {event.type}
+                                        {t(event.typeKey)}
                                     </div>
                                 </div>
 
@@ -620,29 +629,29 @@ export const EventsSection = () => {
                                     </div>
 
                                     <h3 className="text-lg font-bold text-gray-900 leading-snug mb-3 line-clamp-2 min-h-[3.5rem] group-hover:text-orange-600 transition-colors">
-                                        {event.title}
+                                        {t(event.titleKey)}
                                     </h3>
 
                                     <div className="flex flex-wrap gap-2 mb-4">
                                         {event.tags.map(tag => (
                                             <span key={tag} className="text-xs px-2 py-1 bg-gray-50 text-gray-500 rounded-full border border-gray-100">
-                                                {tag}
+                                                {t(`landing.tags.${tag}`)}
                                             </span>
                                         ))}
                                     </div>
 
                                     <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                                         <div className="flex flex-col gap-1">
-                                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {event.date}</span>
-                                            <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {event.enrolled} Enrolled</span>
+                                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {t(event.dateKey)}</span>
+                                            <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {t('landing.events.enrolled', { count: event.enrolled })}</span>
                                         </div>
                                     </div>
 
                                     <Button className="w-full mt-4 bg-white border border-orange-200 text-orange-600 hover:bg-orange-50 font-semibold h-9 text-sm flex items-center justify-center gap-2">
-                                        View details
+                                        {t('landing.events.viewDetails')}
                                     </Button>
                                     <div className="mt-3 flex items-center gap-1 text-xs text-orange-600 font-medium">
-                                        <Star className="w-3 h-3 fill-orange-600" /> Learn from experts
+                                        <Star className="w-3 h-3 fill-orange-600" /> {t('landing.events.learnFromExperts')}
                                     </div>
                                 </div>
                             </Card>
@@ -662,6 +671,7 @@ export const EventsSection = () => {
 }
 
 export const StatsSection = () => {
+    const { t } = useTranslation()
     // Numbers come from Super Admin -> Config; defaults show until they load.
     const [stats, setStats] = useState<LandingStats>(DEFAULT_LANDING_STATS)
 
@@ -675,12 +685,12 @@ export const StatsSection = () => {
         }
     }, [])
 
-    const StatItem = ({ end, label, color }: { end: number, label: string, color: string }) => {
+    const StatItem = ({ end, label, color, percent = false }: { end: number, label: string, color: string, percent?: boolean }) => {
         const { count, countRef } = useCounter(end)
         return (
             <div className="text-center" ref={countRef}>
                 <div className={`text-5xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r ${color}`}>
-                    {count.toLocaleString()}{label.includes("Rate") ? "%" : "+"}
+                    {count.toLocaleString()}{percent ? "%" : "+"}
                 </div>
                 <p className="text-gray-500 font-medium uppercase tracking-wide text-sm">{label}</p>
             </div>
@@ -694,10 +704,10 @@ export const StatsSection = () => {
         <section className="py-20 bg-white border-y border-gray-100">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-                    <StatItem end={stats.activeArtists} label="Active Artists" color="from-orange-600 to-amber-500" />
-                    <StatItem end={stats.castingDirectors} label="Casting Directors" color="from-blue-600 to-purple-500" />
-                    <StatItem end={stats.successfulAuditions} label="Successful Auditions" color="from-green-600 to-emerald-500" />
-                    <StatItem end={stats.successRate} label="Success Rate" color="from-red-500 to-pink-500" />
+                    <StatItem end={stats.activeArtists} label={t('landing.stats.activeArtists')} color="from-orange-600 to-amber-500" />
+                    <StatItem end={stats.castingDirectors} label={t('landing.stats.castingDirectors')} color="from-blue-600 to-purple-500" />
+                    <StatItem end={stats.successfulAuditions} label={t('landing.stats.successfulAuditions')} color="from-green-600 to-emerald-500" />
+                    <StatItem end={stats.successRate} label={t('landing.stats.successRate')} color="from-red-500 to-pink-500" percent />
                 </div>
             </div>
         </section>
@@ -706,6 +716,7 @@ export const StatsSection = () => {
 
 export const BlogSection = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [blogs, setBlogs] = useState<BlogPost[]>([])
     const [enabled, setEnabled] = useState(true)
     const [loading, setLoading] = useState(true)
@@ -737,11 +748,11 @@ export const BlogSection = () => {
             <div className="container mx-auto px-4">
                 <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
                     <div>
-                        <h2 className="text-4xl font-bold mb-2">From our Blog</h2>
-                        <p className="text-xl text-gray-500">Audition tips, casting news and industry stories.</p>
+                        <h2 className="text-4xl font-bold mb-2">{t('landing.blog.title')}</h2>
+                        <p className="text-xl text-gray-500">{t('landing.blog.subtitle')}</p>
                     </div>
                     <Button variant="outline" onClick={() => navigate('/blogs')}>
-                        View all blogs <ChevronRight className="w-4 h-4 ml-1" />
+                        {t('landing.blog.viewAll')} <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                 </div>
 
@@ -783,6 +794,7 @@ export const BlogSection = () => {
 }
 
 export const TestimonialsSection = () => {
+    const { t } = useTranslation()
     return (
         <section className="py-20 bg-slate-900 text-white relative overflow-hidden">
             {/* Decorative blob */}
@@ -791,21 +803,21 @@ export const TestimonialsSection = () => {
 
             <div className="container mx-auto px-4 relative z-10">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl font-bold mb-4">What Our Users Say</h2>
-                    <p className="text-xl text-slate-300">Real stories from our creative community.</p>
+                    <h2 className="text-4xl font-bold mb-4">{t('landing.testimonials.title')}</h2>
+                    <p className="text-xl text-slate-300">{t('landing.testimonials.subtitle')}</p>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-8">
-                    {TESTIMONIALS.map((t) => (
-                        <div key={t.id} className="bg-slate-800/50 backdrop-blur-md p-8 rounded-2xl border border-slate-700 hover:border-orange-500/50 transition-colors">
+                    {TESTIMONIALS.map((item) => (
+                        <div key={item.id} className="bg-slate-800/50 backdrop-blur-md p-8 rounded-2xl border border-slate-700 hover:border-orange-500/50 transition-colors">
                             <div className="flex items-center gap-4 mb-6">
-                                <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-orange-500" />
+                                <img src={item.image} alt={item.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-orange-500" />
                                 <div>
-                                    <h4 className="font-bold text-white">{t.name}</h4>
-                                    <p className="text-sm text-slate-400">{t.role}</p>
+                                    <h4 className="font-bold text-white">{item.name}</h4>
+                                    <p className="text-sm text-slate-400">{t(item.roleKey)}</p>
                                 </div>
                             </div>
-                            <p className="text-slate-300 leading-relaxed italic">"{t.quote}"</p>
+                            <p className="text-slate-300 leading-relaxed italic">"{t(item.quoteKey)}"</p>
                         </div>
                     ))}
                 </div>
@@ -815,16 +827,17 @@ export const TestimonialsSection = () => {
 }
 
 export const AboutSection = () => {
+    const { t } = useTranslation()
     return (
         <section className="py-20 bg-white">
             <div className="container mx-auto px-4">
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
-                            About Icastar: The Creative Industry's Connection Hub
+                            {t('landing.about.title')}
                         </h2>
                         <p className="text-xl text-gray-600 leading-relaxed">
-                            Icastar was built on the belief that talent, no matter where it comes from, should be easy to find, connect with, and hire.
+                            {t('landing.about.intro')}
                         </p>
                     </div>
 
@@ -833,12 +846,12 @@ export const AboutSection = () => {
                             <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center mb-6">
                                 <Star className="h-6 w-6 text-white" />
                             </div>
-                            <h3 className="text-2xl font-bold mb-4 text-gray-900">Empowering the Artist</h3>
+                            <h3 className="text-2xl font-bold mb-4 text-gray-900">{t('landing.about.artist.title')}</h3>
                             <p className="text-gray-700 leading-relaxed mb-4">
-                                We give every artist a professional, one-click shareable Icastar Profile—a comprehensive portfolio that instantly provides recruiters with all the necessary details, photos, and video proof of skill.
+                                {t('landing.about.artist.p1')}
                             </p>
                             <p className="text-gray-700 leading-relaxed">
-                                Apply for roles using our smart <span className="font-semibold text-orange-600">Flash</span> and <span className="font-semibold text-orange-600">Spotlight</span> application system, designed to get your profile noticed based on match percentage.
+                                {t('landing.about.artist.p2Before')}<span className="font-semibold text-orange-600">{t('landing.about.artist.flash')}</span>{t('landing.about.artist.p2Middle')}<span className="font-semibold text-orange-600">{t('landing.about.artist.spotlight')}</span>{t('landing.about.artist.p2After')}
                             </p>
                         </div>
 
@@ -846,41 +859,41 @@ export const AboutSection = () => {
                             <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
                                 <Briefcase className="h-6 w-6 text-white" />
                             </div>
-                            <h3 className="text-2xl font-bold mb-4 text-gray-900">Streamlining Casting</h3>
+                            <h3 className="text-2xl font-bold mb-4 text-gray-900">{t('landing.about.casting.title')}</h3>
                             <p className="text-gray-700 leading-relaxed">
-                                For recruiters and casting directors, Icastar is the virtual office that simplifies the entire workflow. From initial selection to final hiring, our platform provides the tools needed to manage talent efficiently and effectively.
+                                {t('landing.about.casting.text')}
                             </p>
                         </div>
                     </div>
 
                     <div className="bg-gray-50 p-10 rounded-2xl border border-gray-200">
-                        <h3 className="text-2xl font-bold mb-6 text-gray-900 text-center">Our Diverse Community</h3>
+                        <h3 className="text-2xl font-bold mb-6 text-gray-900 text-center">{t('landing.about.community.title')}</h3>
                         <div className="grid md:grid-cols-3 gap-8 text-center">
                             <div>
                                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Music className="h-8 w-8 text-purple-600" />
                                 </div>
-                                <h4 className="font-bold text-lg mb-3 text-gray-900">Artists</h4>
+                                <h4 className="font-bold text-lg mb-3 text-gray-900">{t('landing.about.community.artists.title')}</h4>
                                 <p className="text-sm text-gray-600 leading-relaxed">
-                                    Writers, singers, dancers, choreographers, makeup artists, stand-up comedians, DJs, musicians, and actors
+                                    {t('landing.about.community.artists.text')}
                                 </p>
                             </div>
                             <div>
                                 <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Video className="h-8 w-8 text-orange-600" />
                                 </div>
-                                <h4 className="font-bold text-lg mb-3 text-gray-900">Film Professionals</h4>
+                                <h4 className="font-bold text-lg mb-3 text-gray-900">{t('landing.about.community.film.title')}</h4>
                                 <p className="text-sm text-gray-600 leading-relaxed">
-                                    Directors, cinematographers, lighting technicians, focus pullers, PR specialists, and distributors
+                                    {t('landing.about.community.film.text')}
                                 </p>
                             </div>
                             <div>
                                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Users className="h-8 w-8 text-green-600" />
                                 </div>
-                                <h4 className="font-bold text-lg mb-3 text-gray-900">Event Organizers</h4>
+                                <h4 className="font-bold text-lg mb-3 text-gray-900">{t('landing.about.community.events.title')}</h4>
                                 <p className="text-sm text-gray-600 leading-relaxed">
-                                    Need talent for a wedding or function? Find your perfect artist on Icastar
+                                    {t('landing.about.community.events.text')}
                                 </p>
                             </div>
                         </div>
@@ -888,10 +901,10 @@ export const AboutSection = () => {
 
                     <div className="text-center mt-12">
                         <p className="text-gray-600 mb-4">
-                            At Icastar, we aim to eliminate barriers and create a seamless environment where opportunity meets talent.
+                            {t('landing.about.closing')}
                         </p>
                         <p className="text-gray-700 font-medium">
-                            More information:{' '}
+                            {t('landing.about.moreInfo')}{' '}
                             <a
                                 href="mailto:admin.icastar@gmail.com"
                                 onClick={(e) => {
@@ -914,70 +927,71 @@ export const AboutSection = () => {
 }
 
 export const FAQSection = () => {
+    const { t } = useTranslation()
     const [openFAQ, setOpenFAQ] = useState<number | null>(null)
 
     const faqs = [
         {
             id: 1,
-            question: "What exactly is an Icastar Profile?",
+            question: t('landing.faq.q1.question'),
             answer: {
-                artist: "Your Icastar profile is your digital portfolio, supercharged! It's the sleek, one-click link you send to recruiters and casting directors. They instantly get a full picture: your essential details, stunning photos, and, most importantly, a glimpse of your talent through your audition video. It's your professional handshake in a single click.",
-                recruiter: "Think of your Icastar profile as your virtual casting office. It's a powerful, streamlined web platform where you can effortlessly discover, select, connect with, and hire the perfect artist or professional for any project."
+                artist: t('landing.faq.q1.artist'),
+                recruiter: t('landing.faq.q1.recruiter')
             }
         },
         {
             id: 2,
-            question: "How does Icastar actually work?",
+            question: t('landing.faq.q2.question'),
             answer: {
-                main: "Icastar is the ultimate creative bridge! We connect aspiring and established artists with the busy recruiters and casting professionals looking for talent. We make the finding, connecting, and hiring process simple and seamless for everyone."
+                main: t('landing.faq.q2.main')
             }
         },
         {
             id: 3,
-            question: "How do I apply for an audition?",
+            question: t('landing.faq.q3.question'),
             answer: {
-                main: "It couldn't be easier! Our Call to Action is crystal clear:",
+                main: t('landing.faq.q3.main'),
                 steps: [
-                    "Find a casting call that excites you",
-                    "Click the easy-to-find 'Apply' button",
-                    "Choose your application method: Flash or Spotlight!"
+                    t('landing.faq.q3.steps.s1'),
+                    t('landing.faq.q3.steps.s2'),
+                    t('landing.faq.q3.steps.s3')
                 ]
             }
         },
         {
             id: 4,
-            question: "What's the deal with Flash and Spotlight credits?",
+            question: t('landing.faq.q4.question'),
             answer: {
-                main: "These credits are designed to make the casting director's selection process smarter and faster! They are based on your profile's match percentage to the role.",
-                details: "The Flash application should be used when you have a less matching profile. Conversely, the Spotlight application should be used when you have a perfect match of profile - this is considered the direct path and helps the casting director notice your profile immediately."
+                main: t('landing.faq.q4.main'),
+                details: t('landing.faq.q4.details')
             }
         },
         {
             id: 5,
-            question: "Is Icastar only for actors?",
+            question: t('landing.faq.q5.question'),
             answer: {
-                main: "Absolutely not! Icastar is a vast, inclusive platform for the entire creative ecosystem, connecting talent across all needs:",
+                main: t('landing.faq.q5.main'),
                 categories: [
                     {
-                        title: "For the Artists",
-                        desc: "We are a hub for performers and creators of all types! This includes actors, writers, singers, dancers, makeup artists, choreographers, musicians, stand-up comedians, DJs, and many more!"
+                        title: t('landing.faq.q5.categories.artists.title'),
+                        desc: t('landing.faq.q5.categories.artists.desc')
                     },
                     {
-                        title: "For the Industry Professionals",
-                        desc: "The platform is essential for those behind the scenes, welcoming directors, cinematographers, lighting technicians, focus pullers, PR specialists, and distributors. You name it, you belong here!"
+                        title: t('landing.faq.q5.categories.professionals.title'),
+                        desc: t('landing.faq.q5.categories.professionals.desc')
                     },
                     {
-                        title: "For Individuals & Events",
-                        desc: "Need talent for a special occasion? Icastar is also the place for individuals who want to hire artists for private events like programs, weddings, and functions."
+                        title: t('landing.faq.q5.categories.individuals.title'),
+                        desc: t('landing.faq.q5.categories.individuals.desc')
                     }
                 ]
             }
         },
         {
             id: 6,
-            question: "Why is my profile restricted?",
+            question: t('landing.faq.q6.question'),
             answer: {
-                main: "Profile restrictions typically occur when a user hasn't followed our community guidelines or Terms and Conditions. Please visit our dedicated Terms and Conditions page to review the full details and understand the next steps."
+                main: t('landing.faq.q6.main')
             }
         }
     ]
@@ -988,10 +1002,10 @@ export const FAQSection = () => {
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
-                            Frequently Asked Questions
+                            {t('landing.faq.title')}
                         </h2>
                         <p className="text-xl text-gray-600">
-                            Got questions? We've got answers!
+                            {t('landing.faq.subtitle')}
                         </p>
                     </div>
 
@@ -1018,13 +1032,13 @@ export const FAQSection = () => {
                                     <div className="px-8 pb-6 text-gray-700 leading-relaxed">
                                         {faq.answer.artist && (
                                             <div className="mb-4">
-                                                <p className="font-semibold text-orange-600 mb-2">For the Artist:</p>
+                                                <p className="font-semibold text-orange-600 mb-2">{t('landing.faq.forArtist')}</p>
                                                 <p>{faq.answer.artist}</p>
                                             </div>
                                         )}
                                         {faq.answer.recruiter && (
                                             <div className="mb-4">
-                                                <p className="font-semibold text-blue-600 mb-2">For Recruiters/Casting Directors:</p>
+                                                <p className="font-semibold text-blue-600 mb-2">{t('landing.faq.forRecruiters')}</p>
                                                 <p>{faq.answer.recruiter}</p>
                                             </div>
                                         )}
@@ -1058,9 +1072,9 @@ export const FAQSection = () => {
                     </div>
 
                     <div className="mt-12 text-center p-8 bg-orange-50 rounded-2xl border border-orange-200">
-                        <h3 className="text-2xl font-bold mb-4 text-gray-900">Got More Questions?</h3>
+                        <h3 className="text-2xl font-bold mb-4 text-gray-900">{t('landing.faq.moreQuestions.title')}</h3>
                         <p className="text-gray-700 mb-4">
-                            If you need further assistance, don't hesitate! Just shoot us an email, and we'll be happy to help you shine.
+                            {t('landing.faq.moreQuestions.text')}
                         </p>
                         <a
                             href="mailto:admin.icastar@gmail.com"
@@ -1079,7 +1093,7 @@ export const FAQSection = () => {
                             className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
                         >
                             <Send className="h-5 w-5" />
-                            Email Us: admin.icastar@gmail.com
+                            {t('landing.faq.moreQuestions.emailUs', { email: 'admin.icastar@gmail.com' })}
                         </a>
                     </div>
                 </div>

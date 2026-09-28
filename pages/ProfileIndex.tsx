@@ -1,8 +1,10 @@
 import React from 'react'
 import { RecruiterProfilePage } from './recruiter/RecruiterProfilePage'
 import Profile from './artist/Profile'
+import { useTranslation } from '@/i18n'
 
 const ProfileIndex: React.FC = () => {
+  const { t } = useTranslation()
   // Read role from stored user payload (set by authService) or fallback to direct 'role' key
   const storedUser = localStorage.getItem('user')
   const directRole = localStorage.getItem('role')
@@ -28,7 +30,7 @@ const ProfileIndex: React.FC = () => {
     default:
       return (
         <div className='text-center p-6'>
-          No Profile available for your role.
+          {t('profileIndex.noProfileForRole')}
         </div>
       )
   }

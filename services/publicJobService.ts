@@ -1,5 +1,7 @@
 // Public (no-auth) job endpoints. Uses plain fetch so no token is attached —
 // anyone can view a shared job and apply to it without an account.
+import { translate } from '@/i18n'
+
 const BASE_URL = 'https://api.icastar.com/api'
 
 export interface PublicJob {
@@ -56,9 +58,9 @@ export async function getPublicJob(jobId: string | number): Promise<PublicJob> {
   if (!res.ok || json.success === false) {
     const msg: string = json?.error?.message ?? json?.message ?? ''
     if (res.status === 404 || msg.toLowerCase().includes('not found')) {
-      throw new Error('Job not found')
+      throw new Error(translate('services.publicJob.notFound'))
     }
-    throw new Error('Failed to load job')
+    throw new Error(translate('services.publicJob.loadFailed'))
   }
 
   const data = json.data ?? json
@@ -84,7 +86,7 @@ export async function applyToPublicJob(
 
   if (!res.ok || json.success === false) {
     const msg: string =
-      json?.error?.message ?? json?.message ?? 'Failed to submit application'
+      json?.error?.message ?? json?.message ?? translate('services.publicJob.applyFailed')
     throw new Error(msg)
   }
 

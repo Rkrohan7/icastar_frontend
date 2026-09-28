@@ -1,0 +1,126 @@
+import { defineMessages } from '../defineMessages'
+
+export default defineMessages({
+  en: {
+    title: 'Dashboard Overview',
+    subtitle: 'Platform-wide metrics and quick actions',
+    loading: 'Loading dashboard...',
+    loadError: 'Unable to load dashboard data. Please try again later.',
+    reminders: {
+      button: 'Email Incomplete Profiles',
+      sending: 'Sending…',
+      buttonTitle: 'Email every user whose profile is less than 100% complete',
+      confirm:
+        'Send a "complete your profile" reminder email to ALL users whose profile is less than 100% complete?',
+      sent: 'Reminder emails sent to {{sent}} of {{total}} incomplete-profile users',
+      sentWithFailures:
+        'Reminder emails sent to {{sent}} of {{total}} incomplete-profile users ({{failed}} failed)',
+      failed: 'Failed to send reminder emails. Please try again.',
+    },
+    kpi: {
+      totalUsers: 'Total Users',
+      newToday: '+{{count}} today',
+      totalArtists: 'Total Artists',
+      recruiters: '{{count}} recruiters',
+      activeJobs: 'Active Jobs',
+      total: '{{count}} total',
+      totalApplications: 'Total Applications',
+      pending: '{{count}} pending',
+      verifiedUsers: 'Verified Users',
+      unverified: '{{count}} unverified',
+      newThisMonth: 'New This Month',
+      newThisWeek: '+{{count}} this week',
+    },
+    userStatus: {
+      title: 'User Account Status',
+      subtitle: 'Current distribution across all users',
+    },
+    appStatus: {
+      title: 'Application Status',
+      subtitle: 'Breakdown across all applications',
+    },
+    artistTypes: {
+      title: 'Artist Type Distribution',
+      subtitle: 'Active artists by category',
+    },
+    jobTypes: {
+      title: 'Job Type Distribution',
+      subtitle: 'Jobs by employment type',
+    },
+    top: {
+      recruiters: 'Top Recruiters',
+      recruitersSubtitle: 'By jobs posted',
+      artists: 'Top Artists',
+      artistsSubtitle: 'By applications',
+      jobs: 'Top Jobs',
+      jobsSubtitle: 'Most applied',
+      jobsCount: '{{count}} jobs',
+      hires: '{{count}} hires',
+      apps: '{{count}} apps',
+      views: '{{count}} views',
+      noData: 'No data',
+    },
+    lastUpdated: 'Last updated: {{date}}',
+  },
+  mr: {
+    title: 'डॅशबोर्ड आढावा',
+    subtitle: 'संपूर्ण प्लॅटफॉर्मची आकडेवारी आणि जलद क्रिया',
+    loading: 'डॅशबोर्ड लोड होत आहे...',
+    loadError: 'डॅशबोर्डची माहिती लोड करता आली नाही. कृपया नंतर पुन्हा प्रयत्न करा.',
+    reminders: {
+      button: 'अपूर्ण प्रोफाइल्सना ईमेल करा',
+      sending: 'पाठवत आहे…',
+      buttonTitle: 'ज्यांचे प्रोफाइल 100% पेक्षा कमी पूर्ण आहे अशा प्रत्येक वापरकर्त्याला ईमेल पाठवा',
+      confirm:
+        'ज्यांचे प्रोफाइल 100% पेक्षा कमी पूर्ण आहे अशा सर्व वापरकर्त्यांना "तुमचे प्रोफाइल पूर्ण करा" असा रिमाइंडर ईमेल पाठवायचा का?',
+      sent: 'अपूर्ण प्रोफाइल असलेल्या {{total}} पैकी {{sent}} वापरकर्त्यांना रिमाइंडर ईमेल पाठवले',
+      sentWithFailures:
+        'अपूर्ण प्रोफाइल असलेल्या {{total}} पैकी {{sent}} वापरकर्त्यांना रिमाइंडर ईमेल पाठवले ({{failed}} अयशस्वी)',
+      failed: 'रिमाइंडर ईमेल पाठवता आले नाहीत. कृपया पुन्हा प्रयत्न करा.',
+    },
+    kpi: {
+      totalUsers: 'एकूण वापरकर्ते',
+      newToday: 'आज +{{count}}',
+      totalArtists: 'एकूण कलाकार',
+      recruiters: '{{count}} रिक्रूटर्स',
+      activeJobs: 'सक्रिय नोकऱ्या',
+      total: 'एकूण {{count}}',
+      totalApplications: 'एकूण अर्ज',
+      pending: '{{count}} प्रलंबित',
+      verifiedUsers: 'सत्यापित वापरकर्ते',
+      unverified: '{{count}} असत्यापित',
+      newThisMonth: 'या महिन्यात नवीन',
+      newThisWeek: 'या आठवड्यात +{{count}}',
+    },
+    userStatus: {
+      title: 'वापरकर्ता खाते स्थिती',
+      subtitle: 'सर्व वापरकर्त्यांमधील सध्याचे वितरण',
+    },
+    appStatus: {
+      title: 'अर्ज स्थिती',
+      subtitle: 'सर्व अर्जांचे वर्गीकरण',
+    },
+    artistTypes: {
+      title: 'कलाकार प्रकारानुसार वितरण',
+      subtitle: 'श्रेणीनुसार सक्रिय कलाकार',
+    },
+    jobTypes: {
+      title: 'नोकरी प्रकारानुसार वितरण',
+      subtitle: 'रोजगार प्रकारानुसार नोकऱ्या',
+    },
+    top: {
+      recruiters: 'आघाडीचे रिक्रूटर्स',
+      recruitersSubtitle: 'पोस्ट केलेल्या नोकऱ्यांनुसार',
+      artists: 'आघाडीचे कलाकार',
+      artistsSubtitle: 'अर्जांनुसार',
+      jobs: 'आघाडीच्या नोकऱ्या',
+      jobsSubtitle: 'सर्वाधिक अर्ज आलेल्या',
+      jobsCount: '{{count}} नोकऱ्या',
+      hires: '{{count}} नियुक्त्या',
+      apps: '{{count}} अर्ज',
+      views: '{{count}} व्ह्यूज',
+      noData: 'माहिती नाही',
+    },
+    lastUpdated: 'शेवटचे अपडेट: {{date}}',
+  },
+})

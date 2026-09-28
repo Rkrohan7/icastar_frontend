@@ -7,8 +7,10 @@ import {
   ImageIcon,
 } from '../../components/icons/IconComponents'
 import superAdminService, { SuperAdminPortfolio } from '../../services/superAdminService'
+import { useTranslation } from '@/i18n'
 
 export const SuperAdminPortfolioPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [data, setData] = useState<SuperAdminPortfolio | null>(null)
@@ -26,21 +28,21 @@ export const SuperAdminPortfolioPage: React.FC = () => {
       } catch (e: any) {
         const s = e?.response?.status
         const m = e?.response?.data?.message
-        if (s === 401) setError('Unauthorized — log in as admin.')
-        else if (s === 403) setError('Access denied — admin role required.')
-        else if (s === 404) setError('Artist not found.')
-        else setError(m || e?.message || 'Unable to load portfolio.')
+        if (s === 401) setError(t('adminPortfolio.errors.unauthorized'))
+        else if (s === 403) setError(t('adminPortfolio.errors.accessDenied'))
+        else if (s === 404) setError(t('adminPortfolio.errors.notFound'))
+        else setError(m || e?.message || t('adminPortfolio.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [id])
+  }, [id, t])
 
   if (loading) {
     return (
       <div className='p-6 flex items-center justify-center min-h-[400px]'>
-        <div className='text-gray-500'>Loading portfolio...</div>
+        <div className='text-gray-500'>{t('adminPortfolio.loading')}</div>
       </div>
     )
   }
@@ -51,10 +53,10 @@ export const SuperAdminPortfolioPage: React.FC = () => {
         <button
           onClick={() => navigate('/admin/artists')}
           className='text-sm text-[#E36A3A] hover:underline mb-4'>
-          ← Back to Artists
+          {t('adminPortfolio.backToArtists')}
         </button>
         <div className='bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl'>
-          {error || 'No data'}
+          {error || t('adminPortfolio.noData')}
         </div>
       </div>
     )
@@ -67,7 +69,7 @@ export const SuperAdminPortfolioPage: React.FC = () => {
       <button
         onClick={() => navigate('/admin/artists')}
         className='text-sm text-[#E36A3A] hover:underline'>
-        ← Back to Artists
+        {t('adminPortfolio.backToArtists')}
       </button>
 
       {/* Header card */}
@@ -95,7 +97,7 @@ export const SuperAdminPortfolioPage: React.FC = () => {
               </span>
             )}
             {data.experienceLevel && (
-              <span className='text-xs'>{data.experienceLevel} · {data.yearsOfExperience ?? 0}y</span>
+              <span className='text-xs'>{tEnum(data.experienceLevel)} · {t('adminPortfolio.yearsShort', { count: data.yearsOfExperience ?? 0 })}</span>
             )}
             {data.email && <span className='text-xs'>{data.email}</span>}
           </div>
@@ -103,11 +105,11 @@ export const SuperAdminPortfolioPage: React.FC = () => {
         <div className='grid grid-cols-2 gap-4 text-center md:text-right'>
           <div>
             <p className='text-2xl font-bold text-[#E36A3A]'>{data.totalApplications ?? 0}</p>
-            <p className='text-xs text-gray-500'>Applications</p>
+            <p className='text-xs text-gray-500'>{t('common.nav.applications')}</p>
           </div>
           <div>
             <p className='text-2xl font-bold text-green-600'>{data.successfulHires ?? 0}</p>
-            <p className='text-xs text-gray-500'>Hires</p>
+            <p className='text-xs text-gray-500'>{t('adminPortfolio.hires')}</p>
           </div>
         </div>
       </div>
@@ -115,7 +117,7 @@ export const SuperAdminPortfolioPage: React.FC = () => {
       {/* Bio */}
       {data.bio && (
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <h2 className='text-base font-bold text-gray-900 mb-2'>About</h2>
+          <h2 className='text-base font-bold text-gray-900 mb-2'>{t('adminPortfolio.about')}</h2>
           <p className='text-sm text-gray-700 whitespace-pre-line'>{data.bio}</p>
         </div>
       )}
@@ -123,7 +125,7 @@ export const SuperAdminPortfolioPage: React.FC = () => {
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
         {/* Skills */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <h2 className='text-base font-bold text-gray-900 mb-3'>Skills</h2>
+          <h2 className='text-base font-bold text-gray-900 mb-3'>{t('common.labels.skills')}</h2>
           {data.skills && data.skills.length > 0 ? (
             <div className='flex flex-wrap gap-2'>
               {data.skills.map((s) => (
@@ -133,13 +135,13 @@ export const SuperAdminPortfolioPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p className='text-sm text-gray-400'>No skills listed</p>
+            <p className='text-sm text-gray-400'>{t('adminPortfolio.noSkills')}</p>
           )}
         </div>
 
         {/* Languages */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <h2 className='text-base font-bold text-gray-900 mb-3'>Languages</h2>
+          <h2 className='text-base font-bold text-gray-900 mb-3'>{t('common.labels.languages')}</h2>
           {data.languagesSpoken && data.languagesSpoken.length > 0 ? (
             <div className='flex flex-wrap gap-2'>
               {data.languagesSpoken.map((l) => (
@@ -149,7 +151,7 @@ export const SuperAdminPortfolioPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p className='text-sm text-gray-400'>No languages listed</p>
+            <p className='text-sm text-gray-400'>{t('adminPortfolio.noLanguages')}</p>
           )}
         </div>
       </div>
@@ -157,7 +159,7 @@ export const SuperAdminPortfolioPage: React.FC = () => {
       {/* Portfolio media */}
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
         <h2 className='text-base font-bold text-gray-900 mb-3 flex items-center gap-2'>
-          <ImageIcon className='h-5 w-5 text-[#E36A3A]' /> Portfolio Media
+          <ImageIcon className='h-5 w-5 text-[#E36A3A]' /> {t('adminPortfolio.portfolioMedia')}
         </h2>
         {data.portfolioUrls && data.portfolioUrls.length > 0 ? (
           <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'>
@@ -170,7 +172,7 @@ export const SuperAdminPortfolioPage: React.FC = () => {
                 className='aspect-square rounded-lg overflow-hidden bg-gray-100 hover:opacity-90 transition-opacity'>
                 <img
                   src={url}
-                  alt={`Portfolio ${i + 1}`}
+                  alt={t('adminPortfolio.mediaAlt', { index: i + 1 })}
                   className='w-full h-full object-cover'
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none'
@@ -180,14 +182,14 @@ export const SuperAdminPortfolioPage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <p className='text-sm text-gray-400'>No media uploaded</p>
+          <p className='text-sm text-gray-400'>{t('adminPortfolio.noMedia')}</p>
         )}
       </div>
 
       {/* Projects */}
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
         <h2 className='text-base font-bold text-gray-900 mb-3 flex items-center gap-2'>
-          <CheckCircleIcon className='h-5 w-5 text-[#E36A3A]' /> Projects Worked
+          <CheckCircleIcon className='h-5 w-5 text-[#E36A3A]' /> {t('adminPortfolio.projectsWorked')}
         </h2>
         {data.projectsWorked && data.projectsWorked.length > 0 ? (
           <div className='divide-y divide-gray-100'>
@@ -204,14 +206,14 @@ export const SuperAdminPortfolioPage: React.FC = () => {
                 </div>
                 {p.url && (
                   <a href={p.url} target='_blank' rel='noreferrer' className='text-[#E36A3A] hover:underline text-sm flex items-center gap-1'>
-                    View <ArrowDownIcon className='h-3 w-3 rotate-[-90deg]' />
+                    {t('common.actions.view')} <ArrowDownIcon className='h-3 w-3 rotate-[-90deg]' />
                   </a>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className='text-sm text-gray-400'>No projects listed</p>
+          <p className='text-sm text-gray-400'>{t('adminPortfolio.noProjects')}</p>
         )}
       </div>
     </div>

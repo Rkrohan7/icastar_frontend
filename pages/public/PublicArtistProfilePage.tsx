@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getPublicArtistProfile } from '@/services/publicArtistService'
 import { ArtistProfile } from '@/services/artistService'
+import { useTranslation } from '@/i18n'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -74,23 +75,27 @@ const LoadingSkeleton = () => (
 
 // ── Not Found ─────────────────────────────────────────────────────────────────
 
-const NotFound = () => (
-  <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-center px-4">
-    <img src="/favicon.png" alt="iCastar" className="h-14 w-14 mb-6 opacity-60" />
-    <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Not Found</h2>
-    <p className="text-gray-500 mb-6">This artist profile doesn't exist or has been removed.</p>
-    <a
-      href="https://www.icastar.com"
-      className="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary-hover transition-colors"
-    >
-      Go to iCastar
-    </a>
-  </div>
-)
+const NotFound = () => {
+  const { t } = useTranslation()
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-center px-4">
+      <img src="/favicon.png" alt="iCastar" className="h-14 w-14 mb-6 opacity-60" />
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('publicArtistProfile.notFound.title')}</h2>
+      <p className="text-gray-500 mb-6">{t('publicArtistProfile.notFound.message')}</p>
+      <a
+        href="https://www.icastar.com"
+        className="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary-hover transition-colors"
+      >
+        {t('publicArtistProfile.goToICastar')}
+      </a>
+    </div>
+  )
+}
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export const PublicArtistProfilePage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const { userId } = useParams<{ userId: string }>()
   const [profile, setProfile] = useState<ArtistProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -102,8 +107,6 @@ export const PublicArtistProfilePage: React.FC = () => {
     getPublicArtistProfile(userId)
       .then(p => {
         setProfile(p)
-        const name = p.stageName || p.fullName || 'Artist'
-        document.title = `${name} | iCastar`
         const meta = document.querySelector('meta[name="description"]')
         if (meta && p.bio) meta.setAttribute('content', p.bio)
       })
@@ -111,45 +114,52 @@ export const PublicArtistProfilePage: React.FC = () => {
       .finally(() => setLoading(false))
   }, [userId])
 
+  // Kept separate from the fetch so the tab title follows language changes.
+  useEffect(() => {
+    if (!profile) return
+    const name = profile.stageName || profile.fullName || t('publicArtistProfile.artistFallback')
+    document.title = t('publicArtistProfile.documentTitle', { name })
+  }, [profile, t])
+
   if (loading) return <LoadingSkeleton />
   if (error || !profile) return <NotFound />
 
-  const skills   = toArr(profile.skills)
-  const langs    = toArr(profile.languages ?? profile.languagesSpoken)
-  const areas    = toArr(profile.comfortableAreas)
-  const cities   = toArr(profile.travelCities)
+  const skills = toArr(profile.skills)
+  const langs = toArr(profile.languages ?? profile.languagesSpoken)
+  const areas = toArr(profile.comfortableAreas)
+  const cities = toArr(profile.travelCities)
   const portfolio = toArr(profile.portfolioUrls)
 
-  const displayName = profile.stageName || profile.fullName || 'Artist'
+  const displayName = profile.stageName || profile.fullName || t('publicArtistProfile.artistFallback')
   const professionNames = (profile.professions && profile.professions.length > 0)
     ? profile.professions.map(p =>
-        p.experienceYears != null && p.experienceYears > 0
-          ? `${p.displayName} (${p.experienceYears} yrs)`
-          : p.displayName,
-      )
-    : [profile.artistType?.displayName ?? profile.category ?? 'Artist']
-  const category    = professionNames.join(' · ')
+      p.experienceYears != null && p.experienceYears > 0
+        ? t('publicArtistProfile.professionWithYears', { name: p.displayName, count: p.experienceYears })
+        : p.displayName,
+    )
+    : [profile.artistType?.displayName ?? profile.category ?? t('publicArtistProfile.artistFallback')]
+  const category = professionNames.join(' · ')
 
   const overviewItems = [
-    profile.location && { label: 'Location', value: profile.location },
-    profile.experienceYears != null && { label: 'Experience', value: `${profile.experienceYears} yrs` },
-    profile.gender && { label: 'Gender', value: profile.gender },
-    profile.dateOfBirth && { label: 'Date of Birth', value: profile.dateOfBirth },
-    profile.maritalStatus && { label: 'Marital Status', value: profile.maritalStatus },
-    profile.hourlyRate != null && { label: 'Hourly Rate', value: `₹ ${profile.hourlyRate.toLocaleString('en-IN')}` },
-    profile.hasPassport !== undefined && { label: 'Passport', value: profile.hasPassport ? 'Yes' : 'No' },
+    profile.location && { label: t('common.labels.location'), value: profile.location },
+    profile.experienceYears != null && { label: t('common.labels.experience'), value: t('common.units.yearsShort', { count: profile.experienceYears }) },
+    profile.gender && { label: t('common.labels.gender'), value: tEnum(profile.gender) },
+    profile.dateOfBirth && { label: t('publicArtistProfile.overview.dateOfBirth'), value: profile.dateOfBirth },
+    profile.maritalStatus && { label: t('publicArtistProfile.overview.maritalStatus'), value: tEnum(profile.maritalStatus) },
+    profile.hourlyRate != null && { label: t('publicArtistProfile.overview.perDay'), value: `₹ ${profile.hourlyRate.toLocaleString('en-IN')}` },
+    profile.hasPassport !== undefined && { label: t('publicArtistProfile.overview.passport'), value: profile.hasPassport ? t('common.actions.yes') : t('common.actions.no') },
   ].filter(Boolean) as { label: string; value: string | number | boolean }[]
 
   const physicalItems = [
-    profile.height && { label: 'Height', value: profile.height },
-    profile.weight != null && { label: 'Weight', value: `${profile.weight} kg` },
-    profile.hairColor && { label: 'Hair Color', value: profile.hairColor },
-    profile.hairLength && { label: 'Hair Length', value: profile.hairLength },
-    profile.eyeColor && { label: 'Eye Color', value: profile.eyeColor },
-    profile.complexion && { label: 'Complexion', value: profile.complexion },
-    profile.shoeSize && { label: 'Shoe Size', value: profile.shoeSize },
-    profile.hasTattoo !== undefined && { label: 'Tattoo', value: profile.hasTattoo ? 'Yes' : 'No' },
-    profile.hasMole !== undefined && { label: 'Mole', value: profile.hasMole ? 'Yes' : 'No' },
+    profile.height && { label: t('publicArtistProfile.physical.height'), value: profile.height },
+    profile.weight != null && { label: t('publicArtistProfile.physical.weight'), value: t('publicArtistProfile.physical.weightValue', { value: profile.weight }) },
+    profile.hairColor && { label: t('publicArtistProfile.physical.hairColor'), value: profile.hairColor },
+    profile.hairLength && { label: t('publicArtistProfile.physical.hairLength'), value: profile.hairLength },
+    profile.eyeColor && { label: t('publicArtistProfile.physical.eyeColor'), value: profile.eyeColor },
+    profile.complexion && { label: t('publicArtistProfile.physical.complexion'), value: profile.complexion },
+    profile.shoeSize && { label: t('publicArtistProfile.physical.shoeSize'), value: profile.shoeSize },
+    profile.hasTattoo !== undefined && { label: t('publicArtistProfile.physical.tattoo'), value: profile.hasTattoo ? t('common.actions.yes') : t('common.actions.no') },
+    profile.hasMole !== undefined && { label: t('publicArtistProfile.physical.mole'), value: profile.hasMole ? t('common.actions.yes') : t('common.actions.no') },
   ].filter(Boolean) as { label: string; value: string | number | boolean }[]
 
   return (
@@ -165,13 +175,13 @@ export const PublicArtistProfilePage: React.FC = () => {
           href="https://www.icastar.com/auth"
           className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary-hover transition-colors"
         >
-          Join iCastar
+          {t('publicArtistProfile.joinICastar')}
         </a>
       </nav>
 
       {/* ── Cover Photo ── */}
       {profile.coverPhoto ? (
-        <img src={profile.coverPhoto} alt="Cover" className="w-full h-52 object-cover" />
+        <img src={profile.coverPhoto} alt={t('publicArtistProfile.coverAlt')} className="w-full h-52 object-cover" />
       ) : (
         <div className="w-full h-52 bg-gradient-to-br from-primary/30 via-amber-200/40 to-primary/10" />
       )}
@@ -194,7 +204,7 @@ export const PublicArtistProfilePage: React.FC = () => {
                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Verified
+                  {t('publicArtistProfile.verified')}
                 </span>
               )}
             </div>
@@ -212,14 +222,14 @@ export const PublicArtistProfilePage: React.FC = () => {
 
             {/* Bio */}
             {profile.bio && (
-              <Section title="About">
+              <Section title={t('publicArtistProfile.sections.about')}>
                 <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{profile.bio}</p>
               </Section>
             )}
 
             {/* Skills */}
             {skills.length > 0 && (
-              <Section title="Skills">
+              <Section title={t('common.labels.skills')}>
                 <div className="flex flex-wrap gap-2">
                   {skills.map(s => <Badge key={s} label={s} color="bg-orange-50 text-orange-700" />)}
                 </div>
@@ -228,14 +238,21 @@ export const PublicArtistProfilePage: React.FC = () => {
 
             {/* Overview */}
             {overviewItems.length > 0 && (
-              <Section title="Overview">
+              <Section title={t('publicArtistProfile.sections.overview')}>
                 <InfoGrid items={overviewItems} />
+              </Section>
+            )}
+
+            {/* Physical Attributes */}
+            {physicalItems.length > 0 && (
+              <Section title={t('publicArtistProfile.sections.physicalAttributes')}>
+                <InfoGrid items={physicalItems} />
               </Section>
             )}
 
             {/* Languages */}
             {langs.length > 0 && (
-              <Section title="Languages">
+              <Section title={t('common.labels.languages')}>
                 <div className="flex flex-wrap gap-2">
                   {langs.map(l => <Badge key={l} label={l} color="bg-blue-50 text-blue-700" />)}
                 </div>
@@ -244,7 +261,7 @@ export const PublicArtistProfilePage: React.FC = () => {
 
             {/* Comfortable Areas */}
             {areas.length > 0 && (
-              <Section title="Comfortable Areas">
+              <Section title={t('publicArtistProfile.sections.comfortableAreas')}>
                 <div className="flex flex-wrap gap-2">
                   {areas.map(a => <Badge key={a} label={a} color="bg-green-50 text-green-700" />)}
                 </div>
@@ -253,23 +270,16 @@ export const PublicArtistProfilePage: React.FC = () => {
 
             {/* Travel Cities */}
             {cities.length > 0 && (
-              <Section title="Willing to Travel">
+              <Section title={t('publicArtistProfile.sections.willingToTravel')}>
                 <div className="flex flex-wrap gap-2">
                   {cities.map(c => <Badge key={c} label={c} color="bg-purple-50 text-purple-700" />)}
                 </div>
               </Section>
             )}
 
-            {/* Physical Attributes */}
-            {physicalItems.length > 0 && (
-              <Section title="Physical Attributes">
-                <InfoGrid items={physicalItems} />
-              </Section>
-            )}
-
             {/* Portfolio */}
             {portfolio.length > 0 && (
-              <Section title="Portfolio">
+              <Section title={t('publicArtistProfile.sections.portfolio')}>
                 <ul className="space-y-2">
                   {portfolio.map((url, i) => (
                     <li key={i}>
@@ -289,7 +299,7 @@ export const PublicArtistProfilePage: React.FC = () => {
 
             {/* Video */}
             {(profile.videoUrl || profile.danceVideo) && (
-              <Section title="Video">
+              <Section title={t('publicArtistProfile.sections.video')}>
                 <video
                   src={profile.videoUrl || profile.danceVideo}
                   controls
@@ -304,7 +314,7 @@ export const PublicArtistProfilePage: React.FC = () => {
 
             {/* Contact */}
             {(profile.email || profile.phone) && (
-              <Section title="Contact">
+              <Section title={t('publicArtistProfile.sections.contact')}>
                 <ul className="space-y-3 text-sm">
                   {profile.email && (
                     <li className="flex items-center gap-3">
@@ -326,38 +336,18 @@ export const PublicArtistProfilePage: React.FC = () => {
               </Section>
             )}
 
-            {/* Stats */}
-            {(profile.totalApplications != null || profile.successfulHires != null) && (
-              <Section title="Stats">
-                <div className="space-y-3 text-sm">
-                  {profile.totalApplications != null && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Applications</span>
-                      <span className="font-semibold text-gray-800">{profile.totalApplications}</span>
-                    </div>
-                  )}
-                  {profile.successfulHires != null && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Successful Hires</span>
-                      <span className="font-semibold text-gray-800">{profile.successfulHires}</span>
-                    </div>
-                  )}
-                </div>
-              </Section>
-            )}
-
             {/* iCastar CTA */}
             <div className="bg-gradient-to-br from-primary/10 to-amber-50 rounded-2xl p-5 border border-primary/20 text-center">
               <img src="/favicon.png" alt="iCastar" className="h-10 w-10 rounded-xl mx-auto mb-3" />
-              <p className="text-sm font-semibold text-gray-800 mb-1">Find talent on iCastar</p>
-              <p className="text-xs text-gray-500 mb-4">India's best talent hunting platform</p>
+              <p className="text-sm font-semibold text-gray-800 mb-1">{t('publicArtistProfile.cta.title')}</p>
+              <p className="text-xs text-gray-500 mb-4">{t('publicArtistProfile.cta.subtitle')}</p>
               <a
                 href="https://www.icastar.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary-hover transition-colors"
               >
-                Explore iCastar →
+                {t('publicArtistProfile.cta.explore')}
               </a>
             </div>
           </div>
@@ -370,7 +360,7 @@ export const PublicArtistProfilePage: React.FC = () => {
           <img src="/favicon.png" alt="iCastar" className="h-5 w-5 rounded" />
           <span className="text-sm font-semibold text-gray-700">iCastar</span>
         </div>
-        <p className="text-xs text-gray-400">Best Talent Hunting Platform · <a href="https://www.icastar.com" className="hover:underline text-primary">www.icastar.com</a></p>
+        <p className="text-xs text-gray-400">{t('common.tagline')} · <a href="https://www.icastar.com" className="hover:underline text-primary">www.icastar.com</a></p>
       </footer>
     </div>
   )

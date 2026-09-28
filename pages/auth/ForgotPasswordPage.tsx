@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ArrowLeft, Loader2, Mail } from 'lucide-react'
 import heroBg from '@/assets/hero-stage.jpg'
+import { useTranslation } from '@/i18n'
 
 const BASE_URL = 'https://api.icastar.com/api'
 
 const ForgotPasswordPage = () => {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -31,11 +33,11 @@ const ForgotPasswordPage = () => {
       if (data.success) {
         setSubmitted(true)
       } else {
-        const msg = typeof data.error === 'string' ? data.error : data.error?.message || data.message || 'Something went wrong. Please try again.'
+        const msg = typeof data.error === 'string' ? data.error : data.error?.message || data.message || t('common.status.somethingWentWrong')
         setError(msg)
       }
     } catch {
-      setError('Unable to connect to the server. Please check your internet connection.')
+      setError(t('forgotPassword.networkError'))
     } finally {
       setLoading(false)
     }
@@ -60,17 +62,17 @@ const ForgotPasswordPage = () => {
               <div className="w-16 h-16 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
                 <Mail className="h-8 w-8 text-orange-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-3">Check Your Email</h2>
+              <h2 className="text-2xl font-bold text-white mb-3">{t('forgotPassword.sent.title')}</h2>
               <p className="text-white/70 mb-2">
-                If an account exists with <span className="text-white font-medium">{email}</span>, you will receive a password reset link shortly.
+                {t('forgotPassword.sent.messageBefore')}<span className="text-white font-medium">{email}</span>{t('forgotPassword.sent.messageAfter')}
               </p>
-              <p className="text-sm text-white/50 mb-8">Link expires in 30 minutes</p>
+              <p className="text-sm text-white/50 mb-8">{t('forgotPassword.sent.expires')}</p>
               <Link
                 to="/auth"
                 className="inline-flex items-center text-sm text-white/60 hover:text-white/90 transition-colors"
               >
                 <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-                Back to Login
+                {t('forgotPassword.backToLogin')}
               </Link>
             </CardContent>
           </Card>
@@ -88,20 +90,20 @@ const ForgotPasswordPage = () => {
       <div className="relative z-10 w-full max-w-md px-4 py-8">
         <Card className="backdrop-blur-lg bg-white/10 border-white/20 shadow-2xl">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl text-white">Forgot Password</CardTitle>
+            <CardTitle className="text-2xl text-white">{t('forgotPassword.title')}</CardTitle>
             <CardDescription className="text-white/70">
-              Enter your email and we'll send you a reset link
+              {t('forgotPassword.subtitle')}
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="forgot-email" className="text-white/90">Email Address</Label>
+                <Label htmlFor="forgot-email" className="text-white/90">{t('forgotPassword.emailLabel')}</Label>
                 <Input
                   id="forgot-email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t('forgotPassword.emailPlaceholder')}
                   value={email}
                   onChange={e => { setEmail(e.target.value); setError('') }}
                   required
@@ -123,10 +125,10 @@ const ForgotPasswordPage = () => {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
+                    {t('forgotPassword.sending')}
                   </>
                 ) : (
-                  'Send Reset Link'
+                  t('forgotPassword.sendResetLink')
                 )}
               </Button>
 
@@ -136,7 +138,7 @@ const ForgotPasswordPage = () => {
                   className="inline-flex items-center text-sm text-white/60 hover:text-white/90 transition-colors"
                 >
                   <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-                  Back to Login
+                  {t('forgotPassword.backToLogin')}
                 </Link>
               </div>
             </form>

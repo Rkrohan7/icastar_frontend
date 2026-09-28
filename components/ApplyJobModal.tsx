@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import applicationsService, { ApplicationRequest } from '@/services/applicationsService'
 import { toast } from 'react-toastify'
+import { useTranslation } from '@/i18n'
 
 interface ApplyJobModalProps {
   open: boolean
@@ -21,6 +22,7 @@ const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   jobTitle,
   onSubmitted,
 }) => {
+  const { t } = useTranslation()
   const [coverLetter, setCoverLetter] = useState('')
   const [expectedSalary, setExpectedSalary] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -35,13 +37,13 @@ const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
     const trimmedCover = coverLetter.trim()
     const salary = Number(expectedSalary)
     if (trimmedCover.length < 10) {
-      const msg = 'Please write at least 10 characters in your cover letter.'
+      const msg = t('applyJobModal.validation.coverLetterTooShort')
       setError(msg)
       toast.error(msg)
       return
     }
     if (Number.isNaN(salary) || salary <= 0) {
-      const msg = 'Please enter a valid expected salary greater than 0.'
+      const msg = t('applyJobModal.validation.invalidSalary')
       setError(msg)
       toast.error(msg)
       return
@@ -59,11 +61,11 @@ const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
       onOpenChange(false)
       setCoverLetter('')
       setExpectedSalary('')
-      toast.success(`Applied to ${jobTitle || 'job'} successfully`)
+      toast.success(jobTitle ? t('applyJobModal.toast.success', { title: jobTitle }) : t('applyJobModal.toast.successFallback'))
       if (onSubmitted) onSubmitted()
     } catch (err: any) {
       const backendMessage = err?.response?.data?.message || err?.response?.data?.error
-      const message = backendMessage || err?.message || 'Failed to submit application'
+      const message = backendMessage || err?.message || t('applyJobModal.toast.failed')
       setError(message)
       toast.error(message)
     } finally {
@@ -75,7 +77,7 @@ const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-[500px] bg-white'>
         <DialogHeader>
-          <DialogTitle>Apply for {jobTitle || 'Job'}</DialogTitle>
+          <DialogTitle>{jobTitle ? t('applyJobModal.title', { title: jobTitle }) : t('applyJobModal.titleFallback')}</DialogTitle>
         </DialogHeader>
 
         {error && (
@@ -84,30 +86,30 @@ const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
 
         <div className='space-y-4'>
           <div>
-            <label className='text-sm font-medium'>Cover Letter</label>
+            <label className='text-sm font-medium'>{t('applyJobModal.coverLetter')}</label>
             <Textarea
               value={coverLetter}
               onChange={e => setCoverLetter(e.target.value)}
-              placeholder='Write a brief cover letter...'
+              placeholder={t('applyJobModal.coverLetterPlaceholder')}
               rows={5}
             />
           </div>
           <div>
-            <label className='text-sm font-medium'>Expected Salary</label>
+            <label className='text-sm font-medium'>{t('applyJobModal.expectedSalary')}</label>
             <Input
               type='number'
               step='0.01'
               value={expectedSalary}
               onChange={e => setExpectedSalary(e.target.value)}
-              placeholder='e.g., 7530.12'
+              placeholder={t('applyJobModal.expectedSalaryPlaceholder')}
             />
           </div>
         </div>
 
         <DialogFooter className='mt-4'>
-          <Button variant='secondary' onClick={() => onOpenChange(false)} disabled={submitting}>Cancel</Button>
+          <Button variant='secondary' onClick={() => onOpenChange(false)} disabled={submitting}>{t('common.actions.cancel')}</Button>
           <Button onClick={handleSubmit} disabled={!canSubmit || submitting}>
-            {submitting ? 'Submitting...' : 'Apply'}
+            {submitting ? t('common.actions.submitting') : t('common.actions.apply')}
           </Button>
         </DialogFooter>
       </DialogContent>

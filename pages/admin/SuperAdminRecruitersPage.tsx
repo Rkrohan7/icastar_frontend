@@ -16,25 +16,28 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import UserModerationActions from './UserModerationActions'
+import { useTranslation } from '@/i18n'
 
-const STATUS_OPTIONS: { label: string; value: AccountStatus | '' }[] = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Inactive', value: 'INACTIVE' },
-  { label: 'Suspended', value: 'SUSPENDED' },
-  { label: 'Banned', value: 'BANNED' },
+// '' = no filter. Enum values are labelled with tEnum(value) at render time.
+const STATUS_OPTIONS: { labelKey?: string; value: AccountStatus | '' }[] = [
+  { labelKey: 'adminRecruiters.allStatuses', value: '' },
+  { value: 'ACTIVE' },
+  { value: 'INACTIVE' },
+  { value: 'SUSPENDED' },
+  { value: 'BANNED' },
 ]
 
-const CATEGORY_OPTIONS: { label: string; value: RecruiterCategory | '' }[] = [
-  { label: 'All Categories', value: '' },
-  { label: 'Production House', value: 'PRODUCTION_HOUSE' },
-  { label: 'Casting Director', value: 'CASTING_DIRECTOR' },
-  { label: 'Individual', value: 'INDIVIDUAL' },
+const CATEGORY_OPTIONS: { labelKey?: string; value: RecruiterCategory | '' }[] = [
+  { labelKey: 'adminRecruiters.allCategories', value: '' },
+  { value: 'PRODUCTION_HOUSE' },
+  { value: 'CASTING_DIRECTOR' },
+  { value: 'INDIVIDUAL' },
 ]
 
 const PAGE_SIZE = 20
 
 export const SuperAdminRecruitersPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [recruiters, setRecruiters] = useState<SuperAdminRecruiter[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -70,10 +73,11 @@ export const SuperAdminRecruitersPage: React.FC = () => {
         console.error('Failed to load recruiters:', err)
         const status = err?.response?.status
         const apiMsg = err?.response?.data?.message
-        if (status === 401) setError('Unauthorized — please log in as an admin.')
-        else if (status === 403) setError('Access denied — admin role required.')
-        else if (status === 404) setError('Endpoint not found — check backend route /super-admin/recruiters.')
-        else setError(apiMsg || err?.message || 'Unable to load recruiters.')
+        if (status === 401) setError(t('adminRecruiters.errors.unauthorized'))
+        else if (status === 403) setError(t('adminRecruiters.errors.forbidden'))
+        else if (status === 404)
+          setError(t('adminRecruiters.errors.notFound', { route: '/super-admin/recruiters' }))
+        else setError(apiMsg || err?.message || t('adminRecruiters.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -98,7 +102,7 @@ export const SuperAdminRecruitersPage: React.FC = () => {
               type='text'
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder='Search by name or email...'
+              placeholder={t('adminRecruiters.searchPlaceholder')}
               className='w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </form>
@@ -111,7 +115,7 @@ export const SuperAdminRecruitersPage: React.FC = () => {
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {o.labelKey ? t(o.labelKey) : tEnum(o.value)}
               </option>
             ))}
           </select>
@@ -124,37 +128,37 @@ export const SuperAdminRecruitersPage: React.FC = () => {
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {CATEGORY_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {o.labelKey ? t(o.labelKey) : tEnum(o.value)}
               </option>
             ))}
           </select>
         </div>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {recruiters.length} of {totalItems.toLocaleString()} recruiters
+          {t('adminRecruiters.showing', { shown: recruiters.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       {/* Table */}
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <div className='py-16 text-center text-gray-500'>Loading...</div>
+          <div className='py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
         ) : error ? (
           <div className='py-16 text-center text-red-600'>{error}</div>
         ) : recruiters.length === 0 ? (
-          <div className='py-16 text-center text-gray-500'>No recruiters found</div>
+          <div className='py-16 text-center text-gray-500'>{t('adminRecruiters.empty')}</div>
         ) : (
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50 border-b border-gray-200'>
                 <tr>
-                  <Th>Recruiter</Th>
-                  <Th>Company</Th>
-                  <Th>Contact</Th>
-                  <Th>Category</Th>
-                  <Th>Stats</Th>
-                  <Th>Status</Th>
-                  <Th>Joined</Th>
-                  <Th>Actions</Th>
+                  <Th>{t('adminRecruiters.table.recruiter')}</Th>
+                  <Th>{t('common.labels.company')}</Th>
+                  <Th>{t('adminRecruiters.table.contact')}</Th>
+                  <Th>{t('common.labels.category')}</Th>
+                  <Th>{t('adminRecruiters.table.stats')}</Th>
+                  <Th>{t('common.labels.status')}</Th>
+                  <Th>{t('adminRecruiters.table.joined')}</Th>
+                  <Th>{t('common.labels.actions')}</Th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
@@ -201,22 +205,25 @@ export const SuperAdminRecruitersPage: React.FC = () => {
                       </td>
                       <td className='px-4 py-3'>
                         <span className='inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-[#E36A3A]'>
-                          {(r.recruiterCategory || 'N/A').replace(/_/g, ' ')}
+                          {r.recruiterCategory ? tEnum(r.recruiterCategory) : t('common.status.notAvailable')}
                         </span>
                       </td>
                       <td className='px-4 py-3 text-xs text-gray-700'>
                         <div className='flex items-center gap-1'>
-                          <BriefcaseIcon className='h-3 w-3' /> {r.totalJobsPosted ?? 0} jobs
+                          <BriefcaseIcon className='h-3 w-3' /> {t('adminRecruiters.stats.jobs', { count: r.totalJobsPosted ?? 0 })}
                         </div>
                         <div className='text-gray-500 mt-0.5'>
-                          {r.totalHires ?? 0} hires · {r.totalApplicationsReceived ?? 0} apps
+                          {t('adminRecruiters.stats.hiresApps', {
+                            hires: r.totalHires ?? 0,
+                            apps: r.totalApplicationsReceived ?? 0,
+                          })}
                         </div>
                       </td>
                       <td className='px-4 py-3'>
                         {r.accountStatus && <StatusBadge status={r.accountStatus} />}
                         {r.isVerified && (
                           <div className='flex items-center gap-1 text-xs text-green-600 mt-1'>
-                            <CheckCircleIcon className='h-3 w-3' /> Verified
+                            <CheckCircleIcon className='h-3 w-3' /> {t('adminRecruiters.verified')}
                           </div>
                         )}
                       </td>
@@ -226,7 +233,7 @@ export const SuperAdminRecruitersPage: React.FC = () => {
                       <td className='px-4 py-3'>
                         <UserModerationActions
                           kind='recruiter'
-                          name={r.companyName || `${firstName} ${lastName}`.trim() || 'this recruiter'}
+                          name={r.companyName || `${firstName} ${lastName}`.trim() || t('adminRecruiters.thisRecruiter')}
                           status={r.accountStatus ?? 'ACTIVE'}
                           onChangeStatus={async (status, reason) => {
                             const updated = await superAdminService.updateRecruiterStatus(r.id, status, reason)
@@ -237,7 +244,7 @@ export const SuperAdminRecruitersPage: React.FC = () => {
                           onDelete={async reason => {
                             await superAdminService.deleteRecruiter(r.id, reason)
                             setRecruiters(prev => prev.filter(x => x.id !== r.id))
-                            setTotalItems(t => Math.max(0, t - 1))
+                            setTotalItems(n => Math.max(0, n - 1))
                           }}
                         />
                       </td>
@@ -265,6 +272,7 @@ const Th: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 )
 
 export const StatusBadge: React.FC<{ status: AccountStatus }> = ({ status }) => {
+  const { tEnum } = useTranslation()
   const cfg: Record<AccountStatus, { bg: string; text: string; icon: React.ReactNode }> = {
     ACTIVE: { bg: 'bg-green-50', text: 'text-green-700', icon: <CheckCircleIcon className='h-3 w-3' /> },
     INACTIVE: { bg: 'bg-gray-50', text: 'text-gray-600', icon: null },
@@ -275,7 +283,7 @@ export const StatusBadge: React.FC<{ status: AccountStatus }> = ({ status }) => 
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
       {c.icon}
-      {status}
+      {tEnum(status)}
     </span>
   )
 }
@@ -291,6 +299,7 @@ export const Pagination: React.FC<{
   onChange: (p: number) => void
   totalItems?: number
 }> = ({ page, totalPages, onChange, totalItems }) => {
+  const { t } = useTranslation()
   const current = page + 1
   let nums: (number | '...')[] = []
   if (totalPages <= 12) {
@@ -311,10 +320,23 @@ export const Pagination: React.FC<{
   return (
     <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3'>
       <p className='text-sm text-gray-600'>
-        Page <span className='font-semibold'>{current}</span> of{' '}
-        <span className='font-semibold'>{totalPages}</span>
+        {/* "Page {{page}} of {{total}}" with the two numbers in bold */}
+        {t('common.pagination.pageOf')
+          .split(/(\{\{\w+\}\})/)
+          .map((part, i) =>
+            part === '{{page}}' ? (
+              <span key={i} className='font-semibold'>{current}</span>
+            ) : part === '{{total}}' ? (
+              <span key={i} className='font-semibold'>{totalPages}</span>
+            ) : (
+              part
+            ),
+          )}
         {typeof totalItems === 'number' && (
-          <span className='text-gray-400'> · {totalItems.toLocaleString()} total</span>
+          <span className='text-gray-400'>
+            {' · '}
+            {t('adminRecruiters.pagination.total', { total: totalItems.toLocaleString() })}
+          </span>
         )}
       </p>
       <div className='flex items-center gap-1'>
@@ -322,7 +344,7 @@ export const Pagination: React.FC<{
           onClick={() => onChange(Math.max(0, page - 1))}
           disabled={page === 0}
           className='px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed'>
-          Previous
+          {t('common.pagination.previous')}
         </button>
 
         {nums.map((n, i) =>
@@ -349,7 +371,7 @@ export const Pagination: React.FC<{
           onClick={() => onChange(Math.min(totalPages - 1, page + 1))}
           disabled={page >= totalPages - 1}
           className='px-3 py-1.5 text-sm bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] disabled:opacity-40 disabled:cursor-not-allowed'>
-          Next
+          {t('common.pagination.next')}
         </button>
       </div>
     </div>

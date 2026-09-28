@@ -1,5 +1,6 @@
 import api from './apiClient'
 import { cachedGet, invalidateCache } from './cache'
+import { translate } from '@/i18n'
 
 // Applicant lists per job cache for 60s; scheduling an interview or submitting
 // a result clears the prefix so the list reflects the new status.
@@ -70,7 +71,7 @@ export const recruiterApplicantsService = {
     return applicants.map((applicant: any) => ({
       id: applicant.id ?? applicant.applicantId ?? applicant.artistId,
       jobId: applicant.jobId ?? jobId,
-      name: applicant.artistName ?? applicant.name ?? applicant.fullName ?? 'Unknown',
+      name: applicant.artistName ?? applicant.name ?? applicant.fullName ?? translate('services.fallback.unknown'),
       avatarUrl: applicant.avatarUrl ?? applicant.profilePhoto ?? applicant.photo ?? applicant.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(applicant.artistName || 'User')}&background=random`,
       skills: applicant.skills ?? applicant.skillsList ?? [],
       status: this.mapStatus(applicant.status ?? applicant.applicationStatus ?? 'New'),
@@ -109,7 +110,7 @@ export const recruiterApplicantsService = {
 
   // Helper method to format date
   formatDate(dateString: string | undefined): string {
-    if (!dateString) return 'Recently'
+    if (!dateString) return translate('services.relativeTime.recently')
 
     try {
       const date = new Date(dateString)
@@ -117,13 +118,13 @@ export const recruiterApplicantsService = {
       const diffTime = Math.abs(now.getTime() - date.getTime())
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-      if (diffDays === 0) return 'Today'
-      if (diffDays === 1) return '1 day ago'
-      if (diffDays < 7) return `${diffDays} days ago`
-      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-      return `${Math.floor(diffDays / 30)} months ago`
+      if (diffDays === 0) return translate('services.relativeTime.today')
+      if (diffDays === 1) return translate('services.relativeTime.daysAgo', { count: 1 })
+      if (diffDays < 7) return translate('services.relativeTime.daysAgo', { count: diffDays })
+      if (diffDays < 30) return translate('services.relativeTime.weeksAgo', { count: Math.floor(diffDays / 7) })
+      return translate('services.relativeTime.monthsAgo', { count: Math.floor(diffDays / 30) })
     } catch (error) {
-      return 'Recently'
+      return translate('services.relativeTime.recently')
     }
   },
 

@@ -1,0 +1,98 @@
+import { defineMessages } from '../defineMessages'
+
+export default defineMessages({
+  en: {
+    category: {
+      heading: 'Artist Category',
+      selectLabel: 'Select Your Profession(s)',
+      hint: 'You can choose more than one — e.g. Dancer, Model and Actor.',
+      loading: 'Loading professions...',
+      selected_one: '{{count}} profession selected',
+      selected_other: '{{count}} professions selected',
+      selectPlaceholder: 'Select Profession(s)',
+      searchPlaceholder: 'Search professions...',
+      noResults: 'No professions found',
+      primary: '(Primary)',
+      removeAria: 'Remove {{name}}',
+    },
+    workExperience: {
+      heading: 'Work Experience',
+      hint: 'Add each role or project separately. New to the industry? You can skip this and add it later from your profile.',
+    },
+    education: {
+      hint: 'Add degrees, drama / dance / music schools and workshops. Optional — you can add it later from your profile.',
+    },
+    location: {
+      heading: 'Location & Demographics',
+      selectGender: 'Select Gender',
+      dateOfBirth: 'Date of Birth',
+    },
+    skills: {
+      heading: 'Skills & Experience',
+      languagesKnown: 'Languages Known',
+      languagesSelected: '{{count}} selected',
+    },
+    languageNames: {
+      English: 'English',
+      Hindi: 'Hindi',
+      Marathi: 'Marathi',
+      Tamil: 'Tamil',
+      Telugu: 'Telugu',
+      Kannada: 'Kannada',
+      Malayalam: 'Malayalam',
+      Bengali: 'Bengali',
+      Punjabi: 'Punjabi',
+      Gujarati: 'Gujarati',
+      Urdu: 'Urdu',
+      Odia: 'Odia',
+      Assamese: 'Assamese',
+    },
+  },
+  mr: {
+    category: {
+      heading: 'कलाकार श्रेणी',
+      selectLabel: 'तुमचा व्यवसाय निवडा (एक किंवा अधिक)',
+      hint: 'तुम्ही एकापेक्षा जास्त निवडू शकता — उदा. नर्तक, मॉडेल आणि अभिनेता.',
+      loading: 'व्यवसाय लोड होत आहेत...',
+      selected_one: '{{count}} व्यवसाय निवडला',
+      selected_other: '{{count}} व्यवसाय निवडले',
+      selectPlaceholder: 'व्यवसाय निवडा',
+      searchPlaceholder: 'व्यवसाय शोधा...',
+      noResults: 'कोणतेही व्यवसाय सापडले नाहीत',
+      primary: '(मुख्य)',
+      removeAria: '{{name}} काढा',
+    },
+    workExperience: {
+      heading: 'कामाचा अनुभव',
+      hint: 'प्रत्येक भूमिका किंवा प्रोजेक्ट स्वतंत्रपणे जोडा. इंडस्ट्रीत नवीन आहात? तुम्ही हे आत्ता वगळू शकता आणि नंतर तुमच्या प्रोफाइलमधून जोडू शकता.',
+    },
+    education: {
+      hint: 'पदव्या, नाट्य / नृत्य / संगीत शाळा आणि कार्यशाळा जोडा. ऐच्छिक — तुम्ही हे नंतर तुमच्या प्रोफाइलमधून जोडू शकता.',
+    },
+    location: {
+      heading: 'ठिकाण आणि वैयक्तिक माहिती',
+      selectGender: 'लिंग निवडा',
+      dateOfBirth: 'जन्मतारीख',
+    },
+    skills: {
+      heading: 'कौशल्ये आणि अनुभव',
+      languagesKnown: 'येणाऱ्या भाषा',
+      languagesSelected: '{{count}} निवडल्या',
+    },
+    languageNames: {
+      English: 'इंग्रजी',
+      Hindi: 'हिंदी',
+      Marathi: 'मराठी',
+      Tamil: 'तमिळ',
+      Telugu: 'तेलुगू',
+      Kannada: 'कन्नड',
+      Malayalam: 'मल्याळम',
+      Bengali: 'बंगाली',
+      Punjabi: 'पंजाबी',
+      Gujarati: 'गुजराती',
+      Urdu: 'उर्दू',
+      Odia: 'ओडिया',
+      Assamese: 'आसामी',
+    },
+  },
+})

@@ -8,7 +8,9 @@ import {
   ExclamationCircleIcon,
 } from '../../components/icons/IconComponents'
 import { getRecruiterProfile, updateRecruiterProfile } from '@/services/recruiterProfileService'
-import uploadService from '@/services/uploadService'
+import uploadService, { UPLOAD_LIMITS_MB } from '@/services/uploadService'
+import { Info } from 'lucide-react'
+import { useTranslation } from '@/i18n'
 
 const initialRecruiterData: Recruiter = {
   name: 'Alex Morgan',
@@ -88,24 +90,25 @@ const TextAreaField: React.FC<TextAreaFieldProps> = ({
 const VerificationStatusCard: React.FC<{ status: VerificationStatus }> = ({
   status,
 }) => {
+  const { t } = useTranslation()
   const statusConfig = {
     Verified: {
-      text: 'Profile Verified',
-      description: 'Your profile is verified and trusted.',
+      text: t('recruiterProfile.verification.verified.text'),
+      description: t('recruiterProfile.verification.verified.description'),
       icon: CheckCircleIcon,
       colorClasses: 'bg-green-50 border-green-200 text-green-800',
       iconColor: 'text-green-500',
     },
     Pending: {
-      text: 'Verification Pending',
-      description: 'Your profile is under review.',
+      text: t('recruiterProfile.verification.pending.text'),
+      description: t('recruiterProfile.verification.pending.description'),
       icon: ClockIcon,
       colorClasses: 'bg-yellow-50 border-yellow-200 text-yellow-800',
       iconColor: 'text-yellow-500',
     },
     'Not Verified': {
-      text: 'Profile Not Verified',
-      description: 'Submit your profile for verification.',
+      text: t('recruiterProfile.verification.notVerified.text'),
+      description: t('recruiterProfile.verification.notVerified.description'),
       icon: ExclamationCircleIcon,
       colorClasses: 'bg-red-50 border-red-200 text-red-800',
       iconColor: 'text-red-500',
@@ -125,7 +128,9 @@ const VerificationStatusCard: React.FC<{ status: VerificationStatus }> = ({
       </div>
       {status !== 'Verified' && (
         <button className='ml-4 flex-shrink-0 text-sm font-semibold text-white bg-primary hover:bg-primary-hover px-3 py-1.5 rounded-lg'>
-          {status === 'Pending' ? 'Check Status' : 'Submit for Verification'}
+          {status === 'Pending'
+            ? t('recruiterProfile.verification.checkStatus')
+            : t('recruiterProfile.verification.submitForVerification')}
         </button>
       )}
     </div>
@@ -133,6 +138,7 @@ const VerificationStatusCard: React.FC<{ status: VerificationStatus }> = ({
 }
 
 export const RecruiterProfilePage = () => {
+  const { t } = useTranslation()
   const [recruiter, setRecruiter] = useState<Recruiter>(initialRecruiterData)
   const [formData, setFormData] = useState<Recruiter>(recruiter)
   const [loading, setLoading] = useState(false)
@@ -150,7 +156,7 @@ export const RecruiterProfilePage = () => {
         setRecruiter(data)
         setFormData(data)
       } catch (e: any) {
-        setError(e?.message || 'Failed to load profile')
+        setError(e?.message || t('recruiterProfile.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -188,9 +194,9 @@ export const RecruiterProfilePage = () => {
       setFormData(prev => ({ ...prev, avatarUrl: fileUrl }))
       // Notify header to update avatar instantly
       window.dispatchEvent(new CustomEvent('recruiter-photo-updated', { detail: { url: fileUrl } }))
-      toast.success('Profile photo updated!')
+      toast.success(t('recruiterProfile.toast.photoUpdated'))
     } catch (err: any) {
-      toast.error('Failed to upload photo. Please try again.')
+      toast.error(t('recruiterProfile.toast.photoUploadFailed'))
     } finally {
       setIsUploading(false)
       setUploadProgress(0)
@@ -220,9 +226,9 @@ export const RecruiterProfilePage = () => {
       const merged = { ...latest, avatarUrl: latest.avatarUrl || formData.avatarUrl }
       setRecruiter(merged)
       setFormData(merged)
-      toast.success('Profile saved successfully!')
+      toast.success(t('recruiterProfile.toast.saved'))
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to save profile')
+      toast.error(err?.message || t('recruiterProfile.errors.saveFailed'))
     } finally {
       setLoading(false)
     }
@@ -234,7 +240,7 @@ export const RecruiterProfilePage = () => {
 
   return (
     <div className='max-w-4xl mx-auto'>
-      <h2 className='text-3xl font-bold text-gray-900 mb-6'>My Profile</h2>
+      <h2 className='text-3xl font-bold text-gray-900 mb-6'>{t('common.nav.myProfile')}</h2>
 
       {error && (
         <div className='mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 text-sm'>
@@ -249,10 +255,10 @@ export const RecruiterProfilePage = () => {
 
         <Card>
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>
-            Personal Information
+            {t('recruiterProfile.personal.title')}
           </h3>
           <p className='text-sm text-gray-500 mb-6'>
-            Update your photo and personal details here.
+            {t('recruiterProfile.personal.subtitle')}
           </p>
 
           <div className='flex items-center gap-6 mb-8'>
@@ -270,7 +276,7 @@ export const RecruiterProfilePage = () => {
                 <img
                   className='h-20 w-20 rounded-full object-cover ring-2 ring-gray-200'
                   src={formData.avatarUrl}
-                  alt='Profile photo'
+                  alt={t('recruiterProfile.photo.alt')}
                 />
               ) : (
                 <div className='h-20 w-20 rounded-full bg-gray-100 ring-2 ring-gray-200 flex items-center justify-center'>
@@ -294,7 +300,7 @@ export const RecruiterProfilePage = () => {
                   disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
                   className='px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50'>
-                  Add Photo
+                  {t('recruiterProfile.photo.add')}
                 </button>
               ) : (
                 <div className='flex gap-2'>
@@ -303,14 +309,16 @@ export const RecruiterProfilePage = () => {
                     disabled={isUploading}
                     onClick={() => fileInputRef.current?.click()}
                     className='px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50'>
-                    {isUploading ? `Uploading... ${uploadProgress}%` : 'Change Photo'}
+                    {isUploading
+                      ? t('recruiterProfile.photo.uploadingProgress', { progress: uploadProgress })
+                      : t('recruiterProfile.photo.change')}
                   </button>
                   <button
                     type='button'
                     disabled={isUploading}
                     onClick={handleDeleteAvatar}
                     className='px-4 py-2 border border-red-200 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50'>
-                    Delete Photo
+                    {t('recruiterProfile.photo.delete')}
                   </button>
                 </div>
               )}
@@ -324,19 +332,26 @@ export const RecruiterProfilePage = () => {
                 </div>
               )}
 
-              <p className='text-xs text-gray-500 mt-2'>JPG, PNG or WebP. 5MB max.</p>
+              <p className='mt-3 flex items-start gap-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2'>
+                <Info size={14} className='mt-0.5 flex-shrink-0' />
+                <span>
+                  {t('recruiterProfile.photo.sizeHintBefore')}
+                  <strong>{t('recruiterProfile.photo.sizeHintLimit', { size: UPLOAD_LIMITS_MB.image })}</strong>
+                  {t('recruiterProfile.photo.sizeHintAfter')}
+                </span>
+              </p>
             </div>
           </div>
 
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
             <InputField
-              label='Full Name'
+              label={t('common.labels.fullName')}
               id='name'
               value={formData.name || ''}
               onChange={handleChange}
             />
             <InputField
-              label='Title'
+              label={t('common.labels.title')}
               id='title'
               value={formData.title || ''}
               onChange={handleChange}
@@ -345,7 +360,7 @@ export const RecruiterProfilePage = () => {
               <label
                 htmlFor='recruiterType'
                 className='block text-sm font-medium text-gray-700'>
-                Recruiter Type
+                {t('recruiterProfile.fields.recruiterType')}
               </label>
               <select
                 id='recruiterType'
@@ -353,14 +368,14 @@ export const RecruiterProfilePage = () => {
                 value={formData.recruiterType || 'In-house'}
                 onChange={handleChange}
                 className='mt-1 block w-full rounded-lg border-gray-300 bg-white shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5 pr-10'>
-                <option>In-house</option>
-                <option>Agency</option>
-                <option>Freelance</option>
+                <option value='In-house'>{t('recruiterProfile.recruiterTypes.inHouse')}</option>
+                <option value='Agency'>{t('recruiterProfile.recruiterTypes.agency')}</option>
+                <option value='Freelance'>{t('recruiterProfile.recruiterTypes.freelance')}</option>
               </select>
             </div>
             <div className='sm:col-span-1'>
               <InputField
-                label='Email Address'
+                label={t('recruiterProfile.fields.email')}
                 id='email'
                 type='email'
                 value={formData.email || ''}
@@ -372,15 +387,15 @@ export const RecruiterProfilePage = () => {
 
         <Card>
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>
-            Company Information
+            {t('recruiterProfile.company.title')}
           </h3>
           <p className='text-sm text-gray-500 mb-6'>
-            Details about the company you represent.
+            {t('recruiterProfile.company.subtitle')}
           </p>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
             <div className='sm:col-span-2'>
               <InputField
-                label='Company Name'
+                label={t('recruiterProfile.fields.companyName')}
                 id='companyName'
                 value={formData.companyName || ''}
                 onChange={handleChange}
@@ -388,7 +403,7 @@ export const RecruiterProfilePage = () => {
             </div>
             <div className='sm:col-span-2'>
               <InputField
-                label='Company Website'
+                label={t('recruiterProfile.fields.companyWebsite')}
                 id='companyWebsite'
                 type='url'
                 value={formData.companyWebsite || ''}
@@ -397,7 +412,7 @@ export const RecruiterProfilePage = () => {
             </div>
             <div className='sm:col-span-2'>
               <TextAreaField
-                label='Company Bio'
+                label={t('recruiterProfile.fields.companyBio')}
                 id='companyBio'
                 value={formData.companyBio || ''}
                 onChange={handleChange}
@@ -411,13 +426,13 @@ export const RecruiterProfilePage = () => {
         <button
           onClick={handleCancel}
           className='px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
-          Cancel
+          {t('common.actions.cancel')}
         </button>
         <button
           onClick={handleSave}
           disabled={loading || isUploading}
           className='inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-lg shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed'>
-          {loading ? 'Saving...' : 'Save Changes'}
+          {loading ? t('common.actions.saving') : t('common.actions.saveChanges')}
         </button>
       </div>
     </div>

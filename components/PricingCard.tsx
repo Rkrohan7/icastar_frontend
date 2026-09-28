@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@/i18n';
 
 const CheckIcon: React.FC = () => (
   <svg className="h-6 w-6 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -16,11 +17,13 @@ export interface PricingCardProps {
   onSelect?: () => void;
 }
 
-export const PricingCard: React.FC<PricingCardProps> = ({ planName, price, description, features, buttonText, recommended = false, onSelect }) => (
+export const PricingCard: React.FC<PricingCardProps> = ({ planName, price, description, features, buttonText, recommended = false, onSelect }) => {
+  const { t } = useTranslation();
+  return (
   <div className={`bg-white border rounded-xl p-8 flex flex-col relative ${recommended ? 'border-primary ring-2 ring-primary' : 'border-gray-200'}`}>
     {recommended && (
         <div className="absolute top-0 -translate-y-1/2 bg-primary text-white text-sm font-semibold px-4 py-1 rounded-full">
-            Recommended
+            {t('pricing.recommended')}
         </div>
     )}
     <h3 className="text-lg font-semibold text-gray-900">{planName}</h3>
@@ -45,4 +48,5 @@ export const PricingCard: React.FC<PricingCardProps> = ({ planName, price, descr
       {buttonText}
     </button>
   </div>
-);
+  );
+};

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { ArtistCategory } from '@/types'
 import Step2_ProfileForm from './Step2_ProfileForm'
 import logo from '../../assets/icaster.png'
+import { useTranslation } from '@/i18n'
 
 const ArtistRegistrationForm: React.FC = () => {
   const [formData, setFormData] = useState<{
@@ -12,6 +13,8 @@ const ArtistRegistrationForm: React.FC = () => {
     category: null,
     artistTypeId: null,
   })
+
+  const { t } = useTranslation()
 
   const updateFormData = (data: any) => {
     setFormData(prev => ({ ...prev, ...data }))
@@ -28,7 +31,7 @@ const ArtistRegistrationForm: React.FC = () => {
               className='h-16 md:h-22 w-auto object-contain'
             />
           </div>
-          <p className='text-primary text-lg font-semibold mt-2'>Be a Findix - Artist Onboarding</p>
+          <p className='text-primary text-lg font-semibold mt-2'>{t('onboarding.tagline')}</p>
         </header>
         <div className='mt-8'>
           <Step2_ProfileForm

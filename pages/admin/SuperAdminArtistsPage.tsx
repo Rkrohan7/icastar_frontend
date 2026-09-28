@@ -17,29 +17,33 @@ import superAdminService, {
 import { Pagination, StatusBadge } from './SuperAdminRecruitersPage'
 import UserModerationActions from './UserModerationActions'
 import usePageParam from '../../hooks/usePageParam'
+import { useTranslation } from '@/i18n'
 
-const STATUS_OPTIONS: { label: string; value: AccountStatus | '' }[] = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Inactive', value: 'INACTIVE' },
-  { label: 'Suspended', value: 'SUSPENDED' },
-  { label: 'Banned', value: 'BANNED' },
+// Labels come from tEnum(value); the empty value is the "All Statuses" option.
+const STATUS_OPTIONS: { value: AccountStatus | '' }[] = [
+  { value: '' },
+  { value: 'ACTIVE' },
+  { value: 'INACTIVE' },
+  { value: 'SUSPENDED' },
+  { value: 'BANNED' },
 ]
 
-const ARTIST_TYPE_OPTIONS = [
-  'All Types',
-  'Actor',
-  'Dancer',
-  'Singer',
-  'Model',
-  'Director',
-  'Musician',
-  'Other',
+// `value` is what the backend filters on; only the label is translated.
+const ARTIST_TYPE_OPTIONS: { value: string; labelKey: string }[] = [
+  { value: 'All Types', labelKey: 'adminArtists.artistTypes.all' },
+  { value: 'Actor', labelKey: 'adminArtists.artistTypes.actor' },
+  { value: 'Dancer', labelKey: 'adminArtists.artistTypes.dancer' },
+  { value: 'Singer', labelKey: 'adminArtists.artistTypes.singer' },
+  { value: 'Model', labelKey: 'adminArtists.artistTypes.model' },
+  { value: 'Director', labelKey: 'adminArtists.artistTypes.director' },
+  { value: 'Musician', labelKey: 'adminArtists.artistTypes.musician' },
+  { value: 'Other', labelKey: 'adminArtists.artistTypes.other' },
 ]
 
 const PAGE_SIZE = 20
 
 export const SuperAdminArtistsPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const navigate = useNavigate()
   const [artists, setArtists] = useState<SuperAdminArtist[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,16 +80,16 @@ export const SuperAdminArtistsPage: React.FC = () => {
         console.error('Failed to load artists:', err)
         const status = err?.response?.status
         const apiMsg = err?.response?.data?.message
-        if (status === 401) setError('Unauthorized — please log in as an admin.')
-        else if (status === 403) setError('Access denied — admin role required.')
-        else if (status === 404) setError('Endpoint not found — check backend route /super-admin/artists.')
-        else setError(apiMsg || err?.message || 'Unable to load artists.')
+        if (status === 401) setError(t('adminArtists.errors.unauthorized'))
+        else if (status === 403) setError(t('adminArtists.errors.accessDenied'))
+        else if (status === 404) setError(t('adminArtists.errors.notFound'))
+        else setError(apiMsg || err?.message || t('adminArtists.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
     fetch()
-  }, [page, search, status, artistType])
+  }, [page, search, status, artistType, t])
 
   const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,7 +107,7 @@ export const SuperAdminArtistsPage: React.FC = () => {
               type='text'
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder='Search by name or email...'
+              placeholder={t('adminArtists.searchPlaceholder')}
               className='w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </form>
@@ -116,7 +120,7 @@ export const SuperAdminArtistsPage: React.FC = () => {
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {o.value ? tEnum(o.value) : t('adminArtists.allStatuses')}
               </option>
             ))}
           </select>
@@ -128,38 +132,38 @@ export const SuperAdminArtistsPage: React.FC = () => {
               setArtistType(val === 'All Types' ? '' : val)
             }}
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
-            {ARTIST_TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            {ARTIST_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {t(o.labelKey)}
               </option>
             ))}
           </select>
         </div>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {artists.length} of {totalItems.toLocaleString()} artists
+          {t('adminArtists.showing', { shown: artists.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <div className='py-16 text-center text-gray-500'>Loading...</div>
+          <div className='py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
         ) : error ? (
           <div className='py-16 text-center text-red-600'>{error}</div>
         ) : artists.length === 0 ? (
-          <div className='py-16 text-center text-gray-500'>No artists found</div>
+          <div className='py-16 text-center text-gray-500'>{t('adminArtists.empty')}</div>
         ) : (
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50 border-b border-gray-200'>
                 <tr>
-                  <Th>Artist</Th>
-                  <Th>Type</Th>
-                  <Th>Contact</Th>
-                  <Th>Location</Th>
-                  <Th>Activity</Th>
-                  <Th>Status</Th>
-                  <Th>Joined</Th>
-                  <Th>Actions</Th>
+                  <Th>{t('adminArtists.columns.artist')}</Th>
+                  <Th>{t('common.labels.type')}</Th>
+                  <Th>{t('adminArtists.columns.contact')}</Th>
+                  <Th>{t('common.labels.location')}</Th>
+                  <Th>{t('adminArtists.columns.activity')}</Th>
+                  <Th>{t('common.labels.status')}</Th>
+                  <Th>{t('adminArtists.columns.joined')}</Th>
+                  <Th>{t('common.labels.actions')}</Th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
@@ -194,10 +198,10 @@ export const SuperAdminArtistsPage: React.FC = () => {
                     </td>
                     <td className='px-4 py-3'>
                       <span className='inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-[#E36A3A]'>
-                        {a.artistTypeName || 'N/A'}
+                        {a.artistTypeName || t('common.status.notAvailable')}
                       </span>
                       <p className='text-xs text-gray-500 mt-1'>
-                        {a.experienceLevel || '—'} · {a.yearsOfExperience ?? 0}y
+                        {a.experienceLevel ? tEnum(a.experienceLevel) : '—'} · {t('adminArtists.yearsShort', { count: a.yearsOfExperience ?? 0 })}
                       </p>
                     </td>
                     <td className='px-4 py-3 text-xs'>
@@ -216,17 +220,17 @@ export const SuperAdminArtistsPage: React.FC = () => {
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-700'>
                       <div className='flex items-center gap-1'>
-                        <FileTextIcon className='h-3 w-3' /> {a.totalApplications ?? 0} apps
+                        <FileTextIcon className='h-3 w-3' /> {t('adminArtists.apps', { count: a.totalApplications ?? 0 })}
                       </div>
                       <div className='flex items-center gap-1 text-gray-500 mt-0.5'>
-                        <EyeIcon className='h-3 w-3' /> {(a.profileViews ?? 0).toLocaleString()} views
+                        <EyeIcon className='h-3 w-3' /> {t('adminArtists.views', { count: (a.profileViews ?? 0).toLocaleString() })}
                       </div>
                     </td>
                     <td className='px-4 py-3'>
                       {a.accountStatus && <StatusBadge status={a.accountStatus} />}
                       {a.isVerified && (
                         <div className='flex items-center gap-1 text-xs text-green-600 mt-1'>
-                          <CheckCircleIcon className='h-3 w-3' /> Verified
+                          <CheckCircleIcon className='h-3 w-3' /> {t('adminArtists.verified')}
                         </div>
                       )}
                     </td>
@@ -237,7 +241,7 @@ export const SuperAdminArtistsPage: React.FC = () => {
                       <button
                         onClick={() => navigate(`/admin/artists/${a.id}/portfolio`)}
                         className='text-xs text-[#E36A3A] hover:underline whitespace-nowrap'>
-                        View Portfolio
+                        {t('adminArtists.viewPortfolio')}
                       </button>
                       <div className='mt-2'>
                         <UserModerationActions

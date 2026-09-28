@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ import authService, {
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { UserRole } from '@/types/types'
+import { useTranslation } from '@/i18n'
 
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false)
@@ -47,37 +49,42 @@ const Auth = () => {
   const [lastName, setLastName] = useState('')
   const [mobile, setMobile] = useState('')
   const [role, setRole] = useState<UserRole>()
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('signin')
   const navigate = useNavigate()
   const location = useLocation()
+  const { t, tEnum } = useTranslation()
 
   // Clear errors when switching tabs
   useEffect(() => {
     setErrors({})
   }, [activeTab])
 
-  // Read role from query param (passed from AuthPage)
+  // Read role and initial tab from query params (passed from AuthPage / public pages)
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const roleParam = params.get('role')
     if (roleParam === UserRole.ARTIST || roleParam === UserRole.RECRUITER) {
       setRole(roleParam as UserRole)
     }
+    if (params.get('tab') === 'signup') {
+      setActiveTab('signup')
+    }
   }, [location.search])
 
   const validateSignIn = (): boolean => {
     const newErrors: Record<string, string> = {}
     if (!email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = t('auth.validation.emailRequired')
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email'
+      newErrors.email = t('auth.validation.emailInvalid')
     }
     if (!password) {
-      newErrors.password = 'Password is required'
+      newErrors.password = t('auth.validation.passwordRequired')
     } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
+      newErrors.password = t('auth.validation.passwordMin')
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -95,7 +102,7 @@ const Auth = () => {
       localStorage.setItem('role', userRole)
       setRole(userRole)
 
-      toast.success('You have successfully logged in!')
+      toast.success(t('auth.toast.loginSuccess'))
 
       // Admins land in the super-admin section, not the user dashboard
       if (userRole === UserRole.ADMIN) {
@@ -138,7 +145,7 @@ const Auth = () => {
       const apiMsg = resData?.error || resData?.message
 
       if (error?.code === 'ERR_NETWORK') {
-        toast.error('Unable to connect to the server. Please check your internet connection.')
+        toast.error(t('auth.toast.networkError'))
       } else if (apiMsg) {
         const msg = apiMsg.toLowerCase()
         if (msg.includes('email') || msg.includes('password') || msg.includes('invalid') || msg.includes('credential')) {
@@ -146,7 +153,7 @@ const Auth = () => {
         }
         toast.error(apiMsg)
       } else {
-        toast.error('Sign in failed. Please try again.')
+        toast.error(t('auth.toast.signInFailed'))
       }
     } finally {
       setIsLoading(false)
@@ -159,39 +166,39 @@ const Auth = () => {
     const fn = firstName.trim()
     const ln = lastName.trim()
     if (!fn) {
-      newErrors.firstName = 'First name is required'
+      newErrors.firstName = t('auth.validation.firstNameRequired')
     } else if (fn.length < 2 || fn.length > 50) {
-      newErrors.firstName = 'First name must be between 2 and 50 characters'
+      newErrors.firstName = t('auth.validation.firstNameLength')
     }
     if (!ln) {
-      newErrors.lastName = 'Last name is required'
+      newErrors.lastName = t('auth.validation.lastNameRequired')
     } else if (ln.length < 2 || ln.length > 50) {
-      newErrors.lastName = 'Last name must be between 2 and 50 characters'
+      newErrors.lastName = t('auth.validation.lastNameLength')
     }
     if (!email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = t('auth.validation.emailRequired')
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email'
+      newErrors.email = t('auth.validation.emailInvalid')
     }
     const rawMobile = mobile.trim()
     const normalizedMobile = rawMobile.replace(/[\s\-().]/g, '')
     if (!rawMobile) {
-      newErrors.mobile = 'Mobile number is required'
+      newErrors.mobile = t('auth.validation.mobileRequired')
     } else if (!/^[1-9]\d{9}$/.test(normalizedMobile)) {
-      newErrors.mobile = 'Invalid mobile number format'
+      newErrors.mobile = t('auth.validation.mobileInvalid')
     }
     if (!password) {
-      newErrors.password = 'Password is required'
+      newErrors.password = t('auth.validation.passwordRequired')
     } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
+      newErrors.password = t('auth.validation.passwordMin')
     }
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password'
+      newErrors.confirmPassword = t('auth.validation.confirmPasswordRequired')
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
+      newErrors.confirmPassword = t('auth.validation.passwordsMismatch')
     }
     if (!role) {
-      newErrors.role = 'Please select a role'
+      newErrors.role = t('auth.validation.roleRequired')
     }
 
     setErrors(newErrors)
@@ -200,6 +207,8 @@ const Auth = () => {
 
   const handleSignUp = async (e: FormEvent) => {
     e.preventDefault()
+    // The submit button is disabled until terms are accepted; this also covers other submit paths.
+    if (!acceptedTerms) return
     if (!validateSignUp()) return
     setIsLoading(true)
     try {
@@ -214,7 +223,8 @@ const Auth = () => {
         role,
       }
       await authService.register(userData)
-      toast.success('Your account has been created successfully!')
+      toast.success(t('auth.toast.signUpSuccess'))
+      setAcceptedTerms(false)
       setActiveTab('signin')
     } catch (error: any) {
       console.error('Sign up failed:', error)
@@ -222,7 +232,7 @@ const Auth = () => {
       const apiMsg = resData?.error || resData?.message
 
       if (error?.code === 'ERR_NETWORK') {
-        toast.error('Unable to connect to the server. Please check your internet connection.')
+        toast.error(t('auth.toast.networkError'))
       } else if (apiMsg) {
         const msg = apiMsg.toLowerCase()
         const fieldErrors: Record<string, string> = {}
@@ -234,7 +244,7 @@ const Auth = () => {
         if (Object.keys(fieldErrors).length > 0) setErrors(prev => ({ ...prev, ...fieldErrors }))
         toast.error(apiMsg)
       } else {
-        toast.error('Failed to create account. Please try again.')
+        toast.error(t('auth.toast.signUpFailed'))
       }
     } finally {
       setIsLoading(false)
@@ -264,12 +274,12 @@ const Auth = () => {
               <Badge
                 variant='secondary'
                 className='bg-gradient-to-r from-orange-500/30 to-amber-500/30 text-white border-white/20'>
-                Welcome
+                {t('auth.welcome')}
               </Badge>
             </div>
-            <CardTitle className='text-2xl text-white'>Join iCastar</CardTitle>
+            <CardTitle className='text-2xl text-white'>{t('auth.title')}</CardTitle>
             <CardDescription className='text-white/70'>
-              Start your entertainment career journey today
+              {t('auth.subtitle')}
             </CardDescription>
           </CardHeader>
 
@@ -284,6 +294,7 @@ const Auth = () => {
                 setFirstName('')
                 setLastName('')
                 setMobile('')
+                setAcceptedTerms(false)
                 setErrors({})
               }}
               defaultValue='signin'
@@ -292,12 +303,12 @@ const Auth = () => {
                 <TabsTrigger
                   value='signin'
                   className='text-white/70 data-[state=active]:bg-white/20 data-[state=active]:text-white'>
-                  Sign In
+                  {t('common.actions.signIn')}
                 </TabsTrigger>
                 <TabsTrigger
                   value='signup'
                   className='text-white/70 data-[state=active]:bg-white/20 data-[state=active]:text-white'>
-                  Sign Up
+                  {t('common.actions.signUp')}
                 </TabsTrigger>
               </TabsList>
 
@@ -305,10 +316,10 @@ const Auth = () => {
               <TabsContent value='signin'>
                 <form onSubmit={handleSignIn} className='space-y-4'>
                   <div className='space-y-2'>
-                    <Label htmlFor='signin-email' className='text-white/90'>Email</Label>
+                    <Label htmlFor='signin-email' className='text-white/90'>{t('common.labels.email')}</Label>
                     <Input
                       id='signin-email'
-                      placeholder='Enter your email'
+                      placeholder={t('auth.placeholders.email')}
                       value={email}
                       onChange={e => { setEmail(e.target.value); if (errors.email) setErrors(prev => ({ ...prev, email: '', password: '' })) }}
                       className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.email ? 'border-red-500' : ''}`}
@@ -320,13 +331,13 @@ const Auth = () => {
 
                   <div className='space-y-2'>
                     <Label htmlFor='signin-password' className='text-white/90'>
-                      Password
+                      {t('common.labels.password')}
                     </Label>
                     <div className='relative'>
                       <Input
                         id='signin-password'
                         type={showPassword ? 'text' : 'password'}
-                        placeholder='Enter your password'
+                        placeholder={t('auth.placeholders.password')}
                         value={password}
                         onChange={e => { setPassword(e.target.value); if (errors.password) setErrors(prev => ({ ...prev, password: '', email: '' })) }}
                         className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10 ${errors.password ? 'border-red-500' : ''
@@ -353,7 +364,7 @@ const Auth = () => {
                         to='/forgot-password'
                         className='text-xs text-white/50 hover:text-white/80 transition-colors'
                       >
-                        Forgot Password?
+                        {t('auth.forgotPassword')}
                       </Link>
                     </div>
                   </div>
@@ -365,10 +376,10 @@ const Auth = () => {
                     {isLoading ? (
                       <>
                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        Signing in...
+                        {t('auth.signingIn')}
                       </>
                     ) : (
-                      'Sign In'
+                      t('common.actions.signIn')
                     )}
                   </Button>
                   <div className='mt-6 pt-4 border-t border-white/10 text-center'>
@@ -376,7 +387,7 @@ const Auth = () => {
                       to='/'
                       className='inline-flex items-center text-sm text-white/60 hover:text-white/90 transition-colors'>
                       <ArrowLeft className='h-3.5 w-3.5 mr-1.5' />
-                      Back to Home
+                      {t('auth.backToHome')}
                     </Link>
                   </div>
                 </form>
@@ -393,7 +404,7 @@ const Auth = () => {
                           <Label
                             htmlFor='signup-first-name'
                             className='text-white/90'>
-                            First Name
+                            {t('common.labels.firstName')}
                           </Label>
                           {errors.firstName && (
                             <span className='text-xs text-red-400'>
@@ -404,7 +415,7 @@ const Auth = () => {
                         <Input
                           id='signup-first-name'
                           type='text'
-                          placeholder='Enter your first name'
+                          placeholder={t('auth.placeholders.firstName')}
                           value={firstName}
                           onChange={e => setFirstName(e.target.value)}
                           className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.firstName ? 'border-red-500' : ''
@@ -416,7 +427,7 @@ const Auth = () => {
                           <Label
                             htmlFor='signup-last-name'
                             className='text-white/90'>
-                            Last Name
+                            {t('common.labels.lastName')}
                           </Label>
                           {errors.lastName && (
                             <span className='text-xs text-red-400'>
@@ -427,7 +438,7 @@ const Auth = () => {
                         <Input
                           id='signup-last-name'
                           type='text'
-                          placeholder='Enter your last name'
+                          placeholder={t('auth.placeholders.lastName')}
                           value={lastName}
                           onChange={e => setLastName(e.target.value)}
                           className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.lastName ? 'border-red-500' : ''
@@ -437,10 +448,10 @@ const Auth = () => {
 
                       {/* Email Field */}
                       <div className='space-y-2 md:col-span-2'>
-                        <Label htmlFor='signup-email' className='text-white/90'>Email</Label>
+                        <Label htmlFor='signup-email' className='text-white/90'>{t('common.labels.email')}</Label>
                         <Input
                           id='signup-email'
-                          placeholder='Enter your email'
+                          placeholder={t('auth.placeholders.email')}
                           value={email}
                           onChange={e => { setEmail(e.target.value); if (errors.email) setErrors(prev => ({ ...prev, email: '' })) }}
                           className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.email ? 'border-red-500' : ''}`}
@@ -453,7 +464,7 @@ const Auth = () => {
                     <div className='space-y-2'>
                       <div className='flex justify-between items-center'>
                         <Label htmlFor='signup-role' className='text-white/90'>
-                          I am a
+                          {t('auth.iAmA')}
                         </Label>
                         {errors.role && (
                           <span className='text-xs text-red-400'>
@@ -469,12 +480,12 @@ const Auth = () => {
                         <SelectTrigger
                           className={`bg-white/10 border-white/20 text-white ${errors.role ? 'border-red-500' : ''
                             }`}>
-                          <SelectValue placeholder='Select your role' />
+                          <SelectValue placeholder={t('auth.placeholders.role')} />
                         </SelectTrigger>
                         <SelectContent className='bg-white'>
-                          <SelectItem value={UserRole.ARTIST}>Artist</SelectItem>
+                          <SelectItem value={UserRole.ARTIST}>{tEnum(UserRole.ARTIST)}</SelectItem>
                           <SelectItem value={UserRole.RECRUITER}>
-                            Recruiter
+                            {tEnum(UserRole.RECRUITER)}
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -482,10 +493,10 @@ const Auth = () => {
 
                     {/* Mobile Field */}
                     <div className='space-y-2'>
-                      <Label htmlFor='signup-mobile' className='text-white/90'>Mobile</Label>
+                      <Label htmlFor='signup-mobile' className='text-white/90'>{t('common.labels.mobile')}</Label>
                       <Input
                         id='signup-mobile'
-                        placeholder='Enter your mobile number'
+                        placeholder={t('auth.placeholders.mobile')}
                         value={mobile}
                         onChange={e => { setMobile(e.target.value); if (errors.mobile) setErrors(prev => ({ ...prev, mobile: '' })) }}
                         className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 ${errors.mobile ? 'border-red-500' : ''}`}
@@ -499,7 +510,7 @@ const Auth = () => {
                         <Label
                           htmlFor='signup-password'
                           className='text-white/90'>
-                          Password
+                          {t('common.labels.password')}
                         </Label>
                         {errors.password && (
                           <span className='text-xs text-red-400'>
@@ -511,7 +522,7 @@ const Auth = () => {
                         <Input
                           id='signup-password'
                           type={showPassword ? 'text' : 'password'}
-                          placeholder='Create a password'
+                          placeholder={t('auth.placeholders.createPassword')}
                           value={password}
                           onChange={e => setPassword(e.target.value)}
                           className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10 w-full ${errors.password ? 'border-red-500' : ''
@@ -538,7 +549,7 @@ const Auth = () => {
                         <Label
                           htmlFor='confirm-password'
                           className='text-white/90'>
-                          Confirm Password
+                          {t('common.labels.confirmPassword')}
                         </Label>
                         {errors.confirmPassword && (
                           <span className='text-xs text-red-400'>
@@ -550,7 +561,7 @@ const Auth = () => {
                         <Input
                           id='confirm-password'
                           type={showConfirmPassword ? 'text' : 'password'}
-                          placeholder='Confirm your password'
+                          placeholder={t('auth.placeholders.confirmPassword')}
                           value={confirmPassword}
                           onChange={e => setConfirmPassword(e.target.value)}
                           className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 w-full pr-10 ${errors.confirmPassword ? 'border-red-500' : ''
@@ -570,27 +581,66 @@ const Auth = () => {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Terms consent — Sign Up stays disabled until this is checked */}
+                    <label
+                      htmlFor='signup-terms'
+                      className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                        acceptedTerms
+                          ? 'border-orange-400/60 bg-orange-500/10'
+                          : 'border-white/20 bg-white/5 hover:bg-white/10'
+                      }`}>
+                      <Checkbox
+                        id='signup-terms'
+                        checked={acceptedTerms}
+                        onCheckedChange={checked => setAcceptedTerms(checked === true)}
+                        className='mt-0.5 border-white/60 data-[state=checked]:border-orange-500 data-[state=checked]:bg-orange-500 data-[state=checked]:text-white'
+                      />
+                      <span className='text-sm leading-snug text-white/80'>
+                        {t('auth.terms.before')}
+                        {/* New tab, so the half-filled form isn't lost */}
+                        <Link
+                          to='/terms'
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='font-semibold text-orange-300 underline-offset-2 hover:underline'>
+                          {t('auth.terms.termsLink')}
+                        </Link>
+                        {t('auth.terms.middle')}
+                        <Link
+                          to='/privacy'
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='font-semibold text-orange-300 underline-offset-2 hover:underline'>
+                          {t('auth.terms.privacyLink')}
+                        </Link>
+                        {t('auth.terms.after')}
+                      </span>
+                    </label>
                   </div>
 
                   <Button
                     type='submit'
                     className='w-full bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 transition-all duration-300'
-                    disabled={isLoading}>
+                    disabled={isLoading || !acceptedTerms}>
                     {isLoading ? (
                       <>
                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        Creating account...
+                        {t('auth.creatingAccount')}
                       </>
                     ) : (
-                      'Sign Up'
+                      t('common.actions.signUp')
                     )}
                   </Button>
+                  {!acceptedTerms && (
+                    <p className='-mt-2 text-center text-xs text-white/50'>{t('auth.terms.hint')}</p>
+                  )}
                   <div className='mt-6 pt-4 border-t border-white/10 text-center'>
                     <Link
                       to='/'
                       className='inline-flex items-center text-sm text-white/60 hover:text-white/90 transition-colors'>
                       <ArrowLeft className='h-3.5 w-3.5 mr-1.5' />
-                      Back to Home
+                      {t('auth.backToHome')}
                     </Link>
                   </div>
                 </form>
@@ -600,26 +650,26 @@ const Auth = () => {
             {/* Social stats */}
             <div className='mt-6 pt-6 border-t border-white/20'>
               <p className='text-center text-white/60 text-sm mb-4'>
-                Join our community of
+                {t('auth.community.title')}
               </p>
               <div className='grid grid-cols-3 gap-4 text-center'>
                 <div className='flex flex-col items-center'>
                   <div className='w-10 h-10 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-full flex items-center justify-center mb-2'>
                     <Star className='h-5 w-5 text-orange-400' />
                   </div>
-                  <span className='text-xs text-white/70'>50K+ Artists</span>
+                  <span className='text-xs text-white/70'>{t('auth.community.artists')}</span>
                 </div>
                 <div className='flex flex-col items-center'>
                   <div className='w-10 h-10 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-full flex items-center justify-center mb-2'>
                     <Users className='h-5 w-5 text-amber-400' />
                   </div>
-                  <span className='text-xs text-white/70'>2K+ Recruiters</span>
+                  <span className='text-xs text-white/70'>{t('auth.community.recruiters')}</span>
                 </div>
                 <div className='flex flex-col items-center'>
                   <div className='w-10 h-10 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-full flex items-center justify-center mb-2'>
                     <Camera className='h-5 w-5 text-yellow-400' />
                   </div>
-                  <span className='text-xs text-white/70'>100K+ Auditions</span>
+                  <span className='text-xs text-white/70'>{t('auth.community.auditions')}</span>
                 </div>
               </div>
             </div>

@@ -3,10 +3,12 @@ import { SearchIcon, BriefcaseIcon, MicVocal } from '../../components/icons/Icon
 import superAdminService, { SuperAdminSkill } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
+import { useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 30
 
 export const SuperAdminSkillsPage: React.FC = () => {
+  const { t } = useTranslation()
   const [skills, setSkills] = useState<SuperAdminSkill[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -30,15 +32,15 @@ export const SuperAdminSkillsPage: React.FC = () => {
       } catch (e: any) {
         const s = e?.response?.status
         const m = e?.response?.data?.message
-        if (s === 401) setError('Unauthorized — log in as admin.')
-        else if (s === 403) setError('Access denied — admin role required.')
-        else setError(m || e?.message || 'Unable to load skills.')
+        if (s === 401) setError(t('adminSkills.errors.unauthorized'))
+        else if (s === 403) setError(t('adminSkills.errors.accessDenied'))
+        else setError(m || e?.message || t('adminSkills.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [page, search])
+  }, [page, search, t])
 
   return (
     <div className='p-6 space-y-4'>
@@ -55,24 +57,24 @@ export const SuperAdminSkillsPage: React.FC = () => {
             type='text'
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder='Search skills...'
+            placeholder={t('adminSkills.searchPlaceholder')}
             className='w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
           />
         </form>
         <p className='text-xs text-gray-500 mt-3'>
-          {totalItems.toLocaleString()} skills
+          {t('adminSkills.count', { count: totalItems.toLocaleString() })}
         </p>
       </div>
 
       {loading ? (
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>
-          Loading...
+          {t('common.status.loading')}
         </div>
       ) : error ? (
         <div className='bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl'>{error}</div>
       ) : skills.length === 0 ? (
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>
-          No skills found
+          {t('adminSkills.empty')}
         </div>
       ) : (
         <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'>
@@ -81,10 +83,10 @@ export const SuperAdminSkillsPage: React.FC = () => {
               <h3 className='font-semibold text-gray-900 capitalize mb-2'>{s.name || '—'}</h3>
               <div className='flex items-center justify-between text-xs'>
                 <span className='flex items-center gap-1 text-orange-600'>
-                  <MicVocal className='h-3 w-3' /> {s.artistCount ?? 0} artists
+                  <MicVocal className='h-3 w-3' /> {t('adminSkills.artists', { count: s.artistCount ?? 0 })}
                 </span>
                 <span className='flex items-center gap-1 text-blue-600'>
-                  <BriefcaseIcon className='h-3 w-3' /> {s.jobCount ?? 0} jobs
+                  <BriefcaseIcon className='h-3 w-3' /> {t('adminSkills.jobs', { count: s.jobCount ?? 0 })}
                 </span>
               </div>
             </div>

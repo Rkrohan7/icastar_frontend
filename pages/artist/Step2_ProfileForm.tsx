@@ -10,6 +10,7 @@ import { onboardingService } from '@/services/onboardingService'
 import authService from '@/services/userService'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { useTranslation } from '@/i18n'
 
 interface BaseFormData {
   category: ArtistCategory | null
@@ -32,19 +33,25 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
   formData,
   updateFormData,
 }) => {
+  // Values are translation keys; translated below before being displayed
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
+  const { t } = useTranslation()
+
+  const translatedErrors = Object.fromEntries(
+    Object.entries(errors).map(([field, key]) => [field, t(key)]),
+  )
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {}
     const hasProfession =
       (Array.isArray(formData.artistTypeIds) && formData.artistTypeIds.length > 0) ||
       !!formData.category
-    if (!hasProfession) newErrors.category = 'At least one profession is required'
-    if (!formData.gender) newErrors.gender = 'Gender is required'
-    if (!formData.city?.trim()) newErrors.city = 'City is required'
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required'
+    if (!hasProfession) newErrors.category = 'onboardingProfileForm.errors.professionRequired'
+    if (!formData.gender) newErrors.gender = 'onboardingProfileForm.errors.genderRequired'
+    if (!formData.city?.trim()) newErrors.city = 'onboardingProfileForm.errors.cityRequired'
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'onboardingProfileForm.errors.dateOfBirthRequired'
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -131,25 +138,25 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
 
         if (isOnboardingComplete) {
           // Successfully completed onboarding, navigate to dashboard
-          toast.success('Profile created successfully! Welcome to iCastar.')
+          toast.success(t('onboardingProfileForm.toast.createdWelcome'))
           navigate('/dashboard')
         } else {
           // Backend didn't set isOnboardingComplete flag - show error
           console.error('Backend did not set isOnboardingComplete flag')
-          toast.error('Onboarding status not updated. Please contact support.')
+          toast.error(t('onboardingProfileForm.toast.statusNotUpdated'))
         }
       } catch (verifyError) {
         // /api/auth/me call failed - still try to navigate but log warning
         console.warn('Failed to verify onboarding status:', verifyError)
         localStorage.setItem('isOnboardingComplete', 'true')
-        toast.success('Profile created successfully!')
+        toast.success(t('onboardingProfileForm.toast.created'))
         navigate('/dashboard')
       }
     } catch (error) {
       console.error('Onboarding submission failed:', error)
       setErrors(prev => ({
         ...prev,
-        form: 'Failed to submit the form. Please try again.'
+        form: 'onboardingProfileForm.errors.submitFailed'
       }))
     } finally {
       setIsSubmitting(false)
@@ -161,10 +168,10 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
   return (
     <div className='bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-4xl mx-auto'>
       <h2 className='text-2xl sm:text-3xl font-bold text-center mb-2'>
-        Profile Details
+        {t('onboardingProfileForm.title')}
       </h2>
       <p className='text-gray-500 text-center mb-8'>
-        Complete your artist profile to get started
+        {t('onboardingProfileForm.subtitle')}
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -172,7 +179,7 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
           <CommonFields
             formData={formData}
             updateFormData={updateFormData}
-            errors={errors}
+            errors={translatedErrors}
           />
         </div>
 
@@ -185,10 +192,10 @@ const Step2_ProfileForm: React.FC<ProfileFormProps> = ({
             {isSubmitting ? (
               <span className='inline-flex items-center gap-2'>
                 <span className='inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
-                Submitting...
+                {t('common.actions.submitting')}
               </span>
             ) : (
-              'Submit & Complete Onboarding'
+              t('onboardingProfileForm.submit')
             )}
           </button>
         </div>

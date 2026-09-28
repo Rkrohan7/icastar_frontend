@@ -4,8 +4,10 @@ import { Sidebar } from '@/components/Sidebar'
 import { Header } from '@/components/Header'
 import { UserRole } from '@/types/types'
 import authService from '@/services/userService'
+import { useTranslation } from '@/i18n'
 
 const DashLayout: React.FC = () => {
+  const { t } = useTranslation()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [activePage, setActivePage] = useState<string>('dashboard')
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true)
@@ -68,7 +70,7 @@ const DashLayout: React.FC = () => {
       <div className="flex h-screen items-center justify-center bg-base-bg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{t('common.status.loading')}</p>
         </div>
       </div>
     )

@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
-import uploadService, { UploadType } from '@/services/uploadService'
+import uploadService, { UPLOAD_LIMITS_MB, UploadType } from '@/services/uploadService'
 import Icon from '@/components/Icon'
+import { useTranslation } from '@/i18n'
 
 interface DocumentUploadProps {
   currentDocumentUrl?: string
@@ -20,8 +21,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   description,
   onUploadSuccess,
   acceptedTypes = 'application/pdf,image/jpeg,image/jpg,image/png',
-  maxSizeMB = 10,
+  maxSizeMB = UPLOAD_LIMITS_MB.document,
 }) => {
+  const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [fileName, setFileName] = useState<string | undefined>(
@@ -60,11 +62,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
         )
       }
 
-      toast.success('Document uploaded successfully!')
+      toast.success(t('fileUpload.document.uploadSuccess'))
       onUploadSuccess(fileUrl)
     } catch (error) {
       console.error('Upload failed:', error)
-      toast.error('Failed to upload document. Please try again.')
+      toast.error(t('fileUpload.document.uploadFailed'))
       setFileName(currentDocumentUrl?.split('/').pop()) // Revert to original
     } finally {
       setUploading(false)
@@ -108,7 +110,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-green-600 font-medium mt-1">✓ Uploaded</p>
+                <p className="text-xs text-green-600 font-medium mt-1">{t('fileUpload.uploaded')}</p>
               )}
             </div>
 
@@ -118,7 +120,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="p-2 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                  title="Replace"
+                  title={t('fileUpload.replace')}
                 >
                   <Icon name="RefreshCw" size={18} />
                 </button>
@@ -126,7 +128,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   type="button"
                   onClick={handleRemove}
                   className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Remove"
+                  title={t('common.actions.remove')}
                 >
                   <Icon name="Trash2" size={18} />
                 </button>
@@ -145,11 +147,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
               disabled={uploading}
               className="text-sm font-semibold text-amber-600 hover:text-amber-700 disabled:text-gray-400"
             >
-              Click to upload
+              {t('fileUpload.document.clickToUpload')}
             </button>
-            <p className="text-xs text-gray-500 mt-1">or drag and drop</p>
+            <p className="text-xs text-gray-500 mt-1">{t('fileUpload.document.orDragDrop')}</p>
             <p className="text-xs text-gray-400 mt-2">
-              PDF, JPEG, PNG • Max {maxSizeMB}MB
+              {t('fileUpload.document.formats', { size: maxSizeMB })}
             </p>
           </div>
         )}

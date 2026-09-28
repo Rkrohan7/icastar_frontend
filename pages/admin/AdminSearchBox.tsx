@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { SearchIcon, XIcon } from '../../components/icons/IconComponents'
+import { useTranslation } from '@/i18n'
 
 // Shared search box for the admin list pages. The parent keeps the applied
 // term (which it sends to the API); this component keeps what is being typed
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export const AdminSearchBox: React.FC<Props> = ({ value, onSearch, placeholder, className = '' }) => {
+  const { t } = useTranslation()
   const [text, setText] = useState(value)
 
   // Keep in sync when the parent clears filters
@@ -39,7 +41,7 @@ export const AdminSearchBox: React.FC<Props> = ({ value, onSearch, placeholder, 
             setText('')
             onSearch('')
           }}
-          title='Clear search'
+          title={t('adminSearch.clearSearch')}
           className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600'>
           <XIcon className='h-4 w-4' />
         </button>

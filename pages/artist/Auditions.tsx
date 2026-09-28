@@ -4,6 +4,7 @@ import auditionService from '@/services/auditionService'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import usePageParam from '@/hooks/usePageParam'
+import { useTranslation } from '@/i18n'
 
 interface AuditionData {
   id: number
@@ -70,38 +71,25 @@ const formatDate = (dateString: string): string => {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-const getProjectTypeLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    'FEATURE_FILM': 'Feature Film',
-    'TV_SERIES': 'TV Series',
-    'COMMERCIAL': 'Commercial',
-    'THEATER': 'Theater',
-    'WEB_SERIES': 'Web Series',
-    'SHORT_FILM': 'Short Film',
-    'MUSIC_VIDEO': 'Music Video',
-  }
-  return labels[type] || type
-}
+type TranslateFn = ReturnType<typeof useTranslation>['t']
+type TranslateEnumFn = ReturnType<typeof useTranslation>['tEnum']
 
-const getRoleTypeLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    'LEAD': 'Lead Role',
-    'SUPPORTING': 'Supporting',
-    'BACKGROUND': 'Background',
-    'EXTRA': 'Extra',
-  }
-  return labels[type] || type
-}
+const getProjectTypeLabel = (type: string, tEnum: TranslateEnumFn): string => tEnum(type)
+
+// 'LEAD' is shown as "Lead Role" here; every other role type uses the shared enum label.
+const getRoleTypeLabel = (type: string, t: TranslateFn, tEnum: TranslateEnumFn): string =>
+  type === 'LEAD' ? t('artistAuditions.roleTypes.lead') : tEnum(type)
 
 const AuditionItem: React.FC<{
   audition: AuditionData
   onCancel: (id: number) => void
   onViewDetails: (audition: AuditionData) => void
 }> = ({ audition, onCancel, onViewDetails }) => {
+  const { t, tEnum } = useTranslation()
   const icon = getIconForFormat(audition.auditionFormat || audition.type || 'VIRTUAL')
-  const title = audition.title || audition.job?.jobTitle || 'Audition'
-  const location = audition.auditionLocation || audition.job?.location || 'Location TBD'
-  const company = audition.productionCompany || audition.job?.company || audition.recruiter?.companyName || 'Production Company'
+  const title = audition.title || audition.job?.jobTitle || t('artistAuditions.item.fallbackTitle')
+  const location = audition.auditionLocation || audition.job?.location || t('artistAuditions.item.locationTbd')
+  const company = audition.productionCompany || audition.job?.company || audition.recruiter?.companyName || t('artistAuditions.item.productionCompany')
   const deadline = formatDate(audition.applicationDeadline || '')
   const auditionDate = formatDate(audition.auditionDate || audition.scheduledAt || '')
 
@@ -118,19 +106,19 @@ const AuditionItem: React.FC<{
   const getStatusBadge = () => {
     switch (audition.status) {
       case 'OPEN':
-        return <span className='px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold'>Open</span>
+        return <span className='px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold'>{tEnum(audition.status)}</span>
       case 'CLOSED':
-        return <span className='px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold'>Closed</span>
+        return <span className='px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold'>{tEnum(audition.status)}</span>
       case 'CANCELLED':
-        return <span className='px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold'>Cancelled</span>
+        return <span className='px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold'>{tEnum(audition.status)}</span>
       case 'DRAFT':
-        return <span className='px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold'>Draft</span>
+        return <span className='px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold'>{tEnum(audition.status)}</span>
       case 'SCHEDULED':
-        return <span className='px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold'>Scheduled</span>
+        return <span className='px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold'>{tEnum(audition.status)}</span>
       case 'COMPLETED':
-        return <span className='px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold'>Completed</span>
+        return <span className='px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold'>{tEnum(audition.status)}</span>
       case 'IN_PROGRESS':
-        return <span className='px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold'>In Progress</span>
+        return <span className='px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold'>{tEnum(audition.status)}</span>
       default:
         return null
     }
@@ -153,13 +141,13 @@ const AuditionItem: React.FC<{
               {audition.isUrgent && (
                 <span className='px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold flex items-center gap-1'>
                   <Icon name='AlertCircle' size={12} />
-                  Urgent
+                  {t('artistAuditions.item.urgent')}
                 </span>
               )}
               {audition.isFeatured && (
                 <span className='px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold flex items-center gap-1'>
                   <Icon name='Star' size={12} />
-                  Featured
+                  {t('artistAuditions.item.featured')}
                 </span>
               )}
             </div>
@@ -175,14 +163,14 @@ const AuditionItem: React.FC<{
               <p className='text-sm text-gray-600'>{company}</p>
               <div className='flex flex-wrap gap-2 items-center text-xs text-gray-500'>
                 <span className='px-2 py-1 bg-gray-100 rounded-md font-medium'>
-                  {getProjectTypeLabel(audition.projectType)}
+                  {getProjectTypeLabel(audition.projectType, tEnum)}
                 </span>
                 <span className='px-2 py-1 bg-gray-100 rounded-md font-medium'>
-                  {getRoleTypeLabel(audition.roleType)}
+                  {getRoleTypeLabel(audition.roleType, t, tEnum)}
                 </span>
                 {audition.characterName && (
                   <span className='px-2 py-1 bg-blue-50 text-blue-700 rounded-md font-medium'>
-                    Character: {audition.characterName}
+                    {t('artistAuditions.item.character', { name: audition.characterName })}
                   </span>
                 )}
               </div>
@@ -200,19 +188,19 @@ const AuditionItem: React.FC<{
               {audition.ageRangeMin && audition.ageRangeMax && (
                 <span className='flex items-center gap-1'>
                   <Icon name='Users' size={12} />
-                  Age: {audition.ageRangeMin}-{audition.ageRangeMax}
+                  {t('artistAuditions.item.age', { min: audition.ageRangeMin, max: audition.ageRangeMax })}
                 </span>
               )}
               {audition.genderPreference && audition.genderPreference !== 'ANY' && (
                 <span className='flex items-center gap-1'>
                   <Icon name='User' size={12} />
-                  {audition.genderPreference}
+                  {tEnum(audition.genderPreference)}
                 </span>
               )}
               {audition.compensationType && (
                 <span className='flex items-center gap-1'>
                   <Icon name='DollarSign' size={12} />
-                  {audition.compensationType}
+                  {tEnum(audition.compensationType)}
                 </span>
               )}
             </div>
@@ -227,7 +215,7 @@ const AuditionItem: React.FC<{
                 ))}
                 {audition.skillsRequired.length > 4 && (
                   <span className='px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs'>
-                    +{audition.skillsRequired.length - 4} more
+                    {t('artistAuditions.item.moreSkills', { count: audition.skillsRequired.length - 4 })}
                   </span>
                 )}
               </div>
@@ -242,7 +230,7 @@ const AuditionItem: React.FC<{
             <div className='flex items-start gap-2'>
               <Icon name='MapPin' size={16} className='text-gray-400 mt-0.5' />
               <div>
-                <p className='text-xs text-gray-500 uppercase font-semibold'>Location</p>
+                <p className='text-xs text-gray-500 uppercase font-semibold'>{t('common.labels.location')}</p>
                 <p className='text-sm text-gray-700 font-medium'>{location}</p>
               </div>
             </div>
@@ -252,7 +240,7 @@ const AuditionItem: React.FC<{
               <div className='flex items-start gap-2'>
                 <Icon name='Calendar' size={16} className='text-gray-400 mt-0.5' />
                 <div>
-                  <p className='text-xs text-gray-500 uppercase font-semibold'>Audition Date</p>
+                  <p className='text-xs text-gray-500 uppercase font-semibold'>{t('artistAuditions.item.auditionDate')}</p>
                   <p className='text-sm text-gray-700 font-medium'>{auditionDate}</p>
                 </div>
               </div>
@@ -263,7 +251,7 @@ const AuditionItem: React.FC<{
               <div className='flex items-start gap-2'>
                 <Icon name='Clock' size={16} className='text-amber-500 mt-0.5' />
                 <div>
-                  <p className='text-xs text-gray-500 uppercase font-semibold'>Apply By</p>
+                  <p className='text-xs text-gray-500 uppercase font-semibold'>{t('artistAuditions.item.applyBy')}</p>
                   <p className='text-sm text-amber-700 font-bold'>{deadline}</p>
                 </div>
               </div>
@@ -276,12 +264,12 @@ const AuditionItem: React.FC<{
                 <div>
                   {audition.director && (
                     <p className='text-xs text-gray-600'>
-                      <span className='font-semibold'>Director:</span> {audition.director}
+                      <span className='font-semibold'>{t('artistAuditions.details.director')}</span> {audition.director}
                     </p>
                   )}
                   {audition.castingDirector && (
                     <p className='text-xs text-gray-600'>
-                      <span className='font-semibold'>Casting:</span> {audition.castingDirector}
+                      <span className='font-semibold'>{t('artistAuditions.item.casting')}</span> {audition.castingDirector}
                     </p>
                   )}
                 </div>
@@ -294,7 +282,7 @@ const AuditionItem: React.FC<{
             <button
               onClick={handleViewDetails}
               className='w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200'>
-              View Details
+              {t('common.actions.viewDetails')}
             </button>
           </div>
         </div>
@@ -304,6 +292,7 @@ const AuditionItem: React.FC<{
 }
 
 const Auditions: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [view, setView] = useState<'list' | 'map'>('list')
   const [auditions, setAuditions] = useState<AuditionData[]>([])
   const [loading, setLoading] = useState(true)
@@ -350,7 +339,7 @@ const Auditions: React.FC = () => {
     } catch (error: any) {
       console.error('[Auditions] Failed to fetch auditions:', error)
       console.error('[Auditions] Error details:', error.response?.data)
-      toast.error(error.response?.data?.message || 'Failed to load auditions')
+      toast.error(error.response?.data?.message || t('artistAuditions.toast.loadFailed'))
       setAuditions([])
       setTotalPages(0)
     } finally {
@@ -363,17 +352,17 @@ const Auditions: React.FC = () => {
   }, [filter, page])
 
   const handleCancelAudition = async (id: number) => {
-    if (!window.confirm('Are you sure you want to cancel this audition?')) {
+    if (!window.confirm(t('artistAuditions.confirmCancel'))) {
       return
     }
 
     try {
       await auditionService.cancelMyAudition(id)
-      toast.success('Audition cancelled successfully')
+      toast.success(t('artistAuditions.toast.cancelled'))
       fetchAuditions() // Refresh the list
     } catch (error: any) {
       console.error('Failed to cancel audition:', error)
-      toast.error('Failed to cancel audition')
+      toast.error(t('artistAuditions.toast.cancelFailed'))
     }
   }
 
@@ -391,8 +380,8 @@ const Auditions: React.FC = () => {
     <div className='space-y-6'>
       <div className='flex justify-between items-center'>
         <div>
-          <h1 className='text-4xl font-bold'>My Auditions</h1>
-          <p className='text-gray-600'>Your scheduled auditions and interviews.</p>
+          <h1 className='text-4xl font-bold'>{t('artistAuditions.title')}</h1>
+          <p className='text-gray-600'>{t('artistAuditions.subtitle')}</p>
         </div>
         <div className='flex items-center gap-2'>
           {/* Filter Buttons */}
@@ -407,7 +396,7 @@ const Auditions: React.FC = () => {
                   ? 'bg-amber-600 text-white shadow'
                   : 'text-gray-600 hover:bg-amber-50'
               }`}>
-              Open Auditions
+              {t('artistAuditions.filters.open')}
             </button>
             <button
               onClick={() => {
@@ -419,7 +408,7 @@ const Auditions: React.FC = () => {
                   ? 'bg-amber-600 text-white shadow'
                   : 'text-gray-600 hover:bg-amber-50'
               }`}>
-              Upcoming
+              {t('artistAuditions.filters.upcoming')}
             </button>
             <button
               onClick={() => {
@@ -429,7 +418,7 @@ const Auditions: React.FC = () => {
               className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 filter === 'past' ? 'bg-amber-600 text-white shadow' : 'text-gray-600 hover:bg-amber-50'
               }`}>
-              Past
+              {t('artistAuditions.filters.past')}
             </button>
             <button
               onClick={() => {
@@ -439,7 +428,7 @@ const Auditions: React.FC = () => {
               className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 filter === 'all' ? 'bg-amber-600 text-white shadow' : 'text-gray-600 hover:bg-amber-50'
               }`}>
-              All
+              {t('common.status.all')}
             </button>
           </div>
 
@@ -453,7 +442,7 @@ const Auditions: React.FC = () => {
                   : 'text-gray-600 hover:bg-amber-50'
               }`}>
               <Icon name='List' size={20} className='inline mr-2' />
-              List
+              {t('artistAuditions.view.list')}
             </button>
             <button
               onClick={() => setView('map')}
@@ -461,7 +450,7 @@ const Auditions: React.FC = () => {
                 view === 'map' ? 'bg-amber-600 text-white shadow' : 'text-gray-600 hover:bg-amber-50'
               }`}>
               <Icon name='Map' size={20} className='inline mr-2' />
-              Map
+              {t('artistAuditions.view.map')}
             </button>
           </div>
         </div>
@@ -473,7 +462,7 @@ const Auditions: React.FC = () => {
             <div className='bg-white rounded-2xl shadow-lg p-8 flex items-center justify-center'>
               <div className='text-center'>
                 <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto'></div>
-                <p className='text-gray-600 mt-4'>Loading auditions...</p>
+                <p className='text-gray-600 mt-4'>{t('artistAuditions.loading')}</p>
               </div>
             </div>
           ) : auditions.length === 0 ? (
@@ -482,15 +471,15 @@ const Auditions: React.FC = () => {
                 <div className='bg-amber-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4'>
                   <Icon name='Search' size={40} className='text-amber-600' />
                 </div>
-                <h3 className='text-2xl font-bold text-gray-900 mb-2'>No Auditions Found</h3>
+                <h3 className='text-2xl font-bold text-gray-900 mb-2'>{t('artistAuditions.empty.title')}</h3>
                 <p className='text-gray-600 mb-4'>
                   {filter === 'open'
-                    ? 'No open auditions available for your role at the moment. New opportunities are posted regularly, so check back soon!'
+                    ? t('artistAuditions.empty.open')
                     : filter === 'upcoming'
-                    ? 'You have no upcoming auditions scheduled. Browse open auditions to apply for new opportunities.'
+                    ? t('artistAuditions.empty.upcoming')
                     : filter === 'past'
-                    ? 'You have no past auditions. Your audition history will appear here once you start applying.'
-                    : 'You have no auditions yet. Start exploring open auditions to find your next opportunity!'}
+                    ? t('artistAuditions.empty.past')
+                    : t('artistAuditions.empty.all')}
                 </p>
                 {filter !== 'open' && (
                   <button
@@ -499,7 +488,7 @@ const Auditions: React.FC = () => {
                       setPage(0)
                     }}
                     className='px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200'>
-                    Browse Open Auditions
+                    {t('artistAuditions.empty.browseOpen')}
                   </button>
                 )}
               </div>
@@ -524,16 +513,16 @@ const Auditions: React.FC = () => {
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                     disabled={page === 0}
                     className='px-4 py-2 bg-white rounded-lg shadow disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-50'>
-                    Previous
+                    {t('common.pagination.previous')}
                   </button>
                   <span className='px-4 py-2 bg-white rounded-lg shadow'>
-                    Page {page + 1} of {totalPages}
+                    {t('common.pagination.pageOf', { page: page + 1, total: totalPages })}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                     disabled={page >= totalPages - 1}
                     className='px-4 py-2 bg-white rounded-lg shadow disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-50'>
-                    Next
+                    {t('common.pagination.next')}
                   </button>
                 </div>
               )}
@@ -545,11 +534,11 @@ const Auditions: React.FC = () => {
           <div>
             <img
               src='https://i.imgur.com/gX3A1v3.png'
-              alt='Map placeholder'
+              alt={t('artistAuditions.map.alt')}
               className='rounded-xl'
             />
-            <h3 className='text-xl font-bold mt-4 text-gray-700'>Map View is Coming Soon!</h3>
-            <p className='text-gray-500'>Visually explore auditions near you.</p>
+            <h3 className='text-xl font-bold mt-4 text-gray-700'>{t('artistAuditions.map.comingSoon')}</h3>
+            <p className='text-gray-500'>{t('artistAuditions.map.description')}</p>
           </div>
         </div>
       )}
@@ -562,7 +551,7 @@ const Auditions: React.FC = () => {
             <div className='sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between z-10'>
               <div className='flex-1'>
                 <h2 className='text-2xl font-bold text-gray-900'>{selectedAudition.title}</h2>
-                <p className='text-sm text-gray-600 mt-1'>{selectedAudition.productionCompany || 'Production Company'}</p>
+                <p className='text-sm text-gray-600 mt-1'>{selectedAudition.productionCompany || t('artistAuditions.item.productionCompany')}</p>
               </div>
               <button
                 onClick={handleCloseModal}
@@ -577,28 +566,28 @@ const Auditions: React.FC = () => {
               <div>
                 <h3 className='text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2'>
                   <Icon name='Film' size={20} className='text-amber-600' />
-                  Project Information
+                  {t('artistAuditions.details.projectInformation')}
                 </h3>
                 <div className='bg-gray-50 rounded-xl p-4 space-y-2'>
                   {selectedAudition.projectTitle && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Project Title:</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.projectTitle')}</span>
                       <span className='text-sm text-gray-900'>{selectedAudition.projectTitle}</span>
                     </div>
                   )}
                   <div className='flex justify-between'>
-                    <span className='text-sm font-medium text-gray-600'>Project Type:</span>
-                    <span className='text-sm text-gray-900'>{getProjectTypeLabel(selectedAudition.projectType)}</span>
+                    <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.projectType')}</span>
+                    <span className='text-sm text-gray-900'>{getProjectTypeLabel(selectedAudition.projectType, tEnum)}</span>
                   </div>
                   {selectedAudition.director && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Director:</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.director')}</span>
                       <span className='text-sm text-gray-900'>{selectedAudition.director}</span>
                     </div>
                   )}
                   {selectedAudition.castingDirector && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Casting Director:</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.castingDirector')}</span>
                       <span className='text-sm text-gray-900'>{selectedAudition.castingDirector}</span>
                     </div>
                   )}
@@ -609,22 +598,22 @@ const Auditions: React.FC = () => {
               <div>
                 <h3 className='text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2'>
                   <Icon name='User' size={20} className='text-amber-600' />
-                  Role Details
+                  {t('artistAuditions.details.roleDetails')}
                 </h3>
                 <div className='bg-gray-50 rounded-xl p-4 space-y-2'>
                   <div className='flex justify-between'>
-                    <span className='text-sm font-medium text-gray-600'>Role Type:</span>
-                    <span className='text-sm text-gray-900'>{getRoleTypeLabel(selectedAudition.roleType)}</span>
+                    <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.roleType')}</span>
+                    <span className='text-sm text-gray-900'>{getRoleTypeLabel(selectedAudition.roleType, t, tEnum)}</span>
                   </div>
                   {selectedAudition.characterName && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Character Name:</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.characterName')}</span>
                       <span className='text-sm text-gray-900'>{selectedAudition.characterName}</span>
                     </div>
                   )}
                   {selectedAudition.characterDescription && (
                     <div>
-                      <span className='text-sm font-medium text-gray-600 block mb-1'>Character Description:</span>
+                      <span className='text-sm font-medium text-gray-600 block mb-1'>{t('artistAuditions.details.characterDescription')}</span>
                       <p className='text-sm text-gray-900'>{selectedAudition.characterDescription}</p>
                     </div>
                   )}
@@ -634,7 +623,7 @@ const Auditions: React.FC = () => {
               {/* Description */}
               {selectedAudition.description && (
                 <div>
-                  <h3 className='text-lg font-semibold text-gray-900 mb-3'>Description</h3>
+                  <h3 className='text-lg font-semibold text-gray-900 mb-3'>{t('common.labels.description')}</h3>
                   <p className='text-sm text-gray-700 leading-relaxed'>{selectedAudition.description}</p>
                 </div>
               )}
@@ -643,24 +632,24 @@ const Auditions: React.FC = () => {
               <div>
                 <h3 className='text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2'>
                   <Icon name='CheckCircle' size={20} className='text-amber-600' />
-                  Requirements
+                  {t('artistAuditions.details.requirements')}
                 </h3>
                 <div className='bg-gray-50 rounded-xl p-4 space-y-2'>
                   {selectedAudition.ageRangeMin && selectedAudition.ageRangeMax && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Age Range:</span>
-                      <span className='text-sm text-gray-900'>{selectedAudition.ageRangeMin} - {selectedAudition.ageRangeMax} years</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.ageRange')}</span>
+                      <span className='text-sm text-gray-900'>{t('artistAuditions.details.ageRangeValue', { min: selectedAudition.ageRangeMin, max: selectedAudition.ageRangeMax })}</span>
                     </div>
                   )}
                   {selectedAudition.genderPreference && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Gender:</span>
-                      <span className='text-sm text-gray-900'>{selectedAudition.genderPreference}</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.gender')}</span>
+                      <span className='text-sm text-gray-900'>{tEnum(selectedAudition.genderPreference)}</span>
                     </div>
                   )}
                   {selectedAudition.skillsRequired && selectedAudition.skillsRequired.length > 0 && (
                     <div>
-                      <span className='text-sm font-medium text-gray-600 block mb-2'>Skills Required:</span>
+                      <span className='text-sm font-medium text-gray-600 block mb-2'>{t('artistAuditions.details.skillsRequired')}</span>
                       <div className='flex flex-wrap gap-2'>
                         {selectedAudition.skillsRequired.map((skill, idx) => (
                           <span key={idx} className='px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium'>
@@ -677,28 +666,28 @@ const Auditions: React.FC = () => {
               <div>
                 <h3 className='text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2'>
                   <Icon name='Calendar' size={20} className='text-amber-600' />
-                  Audition Details
+                  {t('artistAuditions.details.auditionDetails')}
                 </h3>
                 <div className='bg-gray-50 rounded-xl p-4 space-y-2'>
                   <div className='flex justify-between'>
-                    <span className='text-sm font-medium text-gray-600'>Format:</span>
-                    <span className='text-sm text-gray-900'>{selectedAudition.auditionFormat}</span>
+                    <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.format')}</span>
+                    <span className='text-sm text-gray-900'>{tEnum(selectedAudition.auditionFormat)}</span>
                   </div>
                   {selectedAudition.auditionLocation && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Location:</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.location')}</span>
                       <span className='text-sm text-gray-900'>{selectedAudition.auditionLocation}</span>
                     </div>
                   )}
                   {selectedAudition.auditionDate && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Audition Date:</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.auditionDate')}</span>
                       <span className='text-sm text-gray-900'>{formatDate(selectedAudition.auditionDate)}</span>
                     </div>
                   )}
                   {selectedAudition.applicationDeadline && (
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Application Deadline:</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.applicationDeadline')}</span>
                       <span className='text-sm text-amber-700 font-semibold'>{formatDate(selectedAudition.applicationDeadline)}</span>
                     </div>
                   )}
@@ -710,16 +699,16 @@ const Auditions: React.FC = () => {
                 <div>
                   <h3 className='text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2'>
                     <Icon name='DollarSign' size={20} className='text-amber-600' />
-                    Compensation
+                    {t('artistAuditions.details.compensation')}
                   </h3>
                   <div className='bg-gray-50 rounded-xl p-4 space-y-2'>
                     <div className='flex justify-between'>
-                      <span className='text-sm font-medium text-gray-600'>Type:</span>
-                      <span className='text-sm text-gray-900'>{selectedAudition.compensationType}</span>
+                      <span className='text-sm font-medium text-gray-600'>{t('artistAuditions.details.type')}</span>
+                      <span className='text-sm text-gray-900'>{tEnum(selectedAudition.compensationType)}</span>
                     </div>
                     {selectedAudition.compensationDetails && (
                       <div>
-                        <span className='text-sm font-medium text-gray-600 block mb-1'>Details:</span>
+                        <span className='text-sm font-medium text-gray-600 block mb-1'>{t('artistAuditions.details.details')}</span>
                         <p className='text-sm text-gray-900'>{selectedAudition.compensationDetails}</p>
                       </div>
                     )}
@@ -733,7 +722,7 @@ const Auditions: React.FC = () => {
               <button
                 onClick={handleCloseModal}
                 className='w-full px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200'>
-                Close
+                {t('common.actions.close')}
               </button>
             </div>
           </div>

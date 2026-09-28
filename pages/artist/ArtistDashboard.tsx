@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Card } from '../../components/Card'
 import {
   XAxis,
@@ -29,9 +29,11 @@ import {
 import artistDashboardService from '../../services/artistDashboardService'
 import { toast } from 'react-toastify'
 import ApplyJobModal from '../../components/ApplyJobModal'
+import { useTranslation } from '@/i18n'
 
 export const ArtistDashboard = () => {
   const navigate = useNavigate()
+  const { t, tEnum } = useTranslation()
 
   // State management
   const [loading, setLoading] = useState(true)
@@ -68,7 +70,7 @@ export const ArtistDashboard = () => {
         // Transform metrics to KPI cards format with null safety
         const transformedKpis = [
           {
-            name: 'Profile Views',
+            nameKey: 'artistDashboard.kpi.profileViews',
             value: (metrics?.profileViews?.value || 0).toLocaleString(),
             change: metrics?.profileViews?.change || '0%',
             changeType: metrics?.profileViews?.changeType || 'increase',
@@ -77,7 +79,7 @@ export const ArtistDashboard = () => {
             iconColor: 'text-purple-600',
           },
           {
-            name: 'Job Invitations',
+            nameKey: 'artistDashboard.kpi.jobInvitations',
             value: (metrics?.jobInvitations?.value || 0).toString(),
             change: metrics?.jobInvitations?.change || '0%',
             changeType: metrics?.jobInvitations?.changeType || 'increase',
@@ -86,7 +88,7 @@ export const ArtistDashboard = () => {
             iconColor: 'text-indigo-600',
           },
           {
-            name: 'Applications Sent',
+            nameKey: 'artistDashboard.kpi.applicationsSent',
             value: (metrics?.applicationsSent?.value || 0).toString(),
             change: metrics?.applicationsSent?.change || '0%',
             changeType: metrics?.applicationsSent?.changeType || 'increase',
@@ -95,7 +97,7 @@ export const ArtistDashboard = () => {
             iconColor: 'text-blue-600',
           },
           {
-            name: 'Interviews Scheduled',
+            nameKey: 'artistDashboard.kpi.interviewsScheduled',
             value: (metrics?.interviewsScheduled?.value || 0).toString(),
             change: metrics?.interviewsScheduled?.change || '0%',
             changeType: metrics?.interviewsScheduled?.changeType || 'increase',
@@ -104,7 +106,7 @@ export const ArtistDashboard = () => {
             iconColor: 'text-amber-600',
           },
           {
-            name: 'Projects Completed',
+            nameKey: 'artistDashboard.kpi.projectsCompleted',
             value: (metrics?.projectsCompleted?.value || 0).toString(),
             change: metrics?.projectsCompleted?.change || '0%',
             changeType: metrics?.projectsCompleted?.changeType || 'increase',
@@ -113,7 +115,7 @@ export const ArtistDashboard = () => {
             iconColor: 'text-green-600',
           },
           {
-            name: 'Credits Balance',
+            nameKey: 'artistDashboard.kpi.creditsBalance',
             value: `$${(metrics?.creditsBalance?.value || 0).toLocaleString()}`,
             change: metrics?.creditsBalance?.change || '0%',
             changeType: metrics?.creditsBalance?.changeType || 'increase',
@@ -196,7 +198,7 @@ export const ArtistDashboard = () => {
         setPortfolioItems([])
         setProfileCompletion(0)
 
-        toast.error('Failed to load dashboard data. Please refresh the page.')
+        toast.error(t('artistDashboard.toast.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -205,34 +207,40 @@ export const ArtistDashboard = () => {
     fetchDashboardData()
   }, [timeFilter])
 
+  // Status names arrive as English labels ("Pending", "Under Review"…); show them in the active language.
+  const translatedStatusData = useMemo(
+    () => (applicationStatusData || []).map(entry => ({ ...entry, name: tEnum(entry?.name) })),
+    [applicationStatusData, tEnum]
+  )
+
   const quickActions = [
     {
-      title: 'Update Portfolio',
-      description: 'Add new artworks',
+      title: t('artistDashboard.quickActions.updatePortfolio'),
+      description: t('artistDashboard.quickActions.updatePortfolioDesc'),
       icon: PlusIcon,
       bgColor: 'bg-purple-600',
       hoverColor: 'hover:bg-purple-700',
       action: () => navigate('/profile'),
     },
     {
-      title: 'Browse Jobs',
-      description: 'Explore opportunities',
+      title: t('artistDashboard.quickActions.browseJobs'),
+      description: t('artistDashboard.quickActions.browseJobsDesc'),
       icon: BriefcaseIcon,
       bgColor: 'bg-indigo-600',
       hoverColor: 'hover:bg-indigo-700',
       action: () => navigate('/jobs'),
     },
     {
-      title: 'My Applications',
-      description: 'Track your applications',
+      title: t('artistDashboard.quickActions.myApplications'),
+      description: t('artistDashboard.quickActions.myApplicationsDesc'),
       icon: UsersIcon,
       bgColor: 'bg-blue-600',
       hoverColor: 'hover:bg-blue-700',
       action: () => navigate('/applications'),
     },
     {
-      title: 'Complete Profile',
-      description: `${profileCompletion}% completed`,
+      title: t('artistDashboard.quickActions.completeProfile'),
+      description: t('artistDashboard.quickActions.completeProfileDesc', { percent: profileCompletion }),
       icon: CheckCircleIcon,
       bgColor: 'bg-amber-600',
       hoverColor: 'hover:bg-amber-700',
@@ -241,10 +249,10 @@ export const ArtistDashboard = () => {
   ]
 
   const getMatchScoreBadge = (score: number) => {
-    if (score >= 90) return { text: 'Excellent Match', color: 'bg-green-100 text-green-800' }
-    if (score >= 80) return { text: 'Great Match', color: 'bg-blue-100 text-blue-800' }
-    if (score >= 70) return { text: 'Good Match', color: 'bg-purple-100 text-purple-800' }
-    return { text: 'Fair Match', color: 'bg-gray-100 text-gray-800' }
+    if (score >= 90) return { text: t('artistDashboard.matchBadge.excellent'), color: 'bg-green-100 text-green-800' }
+    if (score >= 80) return { text: t('artistDashboard.matchBadge.great'), color: 'bg-blue-100 text-blue-800' }
+    if (score >= 70) return { text: t('artistDashboard.matchBadge.good'), color: 'bg-purple-100 text-purple-800' }
+    return { text: t('artistDashboard.matchBadge.fair'), color: 'bg-gray-100 text-gray-800' }
   }
 
   // Show loading state
@@ -253,7 +261,7 @@ export const ArtistDashboard = () => {
       <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4'></div>
-          <p className='text-gray-600 text-lg'>Loading your dashboard...</p>
+          <p className='text-gray-600 text-lg'>{t('artistDashboard.loading')}</p>
         </div>
       </div>
     )
@@ -264,11 +272,11 @@ export const ArtistDashboard = () => {
       {/* Page Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Artist Dashboard</h1>
-          <p className='text-sm text-gray-600 mt-1'>Track your creative journey and opportunities</p>
+          <h1 className='text-3xl font-bold text-gray-900'>{t('artistDashboard.title')}</h1>
+          <p className='text-sm text-gray-600 mt-1'>{t('artistDashboard.subtitle')}</p>
         </div>
         <div className='text-sm text-gray-500'>
-          Last updated: {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          {t('artistDashboard.lastUpdated', { date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) })}
         </div>
       </div>
 
@@ -279,10 +287,10 @@ export const ArtistDashboard = () => {
           const isIncrease = kpi.changeType === 'increase'
 
           return (
-            <Card key={kpi.name} className='hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1'>
+            <Card key={kpi.nameKey} className='hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1'>
               <div className='flex items-start justify-between'>
                 <div className='flex-1'>
-                  <p className='text-xs font-medium text-gray-600 uppercase tracking-wide'>{kpi.name}</p>
+                  <p className='text-xs font-medium text-gray-600 uppercase tracking-wide'>{t(kpi.nameKey)}</p>
                   <div className='mt-2 flex items-baseline gap-2'>
                     <p className='text-2xl font-bold text-gray-900'>{kpi.value}</p>
                   </div>
@@ -308,7 +316,7 @@ export const ArtistDashboard = () => {
       {/* Quick Actions Panel */}
       <Card className='bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500'>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-lg font-semibold text-white'>Quick Actions</h3>
+          <h3 className='text-lg font-semibold text-white'>{t('artistDashboard.quickActions.title')}</h3>
         </div>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
           {(quickActions || []).map((action) => {
@@ -337,8 +345,8 @@ export const ArtistDashboard = () => {
       <Card>
         <div className='flex items-center justify-between mb-6'>
           <div>
-            <h3 className='text-lg font-semibold text-gray-900'>Analytics Overview</h3>
-            <p className='text-sm text-gray-500 mt-1'>Track your performance and growth</p>
+            <h3 className='text-lg font-semibold text-gray-900'>{t('artistDashboard.analytics.title')}</h3>
+            <p className='text-sm text-gray-500 mt-1'>{t('artistDashboard.analytics.subtitle')}</p>
           </div>
           <div className='flex gap-2'>
             {(['7', '30', '90'] as const).map((days) => (
@@ -349,7 +357,7 @@ export const ArtistDashboard = () => {
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}>
-                {days} days
+                {t('artistDashboard.analytics.days', { count: Number(days) })}
               </button>
             ))}
           </div>
@@ -358,7 +366,7 @@ export const ArtistDashboard = () => {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
           {/* Profile Views Trend */}
           <div className='lg:col-span-2'>
-            <h4 className='text-md font-semibold text-gray-800 mb-4'>Profile Views Trend</h4>
+            <h4 className='text-md font-semibold text-gray-800 mb-4'>{t('artistDashboard.analytics.profileViewsTrend')}</h4>
             <div style={{ width: '100%', height: 280 }}>
               <ResponsiveContainer>
                 <LineChart data={profileViewsTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
@@ -380,7 +388,7 @@ export const ArtistDashboard = () => {
                     strokeWidth={3}
                     dot={{ fill: '#A855F7', r: 4 }}
                     activeDot={{ r: 6 }}
-                    name='Profile Views'
+                    name={t('artistDashboard.kpi.profileViews')}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -389,12 +397,12 @@ export const ArtistDashboard = () => {
 
           {/* Application Status Distribution */}
           <div>
-            <h4 className='text-md font-semibold text-gray-800 mb-4'>Application Status</h4>
+            <h4 className='text-md font-semibold text-gray-800 mb-4'>{t('artistDashboard.analytics.applicationStatus')}</h4>
             <div style={{ width: '100%', height: 200 }}>
               <ResponsiveContainer>
                 <PieChart>
                   <Pie
-                    data={applicationStatusData}
+                    data={translatedStatusData}
                     cx='50%'
                     cy='50%'
                     innerRadius={50}
@@ -414,7 +422,7 @@ export const ArtistDashboard = () => {
                 <div key={item.name} className='flex items-center gap-2'>
                   <div className='h-3 w-3 rounded-full' style={{ backgroundColor: item.color }}></div>
                   <div className='flex-1'>
-                    <p className='text-xs font-medium text-gray-700'>{item.name}</p>
+                    <p className='text-xs font-medium text-gray-700'>{tEnum(item.name)}</p>
                     <p className='text-xs text-gray-500'>{item.value}</p>
                   </div>
                 </div>
@@ -425,7 +433,7 @@ export const ArtistDashboard = () => {
 
         {/* Earnings Trend */}
         <div className='mt-6'>
-          <h4 className='text-md font-semibold text-gray-800 mb-4'>Earnings Trend</h4>
+          <h4 className='text-md font-semibold text-gray-800 mb-4'>{t('artistDashboard.analytics.earningsTrend')}</h4>
           <div style={{ width: '100%', height: 280 }}>
             <ResponsiveContainer>
               <BarChart data={earningsTrendData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
@@ -441,7 +449,7 @@ export const ArtistDashboard = () => {
                   }}
                   cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                 />
-                <Bar dataKey='earnings' fill='#10B981' radius={[8, 8, 0, 0]} maxBarSize={60} />
+                <Bar dataKey='earnings' name={t('artistDashboard.analytics.earnings')} fill='#10B981' radius={[8, 8, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -454,13 +462,13 @@ export const ArtistDashboard = () => {
         <Card>
           <div className='flex items-center justify-between mb-6'>
             <div>
-              <h3 className='text-lg font-semibold text-gray-900'>Latest Job Opportunities</h3>
-              <p className='text-sm text-gray-500 mt-1'>Matched to your profile</p>
+              <h3 className='text-lg font-semibold text-gray-900'>{t('artistDashboard.jobs.title')}</h3>
+              <p className='text-sm text-gray-500 mt-1'>{t('artistDashboard.jobs.subtitle')}</p>
             </div>
             <button
               onClick={() => navigate('/jobs')}
               className='text-sm font-medium text-purple-600 hover:text-purple-700'>
-              View All →
+              {t('artistDashboard.jobs.viewAll')}
             </button>
           </div>
 
@@ -475,39 +483,39 @@ export const ArtistDashboard = () => {
                     <div className='flex items-start justify-between mb-2'>
                       <div className='flex-1'>
                         <h4 className='font-semibold text-gray-900 hover:text-purple-600 transition-colors'>
-                          {job?.title || 'Untitled Job'}
+                          {job?.title || t('artistDashboard.jobs.untitled')}
                         </h4>
-                        <p className='text-sm text-gray-600 mt-1'>{job?.company || 'Company'}</p>
+                        <p className='text-sm text-gray-600 mt-1'>{job?.company || t('common.labels.company')}</p>
                       </div>
                       <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${matchBadge.color}`}>
-                        {job?.matchScore || 0}% Match
+                        {t('artistDashboard.jobs.matchScore', { score: job?.matchScore || 0 })}
                       </span>
                     </div>
                     <div className='flex items-center gap-3 text-xs text-gray-500 mb-3'>
                       <span className='flex items-center gap-1'>
-                        <span className='font-medium text-purple-600'>{job?.budget || 'N/A'}</span>
+                        <span className='font-medium text-purple-600'>{job?.budget || t('common.status.notAvailable')}</span>
                       </span>
                       <span>•</span>
-                      <span>{job?.type || 'N/A'}</span>
+                      <span>{tEnum(job?.type) || t('common.status.notAvailable')}</span>
                       <span>•</span>
-                      <span>{job?.location || 'N/A'}</span>
+                      <span>{job?.location || t('common.status.notAvailable')}</span>
                     </div>
                     <button
                       type='button'
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); const resolvedId = job.id ?? job.jobId ?? job.job_id; setSelectedJob({ id: resolvedId, title: job.title || 'Untitled Job' }); setApplyOpen(true) }}
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); const resolvedId = job.id ?? job.jobId ?? job.job_id; setSelectedJob({ id: resolvedId, title: job.title || t('artistDashboard.jobs.untitled') }); setApplyOpen(true) }}
                       className='w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm'>
-                      Apply Now
+                      {t('common.actions.applyNow')}
                     </button>
                   </div>
                 )
               })
             ) : (
               <div className='text-center py-8 text-gray-500'>
-                <p className='text-sm'>No job opportunities available at the moment.</p>
+                <p className='text-sm'>{t('artistDashboard.jobs.empty')}</p>
                 <button
                   onClick={() => navigate('/jobs')}
                   className='mt-3 text-purple-600 hover:text-purple-700 font-medium text-sm'>
-                  Browse All Jobs →
+                  {t('artistDashboard.jobs.browseAll')}
                 </button>
               </div>
             )}
@@ -518,8 +526,8 @@ export const ArtistDashboard = () => {
         <Card>
           <div className='flex items-center justify-between mb-6'>
             <div>
-              <h3 className='text-lg font-semibold text-gray-900'>Recent Activity</h3>
-              <p className='text-sm text-gray-500 mt-1'>Your latest updates</p>
+              <h3 className='text-lg font-semibold text-gray-900'>{t('artistDashboard.activity.title')}</h3>
+              <p className='text-sm text-gray-500 mt-1'>{t('artistDashboard.activity.subtitle')}</p>
             </div>
           </div>
 
@@ -535,16 +543,16 @@ export const ArtistDashboard = () => {
                       <Icon className={`h-5 w-5 ${activity?.color || 'text-purple-600'}`} />
                     </div>
                     <div className='flex-1 min-w-0'>
-                      <p className='font-medium text-gray-900'>{activity?.title || 'Activity'}</p>
-                      <p className='text-sm text-gray-600 mt-0.5'>{activity?.company || 'Company'}</p>
-                      <p className='text-xs text-gray-500 mt-1'>{activity?.timestamp || 'Recently'}</p>
+                      <p className='font-medium text-gray-900'>{activity?.title || t('artistDashboard.activity.fallbackTitle')}</p>
+                      <p className='text-sm text-gray-600 mt-0.5'>{activity?.company || t('common.labels.company')}</p>
+                      <p className='text-xs text-gray-500 mt-1'>{activity?.timestamp || t('artistDashboard.activity.recently')}</p>
                     </div>
                   </div>
                 )
               })
             ) : (
               <div className='text-center py-8 text-gray-500'>
-                <p className='text-sm'>No recent activity to display.</p>
+                <p className='text-sm'>{t('artistDashboard.activity.empty')}</p>
               </div>
             )}
           </div>
@@ -555,13 +563,13 @@ export const ArtistDashboard = () => {
       <Card>
         <div className='flex items-center justify-between mb-6'>
           <div>
-            <h3 className='text-lg font-semibold text-gray-900'>Portfolio Preview</h3>
-            <p className='text-sm text-gray-500 mt-1'>Your latest artworks</p>
+            <h3 className='text-lg font-semibold text-gray-900'>{t('artistDashboard.portfolio.title')}</h3>
+            <p className='text-sm text-gray-500 mt-1'>{t('artistDashboard.portfolio.subtitle')}</p>
           </div>
           <button
             onClick={() => navigate('/profile')}
             className='text-sm font-medium text-purple-600 hover:text-purple-700'>
-            Manage Portfolio →
+            {t('artistDashboard.portfolio.manage')}
           </button>
         </div>
 
@@ -574,15 +582,15 @@ export const ArtistDashboard = () => {
                 <div className='aspect-w-4 aspect-h-3 bg-gray-200'>
                   <img
                     src={item?.imageUrl || item?.thumbnailUrl || '/placeholder.jpg'}
-                    alt={item?.title || 'Portfolio Item'}
+                    alt={item?.title || t('artistDashboard.portfolio.itemAlt')}
                     className='w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110'
                   />
                 </div>
                 <div className='absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4'>
-                  <h4 className='text-white font-semibold text-sm mb-2'>{item?.title || 'Untitled'}</h4>
+                  <h4 className='text-white font-semibold text-sm mb-2'>{item?.title || t('artistDashboard.portfolio.untitled')}</h4>
                   <div className='flex items-center gap-1 text-white text-xs'>
                     <EyeIcon className='h-4 w-4' />
-                    <span>{(item?.views || 0).toLocaleString()} views</span>
+                    <span>{t('artistDashboard.portfolio.views', { count: item?.views || 0, views: (item?.views || 0).toLocaleString() })}</span>
                   </div>
                 </div>
                 <div className='absolute top-3 right-3 bg-white bg-opacity-90 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1 text-xs font-medium text-gray-700'>
@@ -593,11 +601,11 @@ export const ArtistDashboard = () => {
             ))
           ) : (
             <div className='col-span-full text-center py-12 text-gray-500'>
-              <p className='text-sm'>No portfolio items yet.</p>
+              <p className='text-sm'>{t('artistDashboard.portfolio.empty')}</p>
               <button
                 onClick={() => navigate('/profile')}
                 className='mt-3 text-purple-600 hover:text-purple-700 font-medium text-sm'>
-                Add Your First Artwork →
+                {t('artistDashboard.portfolio.addFirst')}
               </button>
             </div>
           )}

@@ -3,8 +3,10 @@ import { Navigate } from 'react-router-dom'
 import ArtistDashboard from './artist/ArtistDashboard'
 import { RecruiterDashboard } from './recruiter/RecruiterDashboard'
 import { UserRole } from '@/types/types'
+import { useTranslation } from '@/i18n'
 
 const DashboardIndex = () => {
+  const { t } = useTranslation()
   // Read role from stored user payload first, fall back to direct 'role' key.
   // Backend may emit either casing — normalize to uppercase to match UserRole enum.
   const storedUser = localStorage.getItem('user')
@@ -33,7 +35,7 @@ const DashboardIndex = () => {
     default:
       return (
         <div className='text-center p-6 text-gray-600'>
-          No dashboard available for your role.
+          {t('dashboardIndex.noDashboard')}
         </div>
       )
   }

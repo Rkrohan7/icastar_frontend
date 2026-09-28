@@ -9,6 +9,7 @@ import {
   ProjectCastingReport,
   SelectedArtist,
 } from '../types'
+import { translate } from '@/i18n'
 
 // Projects change rarely; creating/updating a project or character clears the
 // prefix. Job create/update also clears it because the report depends on jobs.
@@ -50,7 +51,7 @@ const toList = (data: any): any[] => {
 export const mapSelectedArtist = (a: any): SelectedArtist => ({
   userId: a.userId ?? a.artistUserId ?? a.id,
   artistProfileId: a.artistProfileId ?? a.artistId,
-  name: a.name ?? a.artistName ?? a.fullName ?? 'Artist',
+  name: a.name ?? a.artistName ?? a.fullName ?? translate('services.fallback.artist'),
   avatarUrl: a.avatarUrl ?? a.profilePhoto ?? a.photoUrl,
   status: a.status,
 })

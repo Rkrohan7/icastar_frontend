@@ -15,15 +15,17 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination, StatusBadge } from './SuperAdminRecruitersPage'
+import { translate, useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
-const STATUS_OPTIONS: { label: string; value: AccountStatus | '' }[] = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Inactive', value: 'INACTIVE' },
-  { label: 'Suspended', value: 'SUSPENDED' },
-  { label: 'Banned', value: 'BANNED' },
+// '' = no filter. Enum values are labelled with tEnum(value) at render time.
+const STATUS_OPTIONS: { labelKey?: string; value: AccountStatus | '' }[] = [
+  { labelKey: 'adminUsers.allStatuses', value: '' },
+  { value: 'ACTIVE' },
+  { value: 'INACTIVE' },
+  { value: 'SUSPENDED' },
+  { value: 'BANNED' },
 ]
 
 const ROLE_OPTIONS = ['ADMIN', 'SUPER_ADMIN', 'MODERATOR', 'SUPPORT']
@@ -31,13 +33,14 @@ const ROLE_OPTIONS = ['ADMIN', 'SUPER_ADMIN', 'MODERATOR', 'SUPPORT']
 const errMsg = (err: any, fallback: string): string => {
   const s = err?.response?.status
   const m = err?.response?.data?.message
-  if (s === 401) return 'Unauthorized — please log in as an admin.'
-  if (s === 403) return 'Access denied — admin role required.'
-  if (s === 404) return 'Endpoint not found.'
+  if (s === 401) return translate('adminUsers.errors.unauthorized')
+  if (s === 403) return translate('adminUsers.errors.forbidden')
+  if (s === 404) return translate('adminUsers.errors.notFound')
   return m || err?.message || fallback
 }
 
 export const SuperAdminAdminUsersPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [admins, setAdmins] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -64,7 +67,7 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
       setTotalPages(result.totalPages)
       setTotalItems(result.totalItems)
     } catch (err: any) {
-      setError(errMsg(err, 'Unable to load admin users.'))
+      setError(errMsg(err, t('adminUsers.errors.loadFailed')))
     } finally {
       setLoading(false)
     }
@@ -83,22 +86,22 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
 
   const handleStatusToggle = async (admin: AdminUser) => {
     const next: AccountStatus = admin.accountStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
-    if (!confirm(`Change status to ${next}?`)) return
+    if (!confirm(t('adminUsers.confirm.changeStatus', { status: tEnum(next) }))) return
     try {
       await superAdminService.updateAdminUserStatus(admin.id, next)
       load()
     } catch (err: any) {
-      alert(errMsg(err, 'Failed to update status'))
+      alert(errMsg(err, t('adminUsers.errors.statusFailed')))
     }
   }
 
   const handleDelete = async (admin: AdminUser) => {
-    if (!confirm(`Delete admin "${admin.firstName} ${admin.lastName}"?`)) return
+    if (!confirm(t('adminUsers.confirm.delete', { name: `${admin.firstName} ${admin.lastName}` }))) return
     try {
       await superAdminService.deleteAdminUser(admin.id)
       load()
     } catch (err: any) {
-      alert(errMsg(err, 'Failed to delete'))
+      alert(errMsg(err, t('adminUsers.errors.deleteFailed')))
     }
   }
 
@@ -112,7 +115,7 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
               type='text'
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder='Search by name or email...'
+              placeholder={t('adminUsers.searchPlaceholder')}
               className='w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </form>
@@ -125,7 +128,7 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {o.labelKey ? t(o.labelKey) : tEnum(o.value)}
               </option>
             ))}
           </select>
@@ -135,33 +138,33 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
               setModalOpen(true)
             }}
             className='px-4 py-2 bg-[#E36A3A] text-white text-sm font-medium rounded-lg hover:bg-[#C95428] transition-colors flex items-center gap-2'>
-            <PlusIcon className='h-4 w-4' /> Add Admin
+            <PlusIcon className='h-4 w-4' /> {t('adminUsers.addAdmin')}
           </button>
         </div>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {admins.length} of {totalItems.toLocaleString()} admin users
+          {t('adminUsers.showing', { shown: admins.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <div className='py-16 text-center text-gray-500'>Loading...</div>
+          <div className='py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
         ) : error ? (
           <div className='py-16 text-center text-red-600'>{error}</div>
         ) : admins.length === 0 ? (
-          <div className='py-16 text-center text-gray-500'>No admin users found</div>
+          <div className='py-16 text-center text-gray-500'>{t('adminUsers.empty')}</div>
         ) : (
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50 border-b border-gray-200'>
                 <tr>
-                  <Th>Admin</Th>
-                  <Th>Contact</Th>
-                  <Th>Role</Th>
-                  <Th>Permissions</Th>
-                  <Th>Status</Th>
-                  <Th>Last Login</Th>
-                  <Th>Actions</Th>
+                  <Th>{t('adminUsers.table.admin')}</Th>
+                  <Th>{t('adminUsers.table.contact')}</Th>
+                  <Th>{t('common.labels.role')}</Th>
+                  <Th>{t('adminUsers.table.permissions')}</Th>
+                  <Th>{t('common.labels.status')}</Th>
+                  <Th>{t('adminUsers.table.lastLogin')}</Th>
+                  <Th>{t('common.labels.actions')}</Th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
@@ -177,7 +180,7 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
                           </div>
                           <div>
                             <p className='font-medium text-gray-900'>{firstName} {lastName}</p>
-                            <p className='text-xs text-gray-500'>ID: {a.id}</p>
+                            <p className='text-xs text-gray-500'>{t('adminUsers.id', { id: a.id })}</p>
                           </div>
                         </div>
                       </td>
@@ -192,7 +195,7 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
                       <td className='px-4 py-3'>
                         <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700'>
                           <ShieldCheckIcon className='h-3 w-3' />
-                          {(a.role || '—').replace(/_/g, ' ')}
+                          {a.role ? tEnum(a.role) : '—'}
                         </span>
                       </td>
                       <td className='px-4 py-3 text-xs text-gray-700 max-w-xs'>
@@ -206,7 +209,7 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
                         {a.accountStatus && <StatusBadge status={a.accountStatus} />}
                       </td>
                       <td className='px-4 py-3 text-xs text-gray-500'>
-                        {a.lastLoginAt ? new Date(a.lastLoginAt).toLocaleDateString() : 'Never'}
+                        {a.lastLoginAt ? new Date(a.lastLoginAt).toLocaleDateString() : t('adminUsers.never')}
                       </td>
                       <td className='px-4 py-3'>
                         <div className='flex gap-1'>
@@ -216,18 +219,18 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
                               setModalOpen(true)
                             }}
                             className='p-1.5 text-gray-600 hover:bg-gray-100 rounded'
-                            title='Edit'>
+                            title={t('common.actions.edit')}>
                             <EditIcon className='h-4 w-4' />
                           </button>
                           <button
                             onClick={() => handleStatusToggle(a)}
                             className='px-2 py-1 text-xs text-orange-600 hover:bg-orange-50 rounded border border-orange-200'>
-                            {a.accountStatus === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                            {a.accountStatus === 'ACTIVE' ? t('adminUsers.actions.suspend') : t('adminUsers.actions.activate')}
                           </button>
                           <button
                             onClick={() => handleDelete(a)}
                             className='px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded border border-red-200'>
-                            Delete
+                            {t('common.actions.delete')}
                           </button>
                         </div>
                       </td>
@@ -269,6 +272,7 @@ const AdminUserModal: React.FC<{
   onClose: () => void
   onSaved: () => void
 }> = ({ admin, onClose, onSaved }) => {
+  const { t, tEnum } = useTranslation()
   const [firstName, setFirstName] = useState(admin?.firstName || '')
   const [lastName, setLastName] = useState(admin?.lastName || '')
   const [email, setEmail] = useState(admin?.email || '')
@@ -293,7 +297,7 @@ const AdminUserModal: React.FC<{
       }
       onSaved()
     } catch (e: any) {
-      setErr(errMsg(e, 'Failed to save'))
+      setErr(errMsg(e, t('adminUsers.errors.saveFailed')))
     } finally {
       setSaving(false)
     }
@@ -304,7 +308,7 @@ const AdminUserModal: React.FC<{
       <div className='bg-white rounded-xl shadow-xl max-w-md w-full p-6' onClick={(e) => e.stopPropagation()}>
         <div className='flex items-center justify-between mb-4'>
           <h2 className='text-lg font-bold text-gray-900'>
-            {admin ? 'Edit Admin' : 'Add Admin'}
+            {admin ? t('adminUsers.modal.editTitle') : t('adminUsers.modal.addTitle')}
           </h2>
           <button onClick={onClose} className='p-1 hover:bg-gray-100 rounded'>
             <XIcon className='h-5 w-5' />
@@ -313,14 +317,14 @@ const AdminUserModal: React.FC<{
         <div className='space-y-3'>
           <div className='grid grid-cols-2 gap-3'>
             <div>
-              <label className='text-xs font-medium text-gray-600'>First Name *</label>
+              <label className='text-xs font-medium text-gray-600'>{t('common.labels.firstName')} *</label>
               <input
                 type='text' value={firstName} onChange={(e) => setFirstName(e.target.value)}
                 className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
               />
             </div>
             <div>
-              <label className='text-xs font-medium text-gray-600'>Last Name *</label>
+              <label className='text-xs font-medium text-gray-600'>{t('common.labels.lastName')} *</label>
               <input
                 type='text' value={lastName} onChange={(e) => setLastName(e.target.value)}
                 className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
@@ -328,35 +332,35 @@ const AdminUserModal: React.FC<{
             </div>
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Email *</label>
+            <label className='text-xs font-medium text-gray-600'>{t('common.labels.email')} *</label>
             <input
               type='email' value={email} onChange={(e) => setEmail(e.target.value)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Mobile</label>
+            <label className='text-xs font-medium text-gray-600'>{t('common.labels.mobile')}</label>
             <input
               type='tel' value={mobile} onChange={(e) => setMobile(e.target.value)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Role</label>
+            <label className='text-xs font-medium text-gray-600'>{t('common.labels.role')}</label>
             <select
               value={role} onChange={(e) => setRole(e.target.value)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
               {ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
+                <option key={r} value={r}>{tEnum(r)}</option>
               ))}
             </select>
           </div>
           {!admin && (
             <div>
-              <label className='text-xs font-medium text-gray-600'>Initial Password</label>
+              <label className='text-xs font-medium text-gray-600'>{t('adminUsers.modal.initialPassword')}</label>
               <input
                 type='password' value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder='Leave blank to auto-generate'
+                placeholder={t('adminUsers.modal.passwordPlaceholder')}
                 className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
               />
             </div>
@@ -367,13 +371,13 @@ const AdminUserModal: React.FC<{
           <button
             onClick={onClose}
             className='px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50'>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !firstName || !lastName || !email}
             className='px-4 py-2 text-sm font-medium bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] disabled:opacity-50'>
-            {saving ? 'Saving...' : admin ? 'Update' : 'Create'}
+            {saving ? t('common.actions.saving') : admin ? t('common.actions.update') : t('common.actions.create')}
           </button>
         </div>
       </div>

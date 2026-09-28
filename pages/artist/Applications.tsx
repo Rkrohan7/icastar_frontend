@@ -3,6 +3,7 @@ import Icon from '@/components/Icon'
 import { applicationsService, MyApplication } from '@/services/applicationsService'
 import placeholderLogo from '@/assets/icaster.png'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useTranslation } from '@/i18n'
 
 const statusClasses: Record<string, string> = {
   APPLIED: 'bg-blue-100 text-blue-800',
@@ -13,11 +14,12 @@ const statusClasses: Record<string, string> = {
 }
 
 const StatusTag: React.FC<{ status: string }> = ({ status }) => {
+  const { tEnum } = useTranslation()
   const key = status.toUpperCase()
   const classes = statusClasses[key] || 'bg-gray-100 text-gray-800'
   return (
     <span className={`px-3 py-1 text-sm font-semibold rounded-full ${classes}`}>
-      {status}
+      {tEnum(status)}
     </span>
   )
 }
@@ -25,7 +27,9 @@ const StatusTag: React.FC<{ status: string }> = ({ status }) => {
 const Applications: React.FC = () => {
   const [apps, setApps] = useState<MyApplication[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  // Holds a translation key; translated at render
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const fetchApps = async () => {
@@ -42,7 +46,7 @@ const Applications: React.FC = () => {
         setApps(items)
       } catch (e: any) {
         console.error('Failed to load applications', e)
-        setError('Failed to load applications. Please try again later.')
+        setError('artistApplications.loadFailed')
       } finally {
         setLoading(false)
       }
@@ -52,9 +56,9 @@ const Applications: React.FC = () => {
 
   return (
     <div className='space-y-6'>
-      <h1 className='text-4xl font-bold'>My Applications</h1>
+      <h1 className='text-4xl font-bold'>{t('artistApplications.title')}</h1>
       <p className='text-gray-600'>
-        Keep track of all your job applications in one place.
+        {t('artistApplications.subtitle')}
       </p>
 
       <div className='bg-white rounded-2xl shadow-lg overflow-hidden'>
@@ -62,10 +66,10 @@ const Applications: React.FC = () => {
           <table className='w-full text-left'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='p-5 font-semibold text-gray-600'>Job Title</th>
-                <th className='p-5 font-semibold text-gray-600'>Company</th>
-                <th className='p-5 font-semibold text-gray-600'>Date Applied</th>
-                <th className='p-5 font-semibold text-gray-600'>Status</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('artistApplications.table.jobTitle')}</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('common.labels.company')}</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('artistApplications.table.dateApplied')}</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('common.labels.status')}</th>
                 <th className='p-5 font-semibold text-gray-600'></th>
               </tr>
             </thead>
@@ -98,20 +102,20 @@ const Applications: React.FC = () => {
             </tbody>
           </table>
         ) : error ? (
-          <div className='p-6 text-red-600'>{error}</div>
+          <div className='p-6 text-red-600'>{t(error)}</div>
         ) : apps.length === 0 ? (
           <div className='py-16 text-center'>
-            <h3 className='text-lg font-medium text-gray-900'>No Applications Found</h3>
-            <p className='mt-1 text-sm text-gray-500'>You have not applied to any jobs yet.</p>
+            <h3 className='text-lg font-medium text-gray-900'>{t('artistApplications.empty.title')}</h3>
+            <p className='mt-1 text-sm text-gray-500'>{t('artistApplications.empty.description')}</p>
           </div>
         ) : (
           <table className='w-full text-left'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='p-5 font-semibold text-gray-600'>Job Title</th>
-                <th className='p-5 font-semibold text-gray-600'>Company</th>
-                <th className='p-5 font-semibold text-gray-600'>Date Applied</th>
-                <th className='p-5 font-semibold text-gray-600'>Status</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('artistApplications.table.jobTitle')}</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('common.labels.company')}</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('artistApplications.table.dateApplied')}</th>
+                <th className='p-5 font-semibold text-gray-600'>{t('common.labels.status')}</th>
                 <th className='p-5 font-semibold text-gray-600'></th>
               </tr>
             </thead>

@@ -13,23 +13,25 @@ import superAdminService, {
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
+import { useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
-const STATUS_OPTIONS: { label: string; value: ReportStatus | '' }[] = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'In Review', value: 'IN_REVIEW' },
-  { label: 'Resolved', value: 'RESOLVED' },
-  { label: 'Dismissed', value: 'DISMISSED' },
+// Labels come from tEnum(value); the empty value is the "All …" filter option.
+const STATUS_OPTIONS: { value: ReportStatus | '' }[] = [
+  { value: '' },
+  { value: 'PENDING' },
+  { value: 'IN_REVIEW' },
+  { value: 'RESOLVED' },
+  { value: 'DISMISSED' },
 ]
 
-const PRIORITY_OPTIONS: { label: string; value: ReportPriority | '' }[] = [
-  { label: 'All Priorities', value: '' },
-  { label: 'Critical', value: 'CRITICAL' },
-  { label: 'High', value: 'HIGH' },
-  { label: 'Medium', value: 'MEDIUM' },
-  { label: 'Low', value: 'LOW' },
+const PRIORITY_OPTIONS: { value: ReportPriority | '' }[] = [
+  { value: '' },
+  { value: 'CRITICAL' },
+  { value: 'HIGH' },
+  { value: 'MEDIUM' },
+  { value: 'LOW' },
 ]
 
 const ACTION_OPTIONS = [
@@ -54,15 +56,16 @@ const STATUS_COLOR: Record<ReportStatus, string> = {
   DISMISSED: 'bg-gray-50 text-gray-600',
 }
 
-const errMsg = (err: any, fallback: string): string => {
+const errMsg = (err: any, fallback: string, t: (key: string) => string): string => {
   const s = err?.response?.status
   const m = err?.response?.data?.message
-  if (s === 401) return 'Unauthorized — log in as admin.'
-  if (s === 403) return 'Access denied — admin role required.'
+  if (s === 401) return t('adminReportContent.errors.unauthorized')
+  if (s === 403) return t('adminReportContent.errors.accessDenied')
   return m || err?.message || fallback
 }
 
 export const SuperAdminReportContentPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [list, setList] = useState<ReportContentItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -89,7 +92,7 @@ export const SuperAdminReportContentPage: React.FC = () => {
       setTotalPages(result.totalPages)
       setTotalItems(result.totalItems)
     } catch (e: any) {
-      setError(errMsg(e, 'Unable to load reports.'))
+      setError(errMsg(e, t('adminReportContent.errors.loadFailed'), t))
     } finally {
       setLoading(false)
     }
@@ -110,7 +113,7 @@ export const SuperAdminReportContentPage: React.FC = () => {
               setPage(0)
               setSearch(term)
             }}
-            placeholder='Search by reporter, reported user or reason...'
+            placeholder={t('adminReportContent.filters.searchPlaceholder')}
           />
           <select
             value={status}
@@ -120,7 +123,9 @@ export const SuperAdminReportContentPage: React.FC = () => {
             }}
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.value ? tEnum(o.value) : t('adminReportContent.filters.allStatuses')}
+              </option>
             ))}
           </select>
           <select
@@ -131,23 +136,25 @@ export const SuperAdminReportContentPage: React.FC = () => {
             }}
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {PRIORITY_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.value ? tEnum(o.value) : t('adminReportContent.filters.allPriorities')}
+              </option>
             ))}
           </select>
         </div>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {list.length} of {totalItems.toLocaleString()} reports
+          {t('adminReportContent.showing', { shown: list.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       {loading ? (
-        <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>Loading...</div>
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
       ) : error ? (
         <div className='bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl'>{error}</div>
       ) : list.length === 0 ? (
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>
           <ShieldCheckIcon className='h-10 w-10 text-green-500 mx-auto mb-2' />
-          No reports to review
+          {t('adminReportContent.empty')}
         </div>
       ) : (
         <div className='space-y-3'>
@@ -156,50 +163,50 @@ export const SuperAdminReportContentPage: React.FC = () => {
               <div className='flex flex-col md:flex-row md:items-start md:justify-between gap-4'>
                 <div className='flex-1'>
                   <div className='flex flex-wrap items-center gap-2 mb-2'>
-                    <span className='text-sm font-semibold text-gray-900'>{(r.reportType || 'CONTENT').replace(/_/g, ' ')}</span>
+                    <span className='text-sm font-semibold text-gray-900'>{tEnum(r.reportType || 'CONTENT')}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PRIORITY_COLOR[r.priority] || 'bg-gray-100 text-gray-700'}`}>
-                      {r.priority}
+                      {tEnum(r.priority)}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[r.status] || 'bg-gray-100 text-gray-600'}`}>
-                      {r.status}
+                      {tEnum(r.status)}
                     </span>
                   </div>
                   <p className='text-sm text-gray-900 mb-1'>
-                    <strong>Reason:</strong> {(r.reason || '—').replace(/_/g, ' ')}
+                    <strong>{t('adminReportContent.card.reason')}</strong> {r.reason ? tEnum(r.reason) : '—'}
                   </p>
                   {r.description && (
                     <p className='text-sm text-gray-600 mb-2'>{r.description}</p>
                   )}
                   <div className='grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-500 mt-2'>
                     <div>
-                      <p className='font-medium text-gray-700'>Reporter</p>
+                      <p className='font-medium text-gray-700'>{t('adminReportContent.card.reporter')}</p>
                       <p>{r.reporterName || '—'}</p>
                     </div>
                     <div>
-                      <p className='font-medium text-gray-700'>Reported</p>
+                      <p className='font-medium text-gray-700'>{t('adminReportContent.card.reported')}</p>
                       <p>{r.reportedUserName || '—'}</p>
                     </div>
                     <div>
-                      <p className='font-medium text-gray-700'>Reviewer</p>
+                      <p className='font-medium text-gray-700'>{t('adminReportContent.card.reviewer')}</p>
                       <p>{r.reviewedByName || '—'}</p>
                     </div>
                     {r.actionTaken && (
                       <div>
-                        <p className='font-medium text-gray-700'>Action</p>
-                        <p>{r.actionTaken.replace(/_/g, ' ')}</p>
+                        <p className='font-medium text-gray-700'>{t('adminReportContent.card.action')}</p>
+                        <p>{tEnum(r.actionTaken)}</p>
                       </div>
                     )}
                   </div>
                   {r.resolutionNotes && (
                     <div className='mt-3 p-2 bg-gray-50 rounded text-xs'>
-                      <strong>Notes:</strong> {r.resolutionNotes}
+                      <strong>{t('adminReportContent.card.notes')}</strong> {r.resolutionNotes}
                     </div>
                   )}
                 </div>
                 <button
                   onClick={() => setReviewing(r)}
                   className='px-3 py-1.5 text-sm font-medium bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] flex items-center gap-1 flex-shrink-0'>
-                  <EditIcon className='h-4 w-4' /> Review
+                  <EditIcon className='h-4 w-4' /> {t('adminReportContent.card.review')}
                 </button>
               </div>
             </div>
@@ -230,6 +237,7 @@ const ReviewModal: React.FC<{
   onClose: () => void
   onSaved: () => void
 }> = ({ report, onClose, onSaved }) => {
+  const { t, tEnum } = useTranslation()
   const [status, setStatus] = useState<ReportStatus>(report.status || 'IN_REVIEW')
   const [priority, setPriority] = useState<ReportPriority>(report.priority || 'MEDIUM')
   const [resolutionNotes, setResolutionNotes] = useState(report.resolutionNotes || '')
@@ -249,7 +257,7 @@ const ReviewModal: React.FC<{
       await superAdminService.reviewReportedContent(report.id, payload)
       onSaved()
     } catch (e: any) {
-      setErr(errMsg(e, 'Failed to update report'))
+      setErr(errMsg(e, t('adminReportContent.errors.updateFailed'), t))
     } finally {
       setSaving(false)
     }
@@ -259,51 +267,51 @@ const ReviewModal: React.FC<{
     <div className='fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4' onClick={onClose}>
       <div className='bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto' onClick={(e) => e.stopPropagation()}>
         <div className='flex items-center justify-between mb-4'>
-          <h2 className='text-lg font-bold text-gray-900'>Review Report</h2>
+          <h2 className='text-lg font-bold text-gray-900'>{t('adminReportContent.modal.title')}</h2>
           <button onClick={onClose} className='p-1 hover:bg-gray-100 rounded'>
             <XIcon className='h-5 w-5' />
           </button>
         </div>
         <p className='text-sm text-gray-600 mb-4'>
-          <strong>{(report.reason || '—').replace(/_/g, ' ')}</strong>
+          <strong>{report.reason ? tEnum(report.reason) : '—'}</strong>
           {report.reportedUserName ? ` · ${report.reportedUserName}` : ''}
         </p>
         <div className='space-y-3'>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Status</label>
+            <label className='text-xs font-medium text-gray-600'>{t('common.labels.status')}</label>
             <select
               value={status} onChange={(e) => setStatus(e.target.value as ReportStatus)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
               {STATUS_OPTIONS.filter((o) => o.value).map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>{tEnum(o.value)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Priority</label>
+            <label className='text-xs font-medium text-gray-600'>{t('adminReportContent.modal.priority')}</label>
             <select
               value={priority} onChange={(e) => setPriority(e.target.value as ReportPriority)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
               {PRIORITY_OPTIONS.filter((o) => o.value).map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>{tEnum(o.value)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Action Taken</label>
+            <label className='text-xs font-medium text-gray-600'>{t('adminReportContent.modal.actionTaken')}</label>
             <select
               value={actionTaken} onChange={(e) => setActionTaken(e.target.value)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
               {ACTION_OPTIONS.map((a) => (
-                <option key={a} value={a}>{a.replace(/_/g, ' ')}</option>
+                <option key={a} value={a}>{tEnum(a)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Resolution Notes</label>
+            <label className='text-xs font-medium text-gray-600'>{t('adminReportContent.modal.resolutionNotes')}</label>
             <textarea
               value={resolutionNotes} onChange={(e) => setResolutionNotes(e.target.value)} rows={3}
-              placeholder='Optional notes...'
+              placeholder={t('adminReportContent.modal.notesPlaceholder')}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </div>
@@ -311,12 +319,12 @@ const ReviewModal: React.FC<{
         </div>
         <div className='mt-6 flex justify-end gap-2'>
           <button onClick={onClose} className='px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50'>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={save} disabled={saving}
             className='px-4 py-2 text-sm font-medium bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] disabled:opacity-50'>
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('common.actions.saving') : t('common.actions.save')}
           </button>
         </div>
       </div>

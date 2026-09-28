@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Icon from '@/components/Icon'
+import { useTranslation } from '@/i18n'
 
 const recruiters = [
   {
@@ -40,43 +41,44 @@ const messages = {
   1: [
     {
       from: 'recruiter',
-      text: 'Hi Aria, we were very impressed with your portfolio for the Lead Singer role.',
+      textKey: 'artistMessages.sample.chat1.msg1',
     },
     {
       from: 'artist',
-      text: "Thank you, Rohan! I'm very interested in the opportunity.",
+      textKey: 'artistMessages.sample.chat1.msg2',
     },
     {
       from: 'recruiter',
-      text: 'Great. Would you be available for a virtual audition next Tuesday?',
+      textKey: 'artistMessages.sample.chat1.msg3',
     },
   ],
   4: [
     {
       from: 'recruiter',
-      text: 'Hi Aria, your photography style is exactly what we are looking for at Vogue.',
+      textKey: 'artistMessages.sample.chat4.msg1',
     },
     {
       from: 'recruiter',
-      text: 'We have a high-profile fashion shoot coming up next month.',
+      textKey: 'artistMessages.sample.chat4.msg2',
     },
     {
       from: 'recruiter',
-      text: 'Would you be interested in discussing the project?',
+      textKey: 'artistMessages.sample.chat4.msg3',
     },
     {
       from: 'artist',
-      text: "Hi Sneha! Absolutely, that sounds amazing. I'd love to hear more.",
+      textKey: 'artistMessages.sample.chat4.msg4',
     },
     {
       from: 'recruiter',
-      text: "Perfect! I'll send over the brief. Let me know your availability for a call.",
+      textKey: 'artistMessages.sample.chat4.msg5',
     },
   ],
 }
 
 const Messages: React.FC = () => {
   const [activeChat, setActiveChat] = useState(4)
+  const { t } = useTranslation()
   const activeRecruiter = recruiters.find(r => r.id === activeChat)
 
   return (
@@ -84,7 +86,7 @@ const Messages: React.FC = () => {
       {/* Left Pane: Recruiter List */}
       <div className='w-1/3 border-r border-gray-200 flex flex-col'>
         <div className='p-4 border-b border-gray-200'>
-          <h2 className='text-xl font-bold'>Messages</h2>
+          <h2 className='text-xl font-bold'>{t('common.nav.messages')}</h2>
         </div>
         <ul className='overflow-y-auto'>
           {recruiters.map(rec => (
@@ -163,7 +165,7 @@ const Messages: React.FC = () => {
                           ? 'bg-amber-600 text-white rounded-br-none'
                           : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200'
                       }`}>
-                      <p>{msg.text}</p>
+                      <p>{t(msg.textKey)}</p>
                     </div>
                   </div>
                 ),
@@ -173,7 +175,7 @@ const Messages: React.FC = () => {
               <div className='relative'>
                 <input
                   type='text'
-                  placeholder='Type a message...'
+                  placeholder={t('artistMessages.inputPlaceholder')}
                   className='w-full h-12 bg-gray-100 rounded-xl pl-12 pr-20 focus:outline-none focus:ring-2 focus:ring-amber-500'
                 />
                 <button className='absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-amber-600'>
@@ -193,7 +195,7 @@ const Messages: React.FC = () => {
                 size={64}
                 className='mx-auto text-gray-300'
               />
-              <p className='mt-2'>Select a conversation to start chatting.</p>
+              <p className='mt-2'>{t('artistMessages.selectConversation')}</p>
             </div>
           </div>
         )}

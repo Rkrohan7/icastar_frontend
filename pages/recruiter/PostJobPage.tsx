@@ -26,10 +26,18 @@ import { toast } from 'react-toastify'
 import ShareLinkModal from '../../components/ShareLinkModal'
 import recruiterProjectsService, {
   PROJECT_TYPE_LABELS,
-  ROLE_TYPE_LABELS,
   artistPublicProfileUrl,
   mapSelectedArtist,
 } from '../../services/recruiterProjectsService'
+import { useTranslation } from '@/i18n'
+
+// Job['type'] values are UI values (not backend enums), so they have their own labels
+const JOB_TYPE_LABEL_KEYS: Record<Job['type'], string> = {
+  'Full-time': 'postJob.jobTypes.fullTime',
+  'Part-time': 'postJob.jobTypes.partTime',
+  Contract: 'postJob.jobTypes.contract',
+  Freelance: 'postJob.jobTypes.freelance',
+}
 
 const getStatusStyles = (status: Job['status']) => {
   switch (status) {
@@ -182,8 +190,9 @@ const initialJobs: Job[] = [
 const UNASSIGNED = 'unassigned'
 
 const SelectedArtistsCell: React.FC<{ artists?: SelectedArtist[] }> = ({ artists }) => {
+  const { t } = useTranslation()
   if (!artists || artists.length === 0) {
-    return <span className='text-xs text-gray-400 italic'>Not cast yet</span>
+    return <span className='text-xs text-gray-400 italic'>{t('postJob.selectedArtists.notCastYet')}</span>
   }
   return (
     <div className='flex flex-col gap-1.5'>
@@ -196,7 +205,7 @@ const SelectedArtistsCell: React.FC<{ artists?: SelectedArtist[] }> = ({ artists
           href={artistPublicProfileUrl(a.userId)}
           target='_blank'
           rel='noopener noreferrer'
-          title='Open public profile'
+          title={t('postJob.selectedArtists.openProfile')}
           className='inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline'>
           <img
             src={a.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=random`}
@@ -292,6 +301,7 @@ const mapJobDtoToUi = (dto: any): Job => {
 }
 
 export const PostJobPage = () => {
+  const { t, tEnum } = useTranslation()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isBoostModalOpen, setIsBoostModalOpen] = useState(false)
   const [editingJob, setEditingJob] = useState<Job | null>(null)
@@ -335,11 +345,11 @@ export const PostJobPage = () => {
     projects.forEach(p => map.set(p.id, { id: p.id, name: p.name, projectType: p.projectType, project: p }))
     jobs.forEach(j => {
       if (j.projectId && !map.has(j.projectId)) {
-        map.set(j.projectId, { id: j.projectId, name: j.projectName ?? `Project #${j.projectId}`, projectType: j.projectType })
+        map.set(j.projectId, { id: j.projectId, name: j.projectName ?? t('postJob.projectFallback', { id: j.projectId }), projectType: j.projectType })
       }
     })
     return Array.from(map.values())
-  }, [projects, jobs])
+  }, [projects, jobs, t])
 
   // One table for everything: jobs are ordered project by project (project with the
   // latest job first) and jobs without a project go last.
@@ -373,8 +383,8 @@ export const PostJobPage = () => {
       return (
         <tr key={`group-none`} className='bg-gray-100'>
           <td colSpan={7} className='px-6 py-2.5 text-sm font-semibold text-gray-700'>
-            Jobs without a project
-            <span className='ml-2 font-normal text-xs text-gray-500'>Edit a job to link it to a project</span>
+            {t('postJob.group.noProject')}
+            <span className='ml-2 font-normal text-xs text-gray-500'>{t('postJob.group.noProjectHint')}</span>
           </td>
         </tr>
       )
@@ -383,10 +393,10 @@ export const PostJobPage = () => {
     const st = projectStats.get(job.projectId) ?? { characters: 0, cast: 0, openJobs: 0, applications: 0 }
     const pct = st.characters ? Math.round((st.cast / st.characters) * 100) : 0
     const meta = [
-      job.projectType && (PROJECT_TYPE_LABELS[job.projectType] ?? job.projectType),
+      job.projectType && (PROJECT_TYPE_LABELS[job.projectType] ? t(`projectCastingFields.projectTypes.${job.projectType}`) : job.projectType),
       option?.project?.language,
       option?.project?.productionHouse,
-      option?.project?.director && `Dir. ${option.project.director}`,
+      option?.project?.director && t('postJob.group.director', { name: option.project.director }),
     ].filter(Boolean)
     return (
       <tr key={`group-${job.projectId}`} className='bg-amber-50/60'>
@@ -397,18 +407,18 @@ export const PostJobPage = () => {
               {meta.length > 0 && <span className='ml-2 text-xs text-gray-500'>{meta.join(' · ')}</span>}
             </div>
             <div className='flex items-center gap-5 text-xs text-gray-600'>
-              <div className='flex items-center gap-2' title='Characters cast'>
+              <div className='flex items-center gap-2' title={t('postJob.group.charactersCast')}>
                 <div className='w-24 h-1.5 rounded-full bg-gray-200 overflow-hidden'>
                   <div className='h-full bg-green-500' style={{ width: `${pct}%` }} />
                 </div>
-                <span className='font-semibold text-gray-800'>{st.cast}/{st.characters}</span> cast
+                <span className='font-semibold text-gray-800'>{st.cast}/{st.characters}</span> {t('postJob.group.cast')}
               </div>
-              <span><span className='font-semibold text-gray-800'>{st.openJobs}</span> open</span>
-              <span><span className='font-semibold text-gray-800'>{st.applications}</span> applications</span>
+              <span><span className='font-semibold text-gray-800'>{st.openJobs}</span> {t('postJob.group.open')}</span>
+              <span><span className='font-semibold text-gray-800'>{st.applications}</span> {t('postJob.group.applications')}</span>
               <button
                 onClick={() => handleAddJobForProject({ id: job.projectId!, name: job.projectName ?? option?.name ?? '', projectType: job.projectType })}
                 className='font-semibold text-primary hover:underline'>
-                + Add Character Job
+                {t('postJob.group.addCharacterJob')}
               </button>
             </div>
           </div>
@@ -559,11 +569,11 @@ export const PostJobPage = () => {
 
         try {
           await recruiterJobsService.updateJob(jobData.id, payload)
-          toast.success('Job updated successfully')
+          toast.success(t('postJob.toast.updated'))
         } catch (error: any) {
           console.error('Failed to update job:', error)
           setJobs(previousJobs) // Revert
-          const errorMessage = error.response?.data?.message || 'Failed to update job'
+          const errorMessage = error.response?.data?.message || t('postJob.toast.updateFailed')
           toast.error(errorMessage)
         }
       } else {
@@ -613,7 +623,7 @@ export const PostJobPage = () => {
         } as Job
         // Functional update: "Save & Add Next" can create several jobs back to back
         setJobs(prev => [newJob, ...prev])
-        toast.success(`Job added${newJob.characterName ? ` for ${newJob.characterName}` : ''}`)
+        toast.success(newJob.characterName ? t('postJob.toast.addedFor', { name: newJob.characterName }) : t('postJob.toast.added'))
         loadProjects()
       }
     } catch (e) {
@@ -624,7 +634,7 @@ export const PostJobPage = () => {
         applicants: 0,
         status: 'Draft' as const,
         createdDate: new Date().toISOString(),
-        postedDate: 'Just now',
+        postedDate: t('postJob.justNow'),
         boosted: false,
         experienceLevel: jobData.experienceLevel,
         isRemote: jobData.isRemote,
@@ -662,7 +672,7 @@ export const PostJobPage = () => {
       // Revert on error
       setJobs(previousJobs)
       // Extract specific message if available
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to update job status'
+      const errorMessage = error.response?.data?.message || error.message || t('postJob.toast.statusFailed')
       // Use toast instead of alert for better UX (assuming toast is available in scope)
       toast.error(errorMessage)
       console.error('Failed to change job status:', error)
@@ -694,10 +704,10 @@ export const PostJobPage = () => {
     try {
       await recruiterJobsService.deleteJob(jobToDelete.id)
       setJobs(jobs.filter(j => j.id !== jobToDelete.id))
-      toast.success('Job deleted successfully')
+      toast.success(t('postJob.toast.deleted'))
     } catch (error) {
       console.error('Failed to delete job:', error)
-      toast.error('Unable to delete job. Please try again')
+      toast.error(t('postJob.toast.deleteFailed'))
     } finally {
       setIsDeleting(false)
       setIsDeleteModalOpen(false)
@@ -742,19 +752,19 @@ export const PostJobPage = () => {
         open={!!shareJob}
         onClose={() => setShareJob(null)}
         link={shareJob?.id ? `https://icastar.com/jobs/${shareJob.id}/public` : ''}
-        title='Share Job'
-        description='Anyone with this link can view this job and apply — no login needed.'
+        title={t('postJob.share.title')}
+        description={t('postJob.share.description')}
       />
       <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this job?</AlertDialogTitle>
+            <AlertDialogTitle>{t('postJob.deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the job "{jobToDelete?.title}" and remove all associated applications.
+              {t('postJob.deleteDialog.description', { title: jobToDelete?.title ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
@@ -763,19 +773,19 @@ export const PostJobPage = () => {
               className="bg-red-600 hover:bg-red-700 text-white focus:ring-red-600"
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? t('common.actions.deleting') : t('common.actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       <div>
         <div className='flex justify-between items-center mb-6'>
-          <h2 className='text-3xl font-bold text-gray-900'>My Jobs</h2>
+          <h2 className='text-3xl font-bold text-gray-900'>{t('postJob.title')}</h2>
           <div className='flex items-center gap-3'>
           <button
             onClick={handleOpenCreateModal}
             className='inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary'>
-            Add Job
+            {t('postJob.addJob')}
           </button>
           </div>
         </div>
@@ -786,7 +796,7 @@ export const PostJobPage = () => {
               <label
                 htmlFor='search-jobs'
                 className='block text-sm font-medium text-gray-700'>
-                Search by Title, Project or Character
+                {t('postJob.filters.searchLabel')}
               </label>
               <div className='relative mt-1'>
                 <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
@@ -797,7 +807,7 @@ export const PostJobPage = () => {
                   name='search'
                   id='search-jobs'
                   className='block w-full rounded-lg border-gray-300 bg-white pl-10 shadow-sm transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5'
-                  placeholder='e.g., Inspector Vikram'
+                  placeholder={t('postJob.filters.searchPlaceholder')}
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                 />
@@ -807,7 +817,7 @@ export const PostJobPage = () => {
               <label
                 htmlFor='project-filter'
                 className='block text-sm font-medium text-gray-700'>
-                Project
+                {t('postJob.filters.project')}
               </label>
               <select
                 id='project-filter'
@@ -815,18 +825,18 @@ export const PostJobPage = () => {
                 className='mt-1 block w-full rounded-lg border-gray-300 bg-white shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5 pr-10'
                 value={projectFilter}
                 onChange={e => setProjectFilter(e.target.value)}>
-                <option value='All'>All Projects</option>
+                <option value='All'>{t('postJob.filters.allProjects')}</option>
                 {projectOptions.map(p => (
                   <option key={p.id} value={String(p.id)}>{p.name}</option>
                 ))}
-                <option value={UNASSIGNED}>No project</option>
+                <option value={UNASSIGNED}>{t('postJob.filters.noProject')}</option>
               </select>
             </div>
             <div>
               <label
                 htmlFor='status-filter'
                 className='block text-sm font-medium text-gray-700'>
-                Status
+                {t('common.labels.status')}
               </label>
               <select
                 id='status-filter'
@@ -834,17 +844,17 @@ export const PostJobPage = () => {
                 className='mt-1 block w-full rounded-lg border-gray-300 bg-white shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5 pr-10'
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value as any)}>
-                <option value='All'>All Statuses</option>
-                <option value='Active'>Active</option>
-                <option value='Draft'>Draft</option>
-                <option value='Closed'>Closed</option>
+                <option value='All'>{t('postJob.filters.allStatuses')}</option>
+                <option value='Active'>{tEnum('Active')}</option>
+                <option value='Draft'>{tEnum('Draft')}</option>
+                <option value='Closed'>{tEnum('Closed')}</option>
               </select>
             </div>
             <div>
               <label
                 htmlFor='type-filter'
                 className='block text-sm font-medium text-gray-700'>
-                Job Type
+                {t('postJob.filters.jobType')}
               </label>
               <select
                 id='type-filter'
@@ -852,18 +862,18 @@ export const PostJobPage = () => {
                 className='mt-1 block w-full rounded-lg border-gray-300 bg-white shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5 pr-10'
                 value={typeFilter}
                 onChange={e => setTypeFilter(e.target.value as any)}>
-                <option value='All'>All Types</option>
-                <option value='Full-time'>Full-time</option>
-                <option value='Part-time'>Part-time</option>
-                <option value='Contract'>Contract</option>
-                <option value='Freelance'>Freelance</option>
+                <option value='All'>{t('postJob.filters.allTypes')}</option>
+                <option value='Full-time'>{t('postJob.jobTypes.fullTime')}</option>
+                <option value='Part-time'>{t('postJob.jobTypes.partTime')}</option>
+                <option value='Contract'>{t('postJob.jobTypes.contract')}</option>
+                <option value='Freelance'>{t('postJob.jobTypes.freelance')}</option>
               </select>
             </div>
             <div className='flex items-end'>
               <button
                 onClick={handleClearFilters}
                 className='w-full justify-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
-                Clear
+                {t('postJob.filters.clear')}
               </button>
             </div>
           </div>
@@ -877,35 +887,35 @@ export const PostJobPage = () => {
                   <th
                     scope='col'
                     className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Job Title
+                    {t('postJob.table.jobTitle')}
                   </th>
                   <th
                     scope='col'
                     className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Character / Role
+                    {t('postJob.table.characterRole')}
                   </th>
                   <th
                     scope='col'
                     className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Selected Artist
+                    {t('postJob.table.selectedArtist')}
                   </th>
                   <th
                     scope='col'
                     className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Status
+                    {t('common.labels.status')}
                   </th>
                   <th
                     scope='col'
                     className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Applicants
+                    {t('postJob.table.applicants')}
                   </th>
                   <th
                     scope='col'
                     className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    Date Posted
+                    {t('postJob.table.datePosted')}
                   </th>
                   <th scope='col' className='relative px-6 py-3'>
-                    <span className='sr-only'>Actions</span>
+                    <span className='sr-only'>{t('common.labels.actions')}</span>
                   </th>
                 </tr>
               </thead>
@@ -922,19 +932,19 @@ export const PostJobPage = () => {
                           </div>
                           {job.boosted && (
                             <div
-                              title='Boosted Job'
+                              title={t('postJob.table.boostedJob')}
                               className='flex items-center text-secondary'>
                               <ZapIcon className='h-4 w-4' />
                             </div>
                           )}
                         </div>
-                        <div className='text-sm text-gray-500'>{job.type}</div>
+                        <div className='text-sm text-gray-500'>{JOB_TYPE_LABEL_KEYS[job.type] ? t(JOB_TYPE_LABEL_KEYS[job.type]) : job.type}</div>
                       </td>
                       <td className='px-6 py-4 whitespace-nowrap'>
                         <div className='text-sm text-gray-900'>{job.characterName ?? '—'}</div>
                         {job.roleType && (
                           <span className='inline-flex mt-0.5 px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-800'>
-                            {ROLE_TYPE_LABELS[job.roleType] ?? job.roleType}
+                            {tEnum(job.roleType)}
                           </span>
                         )}
                       </td>
@@ -955,9 +965,9 @@ export const PostJobPage = () => {
                           )}`}
                           onClick={e => e.stopPropagation()} // prevent row click
                         >
-                          <option value='Active'>Active</option>
-                          <option value='Draft'>Draft</option>
-                          <option value='Closed'>Closed</option>
+                          <option value='Active'>{tEnum('Active')}</option>
+                          <option value='Draft'>{tEnum('Draft')}</option>
+                          <option value='Closed'>{tEnum('Closed')}</option>
                         </select>
                       </td>
                       <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center'>
@@ -993,13 +1003,13 @@ export const PostJobPage = () => {
                                   }}
                                   className='block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                                   role='menuitem'>
-                                  Share Job
+                                  {t('postJob.menu.shareJob')}
                                 </button>
                                 <button
                                   onClick={() => handleOpenEditModal(job)}
                                   className='block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                                   role='menuitem'>
-                                  Edit Job
+                                  {t('postJob.menu.editJob')}
                                 </button>
                                 <button
                                   onClick={() => handleViewApplicants(job)}
@@ -1009,13 +1019,13 @@ export const PostJobPage = () => {
                                   }
                                   className='block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed'
                                   role='menuitem'>
-                                  View Applicants
+                                  {t('postJob.menu.viewApplicants')}
                                 </button>
                                 <button
                                   onClick={() => handleOpenDeleteModal(job)}
                                   className='block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50'
                                   role='menuitem'>
-                                  Delete Job
+                                  {t('postJob.menu.deleteJob')}
                                 </button>
                               </div>
                             </div>
@@ -1030,10 +1040,10 @@ export const PostJobPage = () => {
                     <td colSpan={7} className='text-center py-16 px-6'>
                       <SearchIcon className='mx-auto h-12 w-12 text-gray-400' />
                       <h3 className='mt-2 text-lg font-medium text-gray-900'>
-                        No Jobs Found
+                        {t('postJob.empty.title')}
                       </h3>
                       <p className='mt-1 text-sm text-gray-500'>
-                        Try adjusting your search or filter criteria.
+                        {t('postJob.empty.description')}
                       </p>
                     </td>
                   </tr>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CastingCharacter, Job } from '../types';
 import { ProjectCastingFields, ProjectCastingValue } from './ProjectCastingFields';
+import { useTranslation } from '@/i18n';
 
 const InputField: React.FC<{ label: string, id: string, value: string | number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, type?: string, placeholder?: string, required?: boolean, min?: number, error?: string }> = ({ label, id, value, onChange, type = 'text', placeholder, required = false, min, error }) => (
     <div>
@@ -101,6 +102,7 @@ interface PostJobModalProps {
     defaultProject?: { projectId: number; projectName: string; projectType?: Job['projectType'] } | null;
 }
 
+// Values are translation keys; they are translated when rendered
 interface FormErrors {
     projectId?: string;
     characterId?: string;
@@ -128,6 +130,7 @@ const emptyJob: Partial<Job> = {
 };
 
 export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onSave, jobToEdit, defaultProject }) => {
+    const { t, tEnum } = useTranslation();
     const [formData, setFormData] = useState<Partial<Job>>({});
     const [errors, setErrors] = useState<FormErrors>({});
     const [addedCount, setAddedCount] = useState(0);
@@ -153,38 +156,38 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
 
         if (isProjectJob) {
             if (!formData.projectId) {
-                newErrors.projectId = 'Project is required';
+                newErrors.projectId = 'postJobModal.errors.projectRequired';
             }
             if (!formData.characterId) {
-                newErrors.characterId = 'Casting character is required';
+                newErrors.characterId = 'postJobModal.errors.characterRequired';
             }
         }
         if (!formData.title?.trim()) {
-            newErrors.title = 'Job Title is required';
+            newErrors.title = 'postJobModal.errors.titleRequired';
         }
         if (!formData.description?.trim()) {
-            newErrors.description = 'Job Description is required';
+            newErrors.description = 'postJobModal.errors.descriptionRequired';
         }
         if (!formData.requirements?.trim()) {
-            newErrors.requirements = 'Requirements is required';
+            newErrors.requirements = 'postJobModal.errors.requirementsRequired';
         }
         if (!formData.skills?.trim()) {
-            newErrors.skills = 'Required Skills is required';
+            newErrors.skills = 'postJobModal.errors.skillsRequired';
         }
         if (!formData.isRemote && !formData.location?.trim()) {
-            newErrors.location = 'Location is required';
+            newErrors.location = 'postJobModal.errors.locationRequired';
         }
         if (formData.budgetMin === undefined || formData.budgetMin === null || String(formData.budgetMin) === '') {
-            newErrors.budgetMin = 'Budget Min is required';
+            newErrors.budgetMin = 'postJobModal.errors.budgetMinRequired';
         }
         if (formData.budgetMax === undefined || formData.budgetMax === null || String(formData.budgetMax) === '') {
-            newErrors.budgetMax = 'Budget Max is required';
+            newErrors.budgetMax = 'postJobModal.errors.budgetMaxRequired';
         }
         if (formData.durationDays === undefined || formData.durationDays === null || String(formData.durationDays) === '') {
-            newErrors.durationDays = 'Contract Duration is required';
+            newErrors.durationDays = 'postJobModal.errors.durationRequired';
         }
         if (!formData.applicationDeadline?.trim()) {
-            newErrors.applicationDeadline = 'Application Deadline is required';
+            newErrors.applicationDeadline = 'postJobModal.errors.deadlineRequired';
         }
 
         return newErrors;
@@ -274,12 +277,13 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
     };
 
     const isEditing = !!jobToEdit;
+    const errorText = (key?: string) => (key ? t(key) : undefined);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-start pt-10" aria-labelledby="modal-title" role="dialog" aria-modal="true" onClick={onClose}>
             <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center p-6 border-b">
-                    <h2 id="modal-title" className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Job' : 'Add New Job'}</h2>
+                    <h2 id="modal-title" className="text-2xl font-bold text-gray-900">{isEditing ? t('postJobModal.editTitle') : t('postJobModal.addTitle')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -291,11 +295,11 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                     <div className="p-8 space-y-8">
                         {/* Project & Casting Section */}
                         <div>
-                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Project & Casting</h3>
+                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">{t('postJobModal.casting.title')}</h3>
                             <div className="flex flex-wrap gap-2 mb-4">
                                 {([
-                                    [true, 'For a project', 'Cast a character of one of your projects'],
-                                    [false, 'Standalone job', 'A one-off job with no project'],
+                                    [true, t('postJobModal.casting.forProject'), t('postJobModal.casting.forProjectHint')],
+                                    [false, t('postJobModal.casting.standalone'), t('postJobModal.casting.standaloneHint')],
                                 ] as const).map(([mode, label, hint]) => (
                                     <button
                                         key={String(mode)}
@@ -315,11 +319,11 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                                 <>
                                     {addedCount > 0 && (
                                         <p className="mb-4 rounded-lg bg-green-50 border border-green-100 px-4 py-2 text-sm text-green-800">
-                                            {addedCount} job{addedCount > 1 ? 's' : ''} added to {formData.projectName}. Pick the next character.
+                                            {t('postJobModal.casting.addedToProject', { count: addedCount, project: formData.projectName ?? '' })}
                                         </p>
                                     )}
                                     <p className="mb-4 text-xs text-gray-500">
-                                        Project details are private to you. Artists only see the job title, description and requirements.
+                                        {t('postJobModal.casting.privacyNote')}
                                     </p>
                                     <ProjectCastingFields
                                         value={{
@@ -331,55 +335,55 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                                             roleType: formData.roleType,
                                         }}
                                         onChange={handleCastingChange}
-                                        errors={{ projectId: errors.projectId, characterId: errors.characterId }}
+                                        errors={{ projectId: errorText(errors.projectId), characterId: errorText(errors.characterId) }}
                                     />
                                 </>
                             ) : (
                                 <p className="text-sm text-gray-500">
-                                    This job will be posted on its own, without a project or casting character.
-                                    {jobToEdit?.projectId && ' Saving now removes it from ' + jobToEdit.projectName + '.'}
+                                    {t('postJobModal.casting.standaloneNote')}
+                                    {jobToEdit?.projectId && ' ' + t('postJobModal.casting.removesFromProject', { project: jobToEdit.projectName ?? '' })}
                                 </p>
                             )}
                         </div>
 
                         {/* Job Details Section */}
                         <div>
-                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Job Details</h3>
+                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">{t('postJobModal.details.title')}</h3>
                             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                                 <div className="sm:col-span-1">
-                                    <InputField label="Job Title" id="title" placeholder="e.g., Senior Product Designer" value={formData.title || ''} onChange={handleChange} error={errors.title} />
+                                    <InputField label={t('postJobModal.details.jobTitle')} id="title" placeholder={t('postJobModal.details.jobTitlePlaceholder')} value={formData.title || ''} onChange={handleChange} error={errorText(errors.title)} />
                                 </div>
                                 <div className="sm:col-span-1">
-                                    <SelectField label="Job Type" id="type" value={formData.type || 'Full-time'} onChange={handleChange}>
-                                        <option>Full-time</option>
-                                        <option>Part-time</option>
-                                        <option>Contract</option>
-                                        <option>Freelance</option>
+                                    <SelectField label={t('postJobModal.details.jobType')} id="type" value={formData.type || 'Full-time'} onChange={handleChange}>
+                                        <option value="Full-time">{t('postJobModal.jobTypes.fullTime')}</option>
+                                        <option value="Part-time">{t('postJobModal.jobTypes.partTime')}</option>
+                                        <option value="Contract">{t('postJobModal.jobTypes.contract')}</option>
+                                        <option value="Freelance">{t('postJobModal.jobTypes.freelance')}</option>
                                     </SelectField>
                                 </div>
                                 <div className="sm:col-span-1">
-                                    <SelectField label="Experience Level" id="experienceLevel" value={formData.experienceLevel || 'Entry Level'} onChange={handleChange}>
-                                        <option value="Entry Level">Entry Level</option>
-                                        <option value="Mid Level">Mid Level</option>
-                                        <option value="Senior Level">Senior Level</option>
-                                        <option value="Director">Director</option>
-                                        <option value="Executive">Executive</option>
+                                    <SelectField label={t('postJobModal.details.experienceLevel')} id="experienceLevel" value={formData.experienceLevel || 'Entry Level'} onChange={handleChange}>
+                                        <option value="Entry Level">{tEnum('ENTRY_LEVEL')}</option>
+                                        <option value="Mid Level">{tEnum('MID_LEVEL')}</option>
+                                        <option value="Senior Level">{tEnum('SENIOR_LEVEL')}</option>
+                                        <option value="Director">{tEnum('DIRECTOR')}</option>
+                                        <option value="Executive">{tEnum('EXECUTIVE')}</option>
                                     </SelectField>
                                 </div>
 
                                 <div className="sm:col-span-2">
                                     <div className="flex items-center gap-6">
                                         <CheckboxField
-                                            label="Remote Position"
+                                            label={t('postJobModal.details.remote')}
                                             id="isRemote"
                                             checked={formData.isRemote || false}
                                             onChange={handleChange}
-                                            description="This job can be performed remotely"
+                                            description={t('postJobModal.details.remoteDescription')}
                                         />
 
                                         {!formData.isRemote && (
                                             <div className="flex-1">
-                                                <InputField label="Location" id="location" placeholder="e.g., New York, NY" value={formData.location || ''} onChange={handleChange} error={errors.location} />
+                                                <InputField label={t('common.labels.location')} id="location" placeholder={t('postJobModal.details.locationPlaceholder')} value={formData.location || ''} onChange={handleChange} error={errorText(errors.location)} />
                                             </div>
                                         )}
                                     </div>
@@ -389,27 +393,27 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
 
                         {/* Job Description Section */}
                         <div>
-                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Description & Requirements</h3>
+                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">{t('postJobModal.description.title')}</h3>
                             <div className="grid grid-cols-1 gap-y-6 gap-x-4">
                                 <div>
-                                    <TextAreaField label="Job Description" id="description" placeholder="Describe the role, responsibilities, and what you're looking for." value={formData.description || ''} onChange={handleChange} error={errors.description} />
+                                    <TextAreaField label={t('postJobModal.description.jobDescription')} id="description" placeholder={t('postJobModal.description.jobDescriptionPlaceholder')} value={formData.description || ''} onChange={handleChange} error={errorText(errors.description)} />
                                 </div>
                                 <div>
-                                    <TextAreaField label="Requirements" id="requirements" placeholder="List specific requirements, qualifications, and nice-to-haves." value={formData.requirements || ''} onChange={handleChange} error={errors.requirements} />
+                                    <TextAreaField label={t('postJobModal.description.requirements')} id="requirements" placeholder={t('postJobModal.description.requirementsPlaceholder')} value={formData.requirements || ''} onChange={handleChange} error={errorText(errors.requirements)} />
                                 </div>
                             </div>
                         </div>
 
                         {/* Skills & Compensation Section */}
                         <div>
-                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Skills & Compensation</h3>
+                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">{t('postJobModal.compensation.title')}</h3>
                             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                                 <div className="sm:col-span-6">
-                                    <InputField label="Required Skills" id="skills" placeholder="e.g., Figma, UI Design, Prototyping (comma-separated)" value={formData.skills || ''} onChange={handleChange} error={errors.skills} />
+                                    <InputField label={t('postJobModal.compensation.skills')} id="skills" placeholder={t('postJobModal.compensation.skillsPlaceholder')} value={formData.skills || ''} onChange={handleChange} error={errorText(errors.skills)} />
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <SelectField label="Currency" id="currency" value={formData.currency || 'USD'} onChange={handleChange}>
+                                    <SelectField label={t('postJobModal.compensation.currency')} id="currency" value={formData.currency || 'USD'} onChange={handleChange}>
                                         <option value="USD">USD ($)</option>
                                         <option value="EUR">EUR (€)</option>
                                         <option value="GBP">GBP (£)</option>
@@ -417,32 +421,32 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                                     </SelectField>
                                 </div>
                                 <div className="sm:col-span-2">
-                                    <InputField label="Budget Min" id="budgetMin" type="number" placeholder="Min" value={formData.budgetMin ?? ''} onChange={handleChange} min={0} error={errors.budgetMin} />
+                                    <InputField label={t('postJobModal.compensation.budgetMin')} id="budgetMin" type="number" placeholder={t('postJobModal.compensation.min')} value={formData.budgetMin ?? ''} onChange={handleChange} min={0} error={errorText(errors.budgetMin)} />
                                 </div>
                                 <div className="sm:col-span-2">
-                                    <InputField label="Budget Max" id="budgetMax" type="number" placeholder="Max" value={formData.budgetMax ?? ''} onChange={handleChange} min={0} error={errors.budgetMax} />
+                                    <InputField label={t('postJobModal.compensation.budgetMax')} id="budgetMax" type="number" placeholder={t('postJobModal.compensation.max')} value={formData.budgetMax ?? ''} onChange={handleChange} min={0} error={errorText(errors.budgetMax)} />
                                 </div>
 
                                 <div className="sm:col-span-3">
-                                    <InputField label="Contract Duration (Days)" id="durationDays" type="number" placeholder="e.g., 30" value={formData.durationDays ?? ''} onChange={handleChange} min={1} error={errors.durationDays} />
+                                    <InputField label={t('postJobModal.compensation.duration')} id="durationDays" type="number" placeholder={t('postJobModal.compensation.durationPlaceholder')} value={formData.durationDays ?? ''} onChange={handleChange} min={1} error={errorText(errors.durationDays)} />
                                 </div>
                             </div>
                         </div>
 
                         {/* Hiring Details Section */}
                         <div>
-                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">Hiring Details</h3>
+                            <h3 className="text-lg font-semibold leading-6 text-gray-900 border-b pb-2 mb-4">{t('postJobModal.hiring.title')}</h3>
                             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 lg:grid-cols-4 items-end">
                                 <div className="sm:col-span-2">
-                                    <InputField label="Application Deadline" id="applicationDeadline" type="date" value={formData.applicationDeadline || ''} onChange={handleChange} error={errors.applicationDeadline} />
+                                    <InputField label={t('postJobModal.hiring.deadline')} id="applicationDeadline" type="date" value={formData.applicationDeadline || ''} onChange={handleChange} error={errorText(errors.applicationDeadline)} />
                                 </div>
                                 <div className="sm:col-span-2">
                                     <CheckboxField
-                                        label="Urgent Hiring"
+                                        label={t('postJobModal.hiring.urgent')}
                                         id="isUrgent"
                                         checked={formData.isUrgent || false}
                                         onChange={handleChange}
-                                        description="Mark this job as urgent to attract more applicants"
+                                        description={t('postJobModal.hiring.urgentDescription')}
                                     />
                                 </div>
                             </div>
@@ -456,7 +460,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                         onClick={onClose}
                         className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
                     >
-                        {addedCount > 0 ? 'Done' : 'Cancel'}
+                        {addedCount > 0 ? t('common.actions.done') : t('common.actions.cancel')}
                     </button>
                     {!isEditing && isProjectJob && (
                         <button
@@ -464,7 +468,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                             onClick={() => submit(true)}
                             className="px-6 py-2.5 border border-primary rounded-lg text-sm font-semibold text-primary hover:bg-primary/5 transition-colors"
                         >
-                            Save & Add Next Character
+                            {t('postJobModal.footer.saveAndAddNext')}
                         </button>
                     )}
                     <button
@@ -472,7 +476,7 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
                         form="post-job-form"
                         className="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-lg shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                     >
-                        {isEditing ? 'Save Changes' : 'Add Job'}
+                        {isEditing ? t('common.actions.saveChanges') : t('postJobModal.addJob')}
                     </button>
                 </div>
             </div>

@@ -8,6 +8,7 @@ import {
 import superAdminService, {
   BulkUploadJobsResult,
 } from '../../services/superAdminService'
+import { useTranslation } from '@/i18n'
 
 /** Columns the backend parser expects, in order. Also drives the sample file. */
 const TEMPLATE_COLUMNS = [
@@ -46,11 +47,14 @@ const SAMPLE_ROW = [
   '12',
 ]
 
-/** Shown in the dialog so an admin knows what each column accepts. */
-const COLUMN_HINTS: { column: string; required?: boolean; hint: string }[] = [
-  { column: 'title', required: true, hint: 'Job title' },
-  { column: 'description', required: true, hint: 'Job description' },
-  { column: 'requirements', hint: 'Free text' },
+/**
+ * Shown in the dialog so an admin knows what each column accepts.
+ * `hintKey` is translated; `hint` is literal (enum values / formats the backend expects).
+ */
+const COLUMN_HINTS: { column: string; required?: boolean; hintKey?: string; hint?: string }[] = [
+  { column: 'title', required: true, hintKey: 'adminBulkUpload.columns.hints.jobTitle' },
+  { column: 'description', required: true, hintKey: 'adminBulkUpload.columns.hints.jobDescription' },
+  { column: 'requirements', hintKey: 'adminBulkUpload.columns.hints.freeText' },
   {
     column: 'jobType',
     hint: 'FULL_TIME, PART_TIME, CONTRACT, FREELANCE, INTERNSHIP, PROJECT_BASED',
@@ -59,15 +63,15 @@ const COLUMN_HINTS: { column: string; required?: boolean; hint: string }[] = [
     column: 'experienceLevel',
     hint: 'ENTRY_LEVEL, MID_LEVEL, SENIOR_LEVEL, EXPERT_LEVEL',
   },
-  { column: 'location', hint: 'City name' },
-  { column: 'isRemote', hint: 'true or false' },
-  { column: 'budgetMin', hint: 'Number' },
-  { column: 'budgetMax', hint: 'Number' },
-  { column: 'currency', hint: 'Defaults to INR' },
-  { column: 'skillsRequired', hint: 'Comma-separated' },
+  { column: 'location', hintKey: 'adminBulkUpload.columns.hints.cityName' },
+  { column: 'isRemote', hintKey: 'adminBulkUpload.columns.hints.trueOrFalse' },
+  { column: 'budgetMin', hintKey: 'adminBulkUpload.columns.hints.number' },
+  { column: 'budgetMax', hintKey: 'adminBulkUpload.columns.hints.number' },
+  { column: 'currency', hintKey: 'adminBulkUpload.columns.hints.currencyDefault' },
+  { column: 'skillsRequired', hintKey: 'adminBulkUpload.columns.hints.commaSeparated' },
   { column: 'applicationDeadline', hint: 'YYYY-MM-DD' },
   { column: 'startDate', hint: 'YYYY-MM-DD' },
-  { column: 'recruiterId', required: true, hint: 'Must already exist' },
+  { column: 'recruiterId', required: true, hintKey: 'adminBulkUpload.columns.hints.mustExist' },
 ]
 
 const ACCEPTED_EXT = ['.xlsx', '.xls', '.csv']
@@ -83,6 +87,7 @@ interface Props {
 }
 
 export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) => {
+  const { t } = useTranslation()
   const [file, setFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -98,15 +103,15 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
 
     const lower = picked.name.toLowerCase()
     if (!ACCEPTED_EXT.some((ext) => lower.endsWith(ext))) {
-      setError(`Unsupported file type. Upload ${ACCEPTED_EXT.join(', ')}.`)
+      setError(t('adminBulkUpload.errors.unsupportedType', { types: ACCEPTED_EXT.join(', ') }))
       return
     }
     if (picked.size > MAX_SIZE_MB * 1024 * 1024) {
-      setError(`File is larger than ${MAX_SIZE_MB} MB.`)
+      setError(t('adminBulkUpload.errors.tooLarge', { size: MAX_SIZE_MB }))
       return
     }
     setFile(picked)
-  }, [])
+  }, [t])
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -141,12 +146,12 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
     } catch (err: any) {
       const status = err?.response?.status
       const apiMsg = err?.response?.data?.message
-      if (status === 401) setError('Unauthorized — please log in as an admin.')
-      else if (status === 403) setError('Access denied — admin role required.')
+      if (status === 401) setError(t('adminBulkUpload.errors.unauthorized'))
+      else if (status === 403) setError(t('adminBulkUpload.errors.forbidden'))
       else if (status === 404)
-        setError('Endpoint not found — backend route /super-admin/jobs/bulk-upload is missing.')
-      else if (status === 413) setError('File too large for the server.')
-      else setError(apiMsg || err?.message || 'Upload failed. Please try again.')
+        setError(t('adminBulkUpload.errors.notFound', { route: '/super-admin/jobs/bulk-upload' }))
+      else if (status === 413) setError(t('adminBulkUpload.errors.serverTooLarge'))
+      else setError(apiMsg || err?.message || t('adminBulkUpload.errors.uploadFailed'))
     } finally {
       setUploading(false)
     }
@@ -166,16 +171,16 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
         {/* Header */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200'>
           <div>
-            <h2 className='text-lg font-semibold text-gray-900'>Bulk Upload Jobs</h2>
+            <h2 className='text-lg font-semibold text-gray-900'>{t('adminBulkUpload.title')}</h2>
             <p className='text-xs text-gray-500 mt-0.5'>
-              Upload an Excel or CSV sheet to create many jobs at once.
+              {t('adminBulkUpload.subtitle')}
             </p>
           </div>
           <button
             onClick={onClose}
             disabled={uploading}
             className='p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40'
-            aria-label='Close'>
+            aria-label={t('common.actions.close')}>
             <XIcon className='h-5 w-5 text-gray-500' />
           </button>
         </div>
@@ -185,15 +190,15 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
           {/* Template help */}
           <div className='flex items-start justify-between gap-4 bg-blue-50 border border-blue-100 rounded-lg p-3'>
             <div className='text-xs text-blue-900'>
-              <p className='font-medium'>Not sure about the format?</p>
+              <p className='font-medium'>{t('adminBulkUpload.template.question')}</p>
               <p className='mt-0.5 text-blue-800'>
-                Download the template, fill one job per row, then upload it back.
+                {t('adminBulkUpload.template.help')}
               </p>
             </div>
             <button
               onClick={downloadTemplate}
               className='shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-blue-200 text-blue-700 hover:bg-blue-100'>
-              Download template
+              {t('adminBulkUpload.template.download')}
             </button>
           </div>
 
@@ -201,7 +206,7 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
           {!result && (
             <details className='border border-gray-200 rounded-lg'>
               <summary className='px-3 py-2 text-xs font-medium text-gray-700 cursor-pointer select-none hover:bg-gray-50'>
-                Column reference ({COLUMN_HINTS.length} columns)
+                {t('adminBulkUpload.columns.summary', { count: COLUMN_HINTS.length })}
               </summary>
               <div className='border-t border-gray-200 max-h-48 overflow-y-auto divide-y divide-gray-100'>
                 {COLUMN_HINTS.map((c) => (
@@ -211,10 +216,10 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
                     <span className='font-mono text-gray-900 shrink-0'>{c.column}</span>
                     {c.required && (
                       <span className='text-[10px] px-1 py-0.5 rounded bg-red-50 text-red-600 shrink-0'>
-                        required
+                        {t('adminBulkUpload.columns.required')}
                       </span>
                     )}
-                    <span className='text-gray-500 truncate'>{c.hint}</span>
+                    <span className='text-gray-500 truncate'>{c.hintKey ? t(c.hintKey) : c.hint}</span>
                   </div>
                 ))}
               </div>
@@ -248,16 +253,19 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
                 <>
                   <p className='mt-2 text-sm font-medium text-gray-900'>{file.name}</p>
                   <p className='text-xs text-gray-500 mt-0.5'>
-                    {(file.size / 1024).toFixed(1)} KB — click to choose a different file
+                    {t('adminBulkUpload.dropzone.selected', { size: (file.size / 1024).toFixed(1) })}
                   </p>
                 </>
               ) : (
                 <>
                   <p className='mt-2 text-sm font-medium text-gray-700'>
-                    Drop your sheet here, or click to browse
+                    {t('adminBulkUpload.dropzone.prompt')}
                   </p>
                   <p className='text-xs text-gray-500 mt-0.5'>
-                    {ACCEPTED_EXT.join(', ')} — up to {MAX_SIZE_MB} MB
+                    {t('adminBulkUpload.dropzone.limits', {
+                      types: ACCEPTED_EXT.join(', '),
+                      size: MAX_SIZE_MB,
+                    })}
                   </p>
                 </>
               )}
@@ -268,7 +276,7 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
           {uploading && (
             <div>
               <div className='flex justify-between text-xs text-gray-600 mb-1'>
-                <span>Uploading…</span>
+                <span>{t('adminBulkUpload.uploading')}</span>
                 <span>{progress}%</span>
               </div>
               <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
@@ -279,7 +287,7 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
               </div>
               {progress === 100 && (
                 <p className='text-xs text-gray-500 mt-1'>
-                  Processing the sheet on the server — this can take a moment.
+                  {t('adminBulkUpload.processing')}
                 </p>
               )}
             </div>
@@ -297,17 +305,16 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
           {result && (
             <div className='space-y-3'>
               <div className='grid grid-cols-3 gap-3'>
-                <SummaryTile label='Total rows' value={result.totalRows} tone='neutral' />
-                <SummaryTile label='Created' value={result.successCount} tone='success' />
-                <SummaryTile label='Failed' value={result.failureCount} tone='danger' />
+                <SummaryTile label={t('adminBulkUpload.result.totalRows')} value={result.totalRows} tone='neutral' />
+                <SummaryTile label={t('adminBulkUpload.result.created')} value={result.successCount} tone='success' />
+                <SummaryTile label={t('adminBulkUpload.result.failed')} value={result.failureCount} tone='danger' />
               </div>
 
               {result.successCount > 0 && (
                 <div className='flex gap-2 bg-green-50 border border-green-100 rounded-lg p-3'>
                   <CheckCircleIcon className='h-4 w-4 text-green-600 shrink-0 mt-0.5' />
                   <p className='text-xs text-green-800'>
-                    {result.successCount} job{result.successCount === 1 ? '' : 's'} added to the
-                    jobs table. The list behind this dialog has been refreshed.
+                    {t('adminBulkUpload.result.jobsAdded', { count: result.successCount })}
                   </p>
                 </div>
               )}
@@ -315,12 +322,12 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
               {result.errors.length > 0 && (
                 <div className='border border-gray-200 rounded-lg overflow-hidden'>
                   <p className='px-3 py-2 bg-gray-50 text-xs font-semibold text-gray-700 border-b border-gray-200'>
-                    Rows that were skipped
+                    {t('adminBulkUpload.result.skippedRows')}
                   </p>
                   <div className='max-h-48 overflow-y-auto divide-y divide-gray-100'>
                     {result.errors.map((e, i) => (
                       <div key={i} className='px-3 py-2 text-xs'>
-                        <span className='font-medium text-gray-900'>Row {e.row}</span>
+                        <span className='font-medium text-gray-900'>{t('adminBulkUpload.result.row', { row: e.row })}</span>
                         {e.field && <span className='text-gray-500'> · {e.field}</span>}
                         <p className='text-red-600 mt-0.5'>{e.message}</p>
                       </div>
@@ -339,12 +346,12 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
               <button
                 onClick={reset}
                 className='px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50'>
-                Upload another
+                {t('adminBulkUpload.uploadAnother')}
               </button>
               <button
                 onClick={onClose}
                 className='px-4 py-2 text-sm font-medium rounded-lg bg-[#E36A3A] text-white hover:bg-[#d05c2e]'>
-                Done
+                {t('common.actions.done')}
               </button>
             </>
           ) : (
@@ -353,13 +360,13 @@ export const BulkUploadJobsModal: React.FC<Props> = ({ onClose, onUploaded }) =>
                 onClick={onClose}
                 disabled={uploading}
                 className='px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40'>
-                Cancel
+                {t('common.actions.cancel')}
               </button>
               <button
                 onClick={handleUpload}
                 disabled={!file || uploading}
                 className='px-4 py-2 text-sm font-medium rounded-lg bg-[#E36A3A] text-white hover:bg-[#d05c2e] disabled:opacity-40 disabled:cursor-not-allowed'>
-                {uploading ? 'Uploading…' : 'Upload'}
+                {uploading ? t('adminBulkUpload.uploading') : t('common.actions.upload')}
               </button>
             </>
           )}

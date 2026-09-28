@@ -18,9 +18,13 @@ import {
 import Icon from '@/components/Icon'
 import UpdateStatusModal from '@/components/UpdateStatusModal'
 import usePageParam from '@/hooks/usePageParam'
+import { useTranslation } from '@/i18n'
+
+const STATUS_OPTIONS: HireRequestStatus[] = ['PENDING', 'VIEWED', 'ACCEPTED', 'DECLINED', 'HIRED', 'WITHDRAWN', 'EXPIRED']
 
 const CandidatesPage: React.FC = () => {
   const navigate = useNavigate()
+  const { t, tEnum } = useTranslation()
 
   // State
   const [hireRequests, setHireRequests] = useState<HireRequest[]>([])
@@ -60,7 +64,7 @@ const CandidatesPage: React.FC = () => {
       })
     } catch (error) {
       console.error('Error fetching hire requests:', error)
-      toast.error('Failed to load candidates')
+      toast.error(t('candidates.toast.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -106,28 +110,28 @@ const CandidatesPage: React.FC = () => {
 
     try {
       await updateHireRequestStatus(selectedRequest.id, { status, notes })
-      toast.success('Status updated successfully')
+      toast.success(t('candidates.toast.statusUpdated'))
       setShowUpdateStatusModal(false)
       fetchHireRequests()
       fetchStats()
     } catch (error) {
       console.error('Error updating status:', error)
-      toast.error('Failed to update status')
+      toast.error(t('candidates.toast.statusUpdateFailed'))
     }
   }
 
   // Handle withdraw request
   const handleWithdraw = async (id: number) => {
-    if (!confirm('Are you sure you want to withdraw this hire request?')) return
+    if (!confirm(t('candidates.confirmWithdraw'))) return
 
     try {
       await withdrawHireRequest(id)
-      toast.success('Hire request withdrawn')
+      toast.success(t('candidates.toast.withdrawn'))
       fetchHireRequests()
       fetchStats()
     } catch (error) {
       console.error('Error withdrawing request:', error)
-      toast.error('Failed to withdraw request')
+      toast.error(t('candidates.toast.withdrawFailed'))
     }
   }
 
@@ -135,11 +139,11 @@ const CandidatesPage: React.FC = () => {
   const handleSendReminder = async (id: number) => {
     try {
       await sendReminderEmail(id)
-      toast.success('Reminder email sent to artist')
+      toast.success(t('candidates.toast.reminderSent'))
       fetchHireRequests()
     } catch (error) {
       console.error('Error sending reminder:', error)
-      toast.error('Failed to send reminder')
+      toast.error(t('candidates.toast.reminderFailed'))
     }
   }
 
@@ -178,27 +182,27 @@ const CandidatesPage: React.FC = () => {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Candidates</h1>
-        <p className="text-gray-600 mt-1">Track all your hire requests and candidates</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('candidates.title')}</h1>
+        <p className="text-gray-600 mt-1">{t('candidates.subtitle')}</p>
       </div>
 
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600">Total Requests</p>
+            <p className="text-sm text-gray-600">{t('candidates.stats.totalRequests')}</p>
             <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600">Accepted</p>
+            <p className="text-sm text-gray-600">{t('candidates.stats.accepted')}</p>
             <p className="text-2xl font-bold text-green-600">{stats.accepted}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600">Declined</p>
+            <p className="text-sm text-gray-600">{t('candidates.stats.declined')}</p>
             <p className="text-2xl font-bold text-red-600">{stats.declined}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600">Acceptance Rate</p>
+            <p className="text-sm text-gray-600">{t('candidates.stats.acceptanceRate')}</p>
             <p className="text-2xl font-bold text-amber-600">{stats.acceptanceRate.toFixed(1)}%</p>
           </div>
         </div>
@@ -212,7 +216,7 @@ const CandidatesPage: React.FC = () => {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Search by artist name, job title..."
+                placeholder={t('candidates.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -233,14 +237,10 @@ const CandidatesPage: React.FC = () => {
             onChange={(e) => handleStatusFilter(e.target.value as HireRequestStatus | '')}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="VIEWED">Viewed</option>
-            <option value="ACCEPTED">Accepted</option>
-            <option value="DECLINED">Declined</option>
-            <option value="HIRED">Hired</option>
-            <option value="WITHDRAWN">Withdrawn</option>
-            <option value="EXPIRED">Expired</option>
+            <option value="">{t('candidates.allStatuses')}</option>
+            {STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>{tEnum(status)}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -252,22 +252,22 @@ const CandidatesPage: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Artist
+                  {t('candidates.table.artist')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Job Title
+                  {t('candidates.table.jobTitle')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  {t('candidates.table.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sent On
+                  {t('candidates.table.sentOn')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email Sent
+                  {t('candidates.table.emailSent')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  {t('candidates.table.actions')}
                 </th>
               </tr>
             </thead>
@@ -275,13 +275,13 @@ const CandidatesPage: React.FC = () => {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    Loading candidates...
+                    {t('candidates.table.loading')}
                   </td>
                 </tr>
               ) : hireRequests.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    No candidates found
+                    {t('candidates.table.empty')}
                   </td>
                 </tr>
               ) : (
@@ -304,11 +304,11 @@ const CandidatesPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{request.jobTitle}</div>
-                      <div className="text-sm text-gray-500">{request.jobType}</div>
+                      <div className="text-sm text-gray-500">{tEnum(request.jobType)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}>
-                        {request.status}
+                        {tEnum(request.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -326,7 +326,7 @@ const CandidatesPage: React.FC = () => {
                         <button
                           onClick={() => handleViewProfile(request)}
                           className="text-primary hover:text-primary-hover"
-                          title="View Artist Profile"
+                          title={t('candidates.rowActions.viewProfile')}
                         >
                           <Icon name="Eye" size={18} />
                         </button>
@@ -337,7 +337,7 @@ const CandidatesPage: React.FC = () => {
                               setShowUpdateStatusModal(true)
                             }}
                             className="text-blue-600 hover:text-blue-900"
-                            title="Update Status"
+                            title={t('candidates.rowActions.updateStatus')}
                           >
                             <Icon name="Edit" size={18} />
                           </button>
@@ -346,7 +346,7 @@ const CandidatesPage: React.FC = () => {
                           <button
                             onClick={() => handleSendReminder(request.id)}
                             className="text-amber-600 hover:text-amber-900"
-                            title="Send Reminder"
+                            title={t('candidates.rowActions.sendReminder')}
                           >
                             <Icon name="Bell" size={18} />
                           </button>
@@ -355,7 +355,7 @@ const CandidatesPage: React.FC = () => {
                           <button
                             onClick={() => handleWithdraw(request.id)}
                             className="text-red-600 hover:text-red-900"
-                            title="Withdraw Request"
+                            title={t('candidates.rowActions.withdraw')}
                           >
                             <Icon name="Trash" size={18} />
                           </button>
@@ -374,11 +374,19 @@ const CandidatesPage: React.FC = () => {
           <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing <span className="font-medium">{pagination.currentPage * pagination.size + 1}</span> to{' '}
-                <span className="font-medium">
-                  {Math.min((pagination.currentPage + 1) * pagination.size, pagination.totalElements)}
-                </span>{' '}
-                of <span className="font-medium">{pagination.totalElements}</span> results
+                {(() => {
+                  const values: Record<string, number> = {
+                    '{{from}}': pagination.currentPage * pagination.size + 1,
+                    '{{to}}': Math.min((pagination.currentPage + 1) * pagination.size, pagination.totalElements),
+                    '{{total}}': pagination.totalElements,
+                  }
+                  // Split the translated sentence on its placeholders so the numbers keep their bold styling.
+                  return t('candidates.pagination.showing').split(/(\{\{\w+\}\})/).map((part, i) =>
+                    part in values
+                      ? <span key={i} className="font-medium">{values[part]}</span>
+                      : <React.Fragment key={i}>{part}</React.Fragment>
+                  )
+                })()}
               </div>
               <div className="flex gap-2">
                 <button
@@ -386,14 +394,14 @@ const CandidatesPage: React.FC = () => {
                   disabled={pagination.currentPage === 0}
                   className="px-3 py-1 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
-                  Previous
+                  {t('common.pagination.previous')}
                 </button>
                 <button
                   onClick={() => goToPage(filters.page! + 1)}
                   disabled={pagination.currentPage >= pagination.totalPages - 1}
                   className="px-3 py-1 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
-                  Next
+                  {t('common.pagination.next')}
                 </button>
               </div>
             </div>

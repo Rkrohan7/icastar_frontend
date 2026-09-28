@@ -12,9 +12,11 @@ import {
   XCircleIcon,
   EyeIcon,
 } from '../../components/icons/IconComponents'
+import { useTranslation } from '@/i18n'
 
 export const AuditionApplicationsPage: React.FC = () => {
   const navigate = useNavigate()
+  const { t, tEnum } = useTranslation()
   const { auditionId } = useParams<{ auditionId: string }>()
   const [audition, setAudition] = useState<Audition | null>(null)
   const [applications, setApplications] = useState<AuditionApplication[]>([])
@@ -35,7 +37,7 @@ export const AuditionApplicationsPage: React.FC = () => {
       setAudition(data)
     } catch (error) {
       console.error('Failed to fetch audition:', error)
-      toast.error('Failed to load audition details')
+      toast.error(t('auditionApplications.toast.auditionLoadFailed'))
     }
   }
 
@@ -57,7 +59,7 @@ export const AuditionApplicationsPage: React.FC = () => {
     } catch (error) {
       console.error('[AuditionApplications] Failed to fetch applications:', error)
       console.error('[AuditionApplications] Error details:', (error as any).response?.data)
-      toast.error('Failed to load applications')
+      toast.error(t('auditionApplications.toast.loadFailed'))
       setApplications([])
     } finally {
       setLoading(false)
@@ -67,28 +69,28 @@ export const AuditionApplicationsPage: React.FC = () => {
   const handleUpdateStatus = async (applicationId: number, status: AuditionApplicationStatus) => {
     try {
       await auditionService.updateApplicationStatus(Number(auditionId), applicationId, status)
-      toast.success(`Application ${status.toLowerCase()} successfully`)
+      toast.success(t('auditionApplications.toast.statusUpdated', { status: tEnum(status).toLowerCase() }))
       fetchApplications()
     } catch (error) {
       console.error('Failed to update status:', error)
-      toast.error('Failed to update application status')
+      toast.error(t('auditionApplications.toast.statusUpdateFailed'))
     }
   }
 
   const handleBulkAction = async (status: AuditionApplicationStatus) => {
     if (selectedApplications.length === 0) {
-      toast.error('Please select at least one application')
+      toast.error(t('auditionApplications.toast.selectAtLeastOne'))
       return
     }
 
     try {
       await auditionService.bulkUpdateApplicationStatus(Number(auditionId), selectedApplications, status)
-      toast.success(`${selectedApplications.length} applications updated successfully`)
+      toast.success(t('auditionApplications.toast.bulkUpdated', { count: selectedApplications.length }))
       setSelectedApplications([])
       fetchApplications()
     } catch (error) {
       console.error('Failed to bulk update:', error)
-      toast.error('Failed to update applications')
+      toast.error(t('auditionApplications.toast.bulkUpdateFailed'))
     }
   }
 
@@ -116,7 +118,7 @@ export const AuditionApplicationsPage: React.FC = () => {
   }
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return t('common.status.notAvailable')
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -129,7 +131,7 @@ export const AuditionApplicationsPage: React.FC = () => {
       <div className='flex items-center justify-center min-h-screen bg-gray-50'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4'></div>
-          <p className='text-gray-600 text-lg'>Loading applications...</p>
+          <p className='text-gray-600 text-lg'>{t('auditionApplications.loading')}</p>
         </div>
       </div>
     )
@@ -141,16 +143,16 @@ export const AuditionApplicationsPage: React.FC = () => {
       <div className='flex items-center justify-between'>
         <div>
           <button onClick={() => navigate('/recruiter/auditions')} className='text-purple-600 hover:text-purple-700 mb-2 text-sm'>
-            ← Back to Auditions
+            {t('auditionApplications.back')}
           </button>
-          <h1 className='text-3xl font-bold text-gray-900'>{audition?.title || 'Audition Applications'}</h1>
+          <h1 className='text-3xl font-bold text-gray-900'>{audition?.title || t('auditionApplications.fallbackTitle')}</h1>
           <p className='text-sm text-gray-600 mt-1'>
-            {audition?.roleType} • {audition?.projectType}
+            {tEnum(audition?.roleType)} • {tEnum(audition?.projectType)}
           </p>
         </div>
         <div className='flex items-center gap-2'>
           <span className='px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-semibold'>
-            {applications.length} Total Applications
+            {t('auditionApplications.totalApplications', { count: applications.length })}
           </span>
         </div>
       </div>
@@ -160,26 +162,26 @@ export const AuditionApplicationsPage: React.FC = () => {
         <Card className='bg-gradient-to-r from-purple-50 to-indigo-50'>
           <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
             <div>
-              <p className='text-sm text-gray-600'>Submission Deadline</p>
+              <p className='text-sm text-gray-600'>{t('auditionApplications.info.submissionDeadline')}</p>
               <p className='text-lg font-semibold text-gray-900'>
                 <CalendarIcon className='inline h-4 w-4 mr-1' />
                 {formatDate(audition.submissionDeadline)}
               </p>
             </div>
             <div>
-              <p className='text-sm text-gray-600'>Audition Mode</p>
-              <p className='text-lg font-semibold text-gray-900'>{audition.auditionMode}</p>
+              <p className='text-sm text-gray-600'>{t('auditionApplications.info.auditionMode')}</p>
+              <p className='text-lg font-semibold text-gray-900'>{tEnum(audition.auditionMode)}</p>
             </div>
             <div>
-              <p className='text-sm text-gray-600'>Status</p>
+              <p className='text-sm text-gray-600'>{t('auditionApplications.info.status')}</p>
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-${audition.status === 'Open' ? 'green' : 'gray'}-100 text-${audition.status === 'Open' ? 'green' : 'gray'}-700`}>
-                {audition.status}
+                {tEnum(audition.status)}
               </span>
             </div>
             <div>
-              <p className='text-sm text-gray-600'>Compensation</p>
+              <p className='text-sm text-gray-600'>{t('auditionApplications.info.compensation')}</p>
               <p className='text-lg font-semibold text-gray-900'>
-                {audition.compensationType === 'Paid' ? `${audition.currency} ${audition.budgetMin} - ${audition.budgetMax}` : audition.compensationType}
+                {audition.compensationType === 'Paid' ? `${audition.currency} ${audition.budgetMin} - ${audition.budgetMax}` : tEnum(audition.compensationType)}
               </p>
             </div>
           </div>
@@ -191,7 +193,7 @@ export const AuditionApplicationsPage: React.FC = () => {
         <div className='flex items-center justify-between flex-wrap gap-4'>
           <div className='flex items-center gap-2'>
             <FilterIcon className='h-5 w-5 text-gray-600' />
-            <span className='text-sm font-medium text-gray-700'>Filter by status:</span>
+            <span className='text-sm font-medium text-gray-700'>{t('auditionApplications.filterByStatus')}</span>
             {(['All', 'Applied', 'Shortlisted', 'Accepted', 'Rejected'] as const).map((status) => (
               <button
                 key={status}
@@ -199,28 +201,28 @@ export const AuditionApplicationsPage: React.FC = () => {
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   filterStatus === status ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}>
-                {status}
+                {status === 'All' ? t('common.status.all') : tEnum(status)}
               </button>
             ))}
           </div>
 
           {selectedApplications.length > 0 && (
             <div className='flex items-center gap-2'>
-              <span className='text-sm text-gray-600'>{selectedApplications.length} selected</span>
+              <span className='text-sm text-gray-600'>{t('auditionApplications.selectedCount', { count: selectedApplications.length })}</span>
               <button
                 onClick={() => handleBulkAction('Shortlisted')}
                 className='px-3 py-1 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700'>
-                Shortlist
+                {t('auditionApplications.actions.shortlist')}
               </button>
               <button
                 onClick={() => handleBulkAction('Accepted')}
                 className='px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700'>
-                Accept
+                {t('auditionApplications.actions.accept')}
               </button>
               <button
                 onClick={() => handleBulkAction('Rejected')}
                 className='px-3 py-1 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700'>
-                Reject
+                {t('common.actions.reject')}
               </button>
             </div>
           )}
@@ -232,9 +234,9 @@ export const AuditionApplicationsPage: React.FC = () => {
         <Card>
           <div className='text-center py-12'>
             <UserCircleIcon className='h-16 w-16 text-gray-300 mx-auto mb-4' />
-            <h3 className='text-lg font-semibold text-gray-900 mb-2'>No applications yet</h3>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2'>{t('auditionApplications.empty.title')}</h3>
             <p className='text-gray-600'>
-              {filterStatus === 'All' ? 'Applications will appear here once artists apply' : `No ${filterStatus.toLowerCase()} applications`}
+              {filterStatus === 'All' ? t('auditionApplications.empty.allMessage') : t('auditionApplications.empty.noStatus', { status: tEnum(filterStatus).toLowerCase() })}
             </p>
           </div>
         </Card>
@@ -249,7 +251,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                 onChange={toggleSelectAll}
                 className='w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500'
               />
-              <span className='text-sm font-medium text-gray-700'>Select All ({applications.length} applications)</span>
+              <span className='text-sm font-medium text-gray-700'>{t('auditionApplications.selectAll', { count: applications.length })}</span>
             </label>
           </Card>
 
@@ -288,7 +290,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                       <p className='text-sm text-gray-600'>{application.artistEmail}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(application.status)}`}>
-                      {application.status}
+                      {tEnum(application.status)}
                     </span>
                   </div>
 
@@ -298,7 +300,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                     </span>
                     <span className='flex items-center gap-1'>
                       <CalendarIcon className='h-4 w-4' />
-                      Applied {formatDate(application.appliedAt)}
+                      {t('auditionApplications.appliedOn', { date: formatDate(application.appliedAt) })}
                     </span>
                   </div>
 
@@ -311,7 +313,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                     ))}
                     {application.artistSkills.length > 5 && (
                       <span className='px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded'>
-                        +{application.artistSkills.length - 5} more
+                        {t('auditionApplications.moreSkills', { count: application.artistSkills.length - 5 })}
                       </span>
                     )}
                   </div>
@@ -329,7 +331,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                       onClick={() => navigate(`/recruiter/artists/${application.artistId}`)}
                       className='flex items-center gap-1 px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700'>
                       <EyeIcon className='h-4 w-4' />
-                      View Profile
+                      {t('common.actions.viewProfile')}
                     </button>
 
                     {application.portfolioUrl && (
@@ -338,7 +340,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                         target='_blank'
                         rel='noopener noreferrer'
                         className='px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700'>
-                        View Portfolio
+                        {t('auditionApplications.actions.viewPortfolio')}
                       </a>
                     )}
 
@@ -347,7 +349,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                         onClick={() => handleUpdateStatus(application.id, 'Shortlisted')}
                         className='flex items-center gap-1 px-3 py-2 bg-purple-50 text-purple-600 text-sm font-medium rounded-lg hover:bg-purple-100'>
                         <CheckCircleIcon className='h-4 w-4' />
-                        Shortlist
+                        {t('auditionApplications.actions.shortlist')}
                       </button>
                     )}
 
@@ -356,7 +358,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                         onClick={() => handleUpdateStatus(application.id, 'Accepted')}
                         className='flex items-center gap-1 px-3 py-2 bg-green-50 text-green-600 text-sm font-medium rounded-lg hover:bg-green-100'>
                         <CheckCircleIcon className='h-4 w-4' />
-                        Accept
+                        {t('auditionApplications.actions.accept')}
                       </button>
                     )}
 
@@ -365,7 +367,7 @@ export const AuditionApplicationsPage: React.FC = () => {
                         onClick={() => handleUpdateStatus(application.id, 'Rejected')}
                         className='flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100'>
                         <XCircleIcon className='h-4 w-4' />
-                        Reject
+                        {t('common.actions.reject')}
                       </button>
                     )}
                   </div>

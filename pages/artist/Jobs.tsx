@@ -17,6 +17,7 @@ import ShareLinkModal from '@/components/ShareLinkModal'
 import { bookmarksService } from '@/services/bookmarksService'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import usePageParam from '@/hooks/usePageParam'
+import { useTranslation } from '@/i18n'
 
 
 type JobCardProps = {
@@ -64,8 +65,9 @@ const JobCard: React.FC<JobCardProps> = ({
   bookmarking,
   isBookmarked
 }) => {
+  const { t, tEnum } = useTranslation()
   const formatSalary = () => {
-    if ((budgetMin === undefined || budgetMin === null) && (budgetMax === undefined || budgetMax === null)) return 'Salary not disclosed'
+    if ((budgetMin === undefined || budgetMin === null) && (budgetMax === undefined || budgetMax === null)) return t('artistJobs.card.salaryNotDisclosed')
     const curr = currency || '$'
     if (budgetMin != null && budgetMax != null) {
       return `${curr}${Number(budgetMin).toLocaleString()} - ${curr}${Number(budgetMax).toLocaleString()}`
@@ -75,11 +77,11 @@ const JobCard: React.FC<JobCardProps> = ({
   }
 
   const formatType = (type?: string) => {
-    return type ? type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : 'Full Time'
+    return type ? tEnum(type) : tEnum('FULL_TIME')
   }
 
   const formatExp = (exp?: string) => {
-    return exp ? exp.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : ''
+    return exp ? tEnum(exp) : ''
   }
 
   const daysLeft = applicationDeadline ? Math.ceil((new Date(applicationDeadline).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) : null
@@ -90,7 +92,7 @@ const JobCard: React.FC<JobCardProps> = ({
       {isUrgent && (
         <div className="absolute top-0 right-0">
           <span className="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm uppercase tracking-wider">
-            Urgent
+            {t('artistJobs.card.urgent')}
           </span>
         </div>
       )}
@@ -140,7 +142,7 @@ const JobCard: React.FC<JobCardProps> = ({
         <div className="space-y-2 mb-4">
           <div className='flex items-center text-gray-500 text-xs gap-2'>
             <Icon name={isRemote ? 'Globe' : 'MapPin'} size={14} />
-            <span>{isRemote ? 'Remote' : (location || 'Location varies')}</span>
+            <span>{isRemote ? t('artistJobs.card.remote') : (location || t('artistJobs.card.locationVaries'))}</span>
           </div>
           <div className='flex items-center text-gray-600 text-xs font-medium gap-2'>
             <Icon name='Banknote' size={14} />
@@ -149,7 +151,7 @@ const JobCard: React.FC<JobCardProps> = ({
           {applicationDeadline && !isExpired && (
             <div className={`flex items-center text-xs gap-2 ${daysLeft && daysLeft <= 3 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
               <Icon name='Clock' size={14} />
-              <span>{daysLeft} days left to apply</span>
+              <span>{t('artistJobs.card.daysLeft', { count: daysLeft ?? 0 })}</span>
             </div>
           )}
         </div>
@@ -174,8 +176,8 @@ const JobCard: React.FC<JobCardProps> = ({
 
       <div className='flex flex-col gap-3 mt-2 border-t border-gray-100 pt-4'>
         <div className="flex justify-between items-center text-xs text-gray-400 px-1">
-          <span>{postedDate ? new Date(postedDate).toLocaleDateString() : 'Recently'}</span>
-          {applicantsCount !== undefined && <span>{applicantsCount} applicants</span>}
+          <span>{postedDate ? new Date(postedDate).toLocaleDateString() : t('artistJobs.card.recently')}</span>
+          {applicantsCount !== undefined && <span>{t('artistJobs.card.applicants', { count: applicantsCount })}</span>}
         </div>
         <div className='flex gap-2'>
           <button
@@ -186,12 +188,12 @@ const JobCard: React.FC<JobCardProps> = ({
               : 'bg-primary text-white hover:bg-primary-hover hover:shadow-md'
               }`}
           >
-            {isExpired ? 'Applications Closed' : 'View Details & Apply'}
+            {isExpired ? t('artistJobs.card.applicationsClosed') : t('artistJobs.card.viewAndApply')}
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onShare && onShare({ id, title }); }}
-            title='Share job'
-            aria-label='Share job'
+            title={t('artistJobs.card.shareJob')}
+            aria-label={t('artistJobs.card.shareJob')}
             className='flex items-center justify-center px-3 py-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-primary hover:border-primary transition-colors shrink-0'
           >
             <Icon name='Share2' size={18} />
@@ -214,6 +216,7 @@ const FilterButton: React.FC<{ label: string; icon: any }> = ({
 )
 
 const Jobs: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [uiJobs, setUiJobs] = useState<JobCardProps[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -246,7 +249,7 @@ const Jobs: React.FC = () => {
       try {
         setLoading(true)
         setError(null)
-        const { items, total: t } = await jobsService.listJobs({
+        const { items, total: totalCount } = await jobsService.listJobs({
           page: Math.max(0, currentPage - 1),
           size: pageSize,
           sortBy: 'createdAt',
@@ -274,7 +277,7 @@ const Jobs: React.FC = () => {
 
           return {
             id: j.id,
-            title: j.title ?? 'Untitled Role',
+            title: j.title ?? t('artistJobs.card.untitledRole'),
             company: (j.companyName as string) || (j.company as string) || (j.recruiterCompanyName as string) || (j.organizationName as string) || (j.posterCompany as string) || undefined,
             location: (j.location as string),
             isRemote: j.isRemote,
@@ -292,9 +295,9 @@ const Jobs: React.FC = () => {
           }
         })
         setUiJobs(mapped)
-        setTotal(t ?? mapped.length)
+        setTotal(totalCount ?? mapped.length)
       } catch (err: any) {
-        setError(err?.message ?? 'Failed to load jobs')
+        setError(err?.message ?? t('artistJobs.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -379,9 +382,9 @@ const Jobs: React.FC = () => {
 
   return (
     <div className='space-y-6'>
-      <h1 className='text-4xl font-bold'>Find Your Next Gig</h1>
+      <h1 className='text-4xl font-bold'>{t('artistJobs.title')}</h1>
       <p className='text-gray-600'>
-        Explore thousands of opportunities tailored for artists like you.
+        {t('artistJobs.subtitle')}
       </p>
 
       {/* Loading handled with skeletons in the grid below */}
@@ -400,7 +403,7 @@ const Jobs: React.FC = () => {
               setSearch(e.target.value)
               setCurrentPage(1)
             }}
-            placeholder='Search jobs...'
+            placeholder={t('artistJobs.searchPlaceholder')}
             className='outline-none text-sm text-gray-700'
           />
         </div>
@@ -413,9 +416,9 @@ const Jobs: React.FC = () => {
               setCurrentPage(1)
             }}
             className='text-sm text-gray-700 outline-none'>
-            <option value=''>All Types</option>
+            <option value=''>{t('artistJobs.filters.allTypes')}</option>
             {jobTypes.map(jt => (
-              <option key={jt} value={jt}>{jt}</option>
+              <option key={jt} value={jt}>{tEnum(jt)}</option>
             ))}
           </select>
         </div>
@@ -428,9 +431,9 @@ const Jobs: React.FC = () => {
               setCurrentPage(1)
             }}
             className='text-sm text-gray-700 outline-none'>
-            <option value=''>All Experience</option>
+            <option value=''>{t('artistJobs.filters.allExperience')}</option>
             {expLevels.map(el => (
-              <option key={el} value={el}>{el}</option>
+              <option key={el} value={el}>{tEnum(el)}</option>
             ))}
           </select>
         </div>
@@ -443,7 +446,7 @@ const Jobs: React.FC = () => {
           }}
           className='flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm text-gray-500 hover:bg-amber-50 transition-colors'>
           <Icon name='X' size={18} />
-          <span className='font-medium'>Clear</span>
+          <span className='font-medium'>{t('artistJobs.filters.clear')}</span>
         </button>
       </div>
 
@@ -483,7 +486,7 @@ const Jobs: React.FC = () => {
         ) : (
           <div className='col-span-full flex flex-col items-center justify-center py-12 text-gray-500'>
             <Icon name='Briefcase' size={48} className='mb-3 text-gray-400' />
-            <div className='text-lg font-medium'>No job found</div>
+            <div className='text-lg font-medium'>{t('artistJobs.empty')}</div>
           </div>
         )}
       </div>
@@ -491,14 +494,14 @@ const Jobs: React.FC = () => {
       {!loading && totalPages > 1 && (
       <div className='flex flex-col items-center gap-2 pt-6'>
         <p className='text-sm text-gray-500'>
-          Page {currentPage} of {totalPages} · {total.toLocaleString()} jobs
+          {t('artistJobs.pageSummary', { count: total, page: currentPage, totalPages, total: total.toLocaleString() })}
         </p>
         <UIPagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
                 href='#'
-                aria-label='Previous page'
+                aria-label={t('artistJobs.previousPage')}
                 aria-disabled={currentPage <= 1}
                 onClick={e => {
                   e.preventDefault()
@@ -535,7 +538,7 @@ const Jobs: React.FC = () => {
             <PaginationItem>
               <PaginationNext
                 href='#'
-                aria-label='Next page'
+                aria-label={t('artistJobs.nextPage')}
                 aria-disabled={currentPage >= totalPages}
                 onClick={e => {
                   e.preventDefault()
@@ -556,12 +559,12 @@ const Jobs: React.FC = () => {
         <AlertDialogContent className='bg-white rounded-2xl border-0 shadow-2xl max-w-md'>
           <AlertDialogHeader>
             <AlertDialogTitle className='text-2xl font-bold text-gray-900'>
-              {isRemovingBookmark ? 'Remove this job?' : 'Save this job?'}
+              {isRemovingBookmark ? t('artistJobs.bookmark.removeTitle') : t('artistJobs.bookmark.saveTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription className='text-base text-gray-600 mt-2'>
               {isRemovingBookmark
-                ? 'This will remove the job from your bookmarks.'
-                : 'This will add the job to your bookmarks.'}
+                ? t('artistJobs.bookmark.removeDescription')
+                : t('artistJobs.bookmark.saveDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className='gap-3 mt-6'>
@@ -569,7 +572,7 @@ const Jobs: React.FC = () => {
               disabled={bookmarkLoadingId !== null}
               className='bg-gray-100 hover:bg-gray-200 text-gray-800 border-0 rounded-xl px-6 py-2.5 font-semibold transition-colors'
             >
-              Cancel
+              {t('common.actions.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
@@ -587,9 +590,9 @@ const Jobs: React.FC = () => {
             >
               {bookmarkLoadingId !== null
                 ? isRemovingBookmark
-                  ? 'Removing...'
-                  : 'Saving...'
-                : 'Confirm'}
+                  ? t('artistJobs.bookmark.removing')
+                  : t('common.actions.saving')
+                : t('common.actions.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -609,8 +612,8 @@ const Jobs: React.FC = () => {
         open={!!shareJob}
         onClose={() => setShareJob(null)}
         link={shareJob?.id ? `https://icastar.com/jobs/${shareJob.id}/public` : ''}
-        title='Share Job'
-        description='Anyone with this link can view this job and apply — no login needed.'
+        title={t('artistJobs.share.title')}
+        description={t('artistJobs.share.description')}
       />
     </div>
   )

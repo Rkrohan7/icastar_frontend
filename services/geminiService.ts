@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { SuggestedArtist } from "../types";
+import { translate } from "@/i18n";
 
 // IMPORTANT: In a real application, you would not hardcode the API key.
 // It is sourced from process.env.API_KEY, which is assumed to be configured
@@ -43,7 +44,7 @@ const responseSchema = {
 
 export const getArtistSuggestions = async (jobDescription: string): Promise<SuggestedArtist[]> => {
   if (!API_KEY) {
-    throw new Error("API key is not configured. Cannot fetch suggestions.");
+    throw new Error(translate('services.gemini.apiKeyMissing'));
   }
 
   const prompt = `
@@ -78,6 +79,6 @@ export const getArtistSuggestions = async (jobDescription: string): Promise<Sugg
 
   } catch (error) {
     console.error("Error fetching suggestions from Gemini API:", error);
-    throw new Error("Failed to generate artist suggestions. Please check the console for details.");
+    throw new Error(translate('services.gemini.suggestionsFailed'));
   }
 };

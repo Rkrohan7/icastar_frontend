@@ -11,6 +11,7 @@ import recruiterProjectsService, {
   PROJECT_TYPE_LABELS,
   ROLE_TYPE_LABELS,
 } from '../services/recruiterProjectsService'
+import { translate, useTranslation } from '@/i18n'
 
 export interface ProjectCastingValue {
   projectId?: number
@@ -59,6 +60,9 @@ const emptyCharacter = {
 }
 
 export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors = NO_ERRORS }) => {
+  const { t, tEnum } = useTranslation()
+  const projectTypeLabel = (type: string) =>
+    PROJECT_TYPE_LABELS[type as AuditionProjectType] ? t(`projectCastingFields.projectTypes.${type}`) : type
   const [projects, setProjects] = useState<CastingProject[]>([])
   const [characters, setCharacters] = useState<CastingCharacter[]>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
@@ -74,7 +78,7 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
     recruiterProjectsService
       .listProjects()
       .then(setProjects)
-      .catch(() => toast.error('Unable to load projects'))
+      .catch(() => toast.error(translate('projectCastingFields.toast.loadProjectsFailed')))
       .finally(() => setLoadingProjects(false))
   }, [])
 
@@ -125,7 +129,7 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
 
   const handleCreateProject = async () => {
     if (!newProject.name.trim()) {
-      toast.error('Project name is required')
+      toast.error(t('projectCastingFields.toast.projectNameRequired'))
       return
     }
     setSaving(true)
@@ -143,9 +147,9 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
       })
       setNewProject(emptyProject)
       setShowNewProject(false)
-      toast.success('Project created')
+      toast.success(t('projectCastingFields.toast.projectCreated'))
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create project')
+      toast.error(error.response?.data?.message || t('projectCastingFields.toast.createProjectFailed'))
     } finally {
       setSaving(false)
     }
@@ -154,7 +158,7 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
   const handleCreateCharacter = async () => {
     if (!value.projectId) return
     if (!newCharacter.name.trim()) {
-      toast.error('Character name is required')
+      toast.error(t('projectCastingFields.toast.characterNameRequired'))
       return
     }
     setSaving(true)
@@ -180,9 +184,9 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
       )
       setNewCharacter(emptyCharacter)
       setShowNewCharacter(false)
-      toast.success('Character added')
+      toast.success(t('projectCastingFields.toast.characterAdded'))
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to add character')
+      toast.error(error.response?.data?.message || t('projectCastingFields.toast.addCharacterFailed'))
     } finally {
       setSaving(false)
     }
@@ -195,9 +199,9 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
       {/* Project */}
       <div>
         <div className='flex items-center justify-between'>
-          <label htmlFor='projectId' className={labelCls}>Project</label>
+          <label htmlFor='projectId' className={labelCls}>{t('projectCastingFields.project.label')}</label>
           <button type='button' className={linkBtnCls} onClick={() => setShowNewProject(s => !s)}>
-            {showNewProject ? 'Cancel' : '+ New Project'}
+            {showNewProject ? t('common.actions.cancel') : t('projectCastingFields.project.newProject')}
           </button>
         </div>
         <select
@@ -206,15 +210,15 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
           value={value.projectId ?? ''}
           disabled={loadingProjects}
           onChange={e => selectProject(e.target.value ? Number(e.target.value) : undefined)}>
-          <option value=''>{loadingProjects ? 'Loading...' : 'Select project'}</option>
+          <option value=''>{loadingProjects ? t('common.status.loading') : t('projectCastingFields.project.select')}</option>
           {projects.map(p => (
             <option key={p.id} value={p.id}>
-              {p.name} ({PROJECT_TYPE_LABELS[p.projectType] ?? p.projectType})
+              {p.name} ({projectTypeLabel(p.projectType)})
             </option>
           ))}
           {/* Keep the current value visible while editing even if it is not in the list */}
           {value.projectId && !projects.some(p => p.id === value.projectId) && (
-            <option value={value.projectId}>{value.projectName ?? `Project #${value.projectId}`}</option>
+            <option value={value.projectId}>{value.projectName ?? t('projectCastingFields.project.fallback', { id: value.projectId })}</option>
           )}
         </select>
         {errors.projectId && <p className='mt-1 text-xs text-red-600'>{errors.projectId}</p>}
@@ -223,10 +227,10 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
       {/* Casting character */}
       <div>
         <div className='flex items-center justify-between'>
-          <label htmlFor='characterId' className={labelCls}>Casting Character</label>
+          <label htmlFor='characterId' className={labelCls}>{t('projectCastingFields.character.label')}</label>
           {value.projectId && (
             <button type='button' className={linkBtnCls} onClick={() => setShowNewCharacter(s => !s)}>
-              {showNewCharacter ? 'Cancel' : '+ New Character'}
+              {showNewCharacter ? t('common.actions.cancel') : t('projectCastingFields.character.newCharacter')}
             </button>
           )}
         </div>
@@ -237,15 +241,19 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
           disabled={!value.projectId || loadingCharacters}
           onChange={e => selectCharacter(e.target.value ? Number(e.target.value) : undefined)}>
           <option value=''>
-            {!value.projectId ? 'Select a project first' : loadingCharacters ? 'Loading...' : 'Select character'}
+            {!value.projectId
+              ? t('projectCastingFields.character.selectProjectFirst')
+              : loadingCharacters
+                ? t('common.status.loading')
+                : t('projectCastingFields.character.select')}
           </option>
           {characters.map(c => (
             <option key={c.id} value={c.id}>
-              {c.name} · {ROLE_TYPE_LABELS[c.roleType] ?? c.roleType}
+              {c.name} · {tEnum(c.roleType)}
             </option>
           ))}
           {value.characterId && !characters.some(c => c.id === value.characterId) && (
-            <option value={value.characterId}>{value.characterName ?? `Character #${value.characterId}`}</option>
+            <option value={value.characterId}>{value.characterName ?? t('projectCastingFields.character.fallback', { id: value.characterId })}</option>
           )}
         </select>
         {errors.characterId && <p className='mt-1 text-xs text-red-600'>{errors.characterId}</p>}
@@ -253,14 +261,14 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
 
       {/* Role type */}
       <div>
-        <label htmlFor='roleType' className={labelCls}>Role</label>
+        <label htmlFor='roleType' className={labelCls}>{t('projectCastingFields.role')}</label>
         <select
           id='roleType'
           className={`mt-1 pr-10 ${inputCls}`}
           value={value.roleType ?? 'SUPPORTING'}
           onChange={e => onChange({ ...value, roleType: e.target.value as AuditionRoleType })}>
-          {Object.entries(ROLE_TYPE_LABELS).map(([k, label]) => (
-            <option key={k} value={k}>{label}</option>
+          {Object.keys(ROLE_TYPE_LABELS).map(k => (
+            <option key={k} value={k}>{tEnum(k)}</option>
           ))}
         </select>
       </div>
@@ -268,12 +276,12 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
       {selectedCharacter && !showNewCharacter && (
         <div className='sm:col-span-3 rounded-lg bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-gray-700'>
           <span className='font-semibold'>{selectedCharacter.name}</span>
-          {selectedCharacter.gender && selectedCharacter.gender !== 'ANY' && <> · {selectedCharacter.gender}</>}
+          {selectedCharacter.gender && selectedCharacter.gender !== 'ANY' && <> · {tEnum(selectedCharacter.gender)}</>}
           {(selectedCharacter.ageMin || selectedCharacter.ageMax) && (
-            <> · Age {selectedCharacter.ageMin ?? '?'}–{selectedCharacter.ageMax ?? '?'}</>
+            <> · {t('projectCastingFields.character.ageRange', { min: selectedCharacter.ageMin ?? '?', max: selectedCharacter.ageMax ?? '?' })}</>
           )}
           {selectedCharacter.requiredCount && selectedCharacter.requiredCount > 1 && (
-            <> · Needs {selectedCharacter.requiredCount} artists</>
+            <> · {t('projectCastingFields.character.needsArtists', { count: selectedCharacter.requiredCount })}</>
           )}
           {selectedCharacter.description && <p className='text-gray-500 mt-1'>{selectedCharacter.description}</p>}
         </div>
@@ -281,25 +289,25 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
 
       {showNewProject && (
         <div className='sm:col-span-3 rounded-lg border border-dashed border-gray-300 p-4 space-y-3 bg-gray-50'>
-          <p className='text-sm font-semibold text-gray-800'>New Project</p>
+          <p className='text-sm font-semibold text-gray-800'>{t('projectCastingFields.newProjectForm.title')}</p>
           <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
-            <input className={inputCls} placeholder='Project name *' value={newProject.name}
+            <input className={inputCls} placeholder={t('projectCastingFields.newProjectForm.namePlaceholder')} value={newProject.name}
               onChange={e => setNewProject(p => ({ ...p, name: e.target.value }))} />
             <select className={`pr-10 ${inputCls}`} value={newProject.projectType}
               onChange={e => setNewProject(p => ({ ...p, projectType: e.target.value as AuditionProjectType }))}>
-              {Object.entries(PROJECT_TYPE_LABELS).map(([k, label]) => (
-                <option key={k} value={k}>{label}</option>
+              {Object.keys(PROJECT_TYPE_LABELS).map(k => (
+                <option key={k} value={k}>{projectTypeLabel(k)}</option>
               ))}
             </select>
-            <input className={inputCls} placeholder='Language' value={newProject.language}
+            <input className={inputCls} placeholder={t('projectCastingFields.newProjectForm.languagePlaceholder')} value={newProject.language}
               onChange={e => setNewProject(p => ({ ...p, language: e.target.value }))} />
-            <input className={inputCls} placeholder='Production house' value={newProject.productionHouse}
+            <input className={inputCls} placeholder={t('projectCastingFields.newProjectForm.productionHousePlaceholder')} value={newProject.productionHouse}
               onChange={e => setNewProject(p => ({ ...p, productionHouse: e.target.value }))} />
-            <input className={inputCls} placeholder='Director' value={newProject.director}
+            <input className={inputCls} placeholder={t('projectCastingFields.newProjectForm.directorPlaceholder')} value={newProject.director}
               onChange={e => setNewProject(p => ({ ...p, director: e.target.value }))} />
             <button type='button' disabled={saving} onClick={handleCreateProject}
               className='px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-50'>
-              {saving ? 'Saving...' : 'Create Project'}
+              {saving ? t('common.actions.saving') : t('projectCastingFields.newProjectForm.create')}
             </button>
           </div>
         </div>
@@ -307,36 +315,36 @@ export const ProjectCastingFields: React.FC<Props> = ({ value, onChange, errors 
 
       {showNewCharacter && value.projectId && (
         <div className='sm:col-span-3 rounded-lg border border-dashed border-gray-300 p-4 space-y-3 bg-gray-50'>
-          <p className='text-sm font-semibold text-gray-800'>New Character for {value.projectName}</p>
+          <p className='text-sm font-semibold text-gray-800'>{t('projectCastingFields.newCharacterForm.title', { project: value.projectName ?? '' })}</p>
           <div className='grid grid-cols-1 sm:grid-cols-4 gap-3'>
-            <input className={`sm:col-span-2 ${inputCls}`} placeholder='Character name * (e.g., Inspector Vikram)'
+            <input className={`sm:col-span-2 ${inputCls}`} placeholder={t('projectCastingFields.newCharacterForm.namePlaceholder')}
               value={newCharacter.name}
               onChange={e => setNewCharacter(c => ({ ...c, name: e.target.value }))} />
             <select className={`pr-10 ${inputCls}`} value={newCharacter.roleType}
               onChange={e => setNewCharacter(c => ({ ...c, roleType: e.target.value as AuditionRoleType }))}>
-              {Object.entries(ROLE_TYPE_LABELS).map(([k, label]) => (
-                <option key={k} value={k}>{label}</option>
+              {Object.keys(ROLE_TYPE_LABELS).map(k => (
+                <option key={k} value={k}>{tEnum(k)}</option>
               ))}
             </select>
             <select className={`pr-10 ${inputCls}`} value={newCharacter.gender}
               onChange={e => setNewCharacter(c => ({ ...c, gender: e.target.value as GenderPreference }))}>
-              <option value='ANY'>Any gender</option>
-              <option value='MALE'>Male</option>
-              <option value='FEMALE'>Female</option>
-              <option value='NON_BINARY'>Non-binary</option>
+              <option value='ANY'>{t('projectCastingFields.newCharacterForm.anyGender')}</option>
+              <option value='MALE'>{tEnum('MALE')}</option>
+              <option value='FEMALE'>{tEnum('FEMALE')}</option>
+              <option value='NON_BINARY'>{tEnum('NON_BINARY')}</option>
             </select>
-            <input type='number' min={0} className={inputCls} placeholder='Age min' value={newCharacter.ageMin}
+            <input type='number' min={0} className={inputCls} placeholder={t('projectCastingFields.newCharacterForm.ageMinPlaceholder')} value={newCharacter.ageMin}
               onChange={e => setNewCharacter(c => ({ ...c, ageMin: e.target.value === '' ? '' : Number(e.target.value) }))} />
-            <input type='number' min={0} className={inputCls} placeholder='Age max' value={newCharacter.ageMax}
+            <input type='number' min={0} className={inputCls} placeholder={t('projectCastingFields.newCharacterForm.ageMaxPlaceholder')} value={newCharacter.ageMax}
               onChange={e => setNewCharacter(c => ({ ...c, ageMax: e.target.value === '' ? '' : Number(e.target.value) }))} />
-            <input type='number' min={1} className={inputCls} placeholder='Artists needed' title='How many artists are needed for this character'
+            <input type='number' min={1} className={inputCls} placeholder={t('projectCastingFields.newCharacterForm.artistsNeededPlaceholder')} title={t('projectCastingFields.newCharacterForm.artistsNeededTitle')}
               value={newCharacter.requiredCount}
               onChange={e => setNewCharacter(c => ({ ...c, requiredCount: e.target.value === '' ? '' : Number(e.target.value) }))} />
             <button type='button' disabled={saving} onClick={handleCreateCharacter}
               className='px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary-hover disabled:opacity-50'>
-              {saving ? 'Saving...' : 'Add Character'}
+              {saving ? t('common.actions.saving') : t('projectCastingFields.newCharacterForm.add')}
             </button>
-            <textarea rows={2} className={`sm:col-span-4 ${inputCls}`} placeholder='Character brief (look, personality, scenes...)'
+            <textarea rows={2} className={`sm:col-span-4 ${inputCls}`} placeholder={t('projectCastingFields.newCharacterForm.briefPlaceholder')}
               value={newCharacter.description}
               onChange={e => setNewCharacter(c => ({ ...c, description: e.target.value }))} />
           </div>

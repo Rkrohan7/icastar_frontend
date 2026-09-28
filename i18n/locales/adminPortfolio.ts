@@ -1,0 +1,46 @@
+import { defineMessages } from '../defineMessages'
+
+export default defineMessages({
+  en: {
+    loading: 'Loading portfolio...',
+    backToArtists: '← Back to Artists',
+    noData: 'No data',
+    yearsShort: '{{count}}y',
+    hires: 'Hires',
+    about: 'About',
+    noSkills: 'No skills listed',
+    noLanguages: 'No languages listed',
+    portfolioMedia: 'Portfolio Media',
+    mediaAlt: 'Portfolio {{index}}',
+    noMedia: 'No media uploaded',
+    projectsWorked: 'Projects Worked',
+    noProjects: 'No projects listed',
+    errors: {
+      unauthorized: 'Unauthorized — log in as admin.',
+      accessDenied: 'Access denied — admin role required.',
+      notFound: 'Artist not found.',
+      loadFailed: 'Unable to load portfolio.',
+    },
+  },
+  mr: {
+    loading: 'पोर्टफोलिओ लोड होत आहे...',
+    backToArtists: '← कलाकारांकडे परत जा',
+    noData: 'माहिती नाही',
+    yearsShort: '{{count}} वर्षे',
+    hires: 'नियुक्त्या',
+    about: 'परिचय',
+    noSkills: 'कोणतीही कौशल्ये नमूद केलेली नाहीत',
+    noLanguages: 'कोणत्याही भाषा नमूद केलेल्या नाहीत',
+    portfolioMedia: 'पोर्टफोलिओ मीडिया',
+    mediaAlt: 'पोर्टफोलिओ {{index}}',
+    noMedia: 'कोणताही मीडिया अपलोड केलेला नाही',
+    projectsWorked: 'केलेले प्रकल्प',
+    noProjects: 'कोणतेही प्रकल्प नमूद केलेले नाहीत',
+    errors: {
+      unauthorized: 'अनधिकृत — ॲडमिन म्हणून लॉग इन करा.',
+      accessDenied: 'प्रवेश नाकारला — ॲडमिन भूमिका आवश्यक आहे.',
+      notFound: 'कलाकार सापडला नाही.',
+      loadFailed: 'पोर्टफोलिओ लोड करता आला नाही.',
+    },
+  },
+})

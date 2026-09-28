@@ -18,6 +18,7 @@ import { recruiterJobsService } from '../../services/recruiterJobsService'
 import authService from '../../services/userService'
 import { toast } from 'react-toastify'
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
+import { useTranslation } from '@/i18n'
 const initialJobs: Job[] = [
   {
     id: 1,
@@ -155,6 +156,7 @@ const initialJobs: Job[] = [
 ]
 
 const AudienceMetrics: React.FC<{ artistId: number }> = ({ artistId }) => {
+  const { t } = useTranslation()
   const [metrics, setMetrics] = useState<AudienceMetricsDto | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -184,8 +186,8 @@ const AudienceMetrics: React.FC<{ artistId: number }> = ({ artistId }) => {
     fetchMetrics()
   }, [artistId])
 
-  if (loading) return <div className="p-8 text-center">Loading metrics...</div>
-  if (!metrics) return <div className="p-8 text-center">No audience data available.</div>
+  if (loading) return <div className="p-8 text-center">{t('recruiterArtistProfile.audience.loading')}</div>
+  if (!metrics) return <div className="p-8 text-center">{t('recruiterArtistProfile.audience.empty')}</div>
 
   const ageData = Object.entries(metrics.demographics.ageGroups).map(([name, value]) => ({ name, value }))
 
@@ -193,40 +195,40 @@ const AudienceMetrics: React.FC<{ artistId: number }> = ({ artistId }) => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="text-center p-4">
-          <p className="text-gray-500 text-sm">Total Views</p>
+          <p className="text-gray-500 text-sm">{t('recruiterArtistProfile.audience.totalViews')}</p>
           <p className="text-2xl font-bold text-primary">{metrics.totalViews.toLocaleString()}</p>
         </Card>
         <Card className="text-center p-4">
-          <p className="text-gray-500 text-sm">Unique Visitors</p>
+          <p className="text-gray-500 text-sm">{t('recruiterArtistProfile.audience.uniqueVisitors')}</p>
           <p className="text-2xl font-bold text-gray-800">{metrics.uniqueVisitors.toLocaleString()}</p>
         </Card>
         <Card className="text-center p-4">
-          <p className="text-gray-500 text-sm">Profile Clicks</p>
+          <p className="text-gray-500 text-sm">{t('recruiterArtistProfile.audience.profileClicks')}</p>
           <p className="text-2xl font-bold text-blue-600">{metrics.profileClicks.toLocaleString()}</p>
         </Card>
         <Card className="text-center p-4">
-          <p className="text-gray-500 text-sm">Search Appearances</p>
+          <p className="text-gray-500 text-sm">{t('recruiterArtistProfile.audience.searchAppearances')}</p>
           <p className="text-2xl font-bold text-amber-600">{metrics.appearanceInSearch.toLocaleString()}</p>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
-          <h4 className="text-lg font-semibold mb-4">Age Distribution</h4>
+          <h4 className="text-lg font-semibold mb-4">{t('recruiterArtistProfile.audience.ageDistribution')}</h4>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ageData}>
                 <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} />
                 <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="value" name={t('recruiterArtistProfile.audience.valueLabel')} fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
         <Card className="p-6">
-          <h4 className="text-lg font-semibold mb-4">Top Locations</h4>
+          <h4 className="text-lg font-semibold mb-4">{t('recruiterArtistProfile.audience.topLocations')}</h4>
           <div className="space-y-4">
             {Object.entries(metrics.demographics.locations).map(([city, percent], idx) => (
               <div key={city} className="flex items-center justify-between">
@@ -245,6 +247,7 @@ const AudienceMetrics: React.FC<{ artistId: number }> = ({ artistId }) => {
 }
 
 export const ArtistProfilePage = () => {
+  const { t, tEnum } = useTranslation()
   const [isHireModalOpen, setIsHireModalOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
@@ -299,7 +302,7 @@ export const ArtistProfilePage = () => {
         setJobs(activeJobs)
       } catch (error) {
         console.error('Failed to fetch jobs:', error)
-        toast.error('Failed to load your jobs')
+        toast.error(t('recruiterArtistProfile.toast.jobsLoadFailed'))
         // Fallback to empty array
         setJobs([])
       } finally {
@@ -366,19 +369,22 @@ export const ArtistProfilePage = () => {
     return (
       <div className='text-center py-16'>
         <h3 className='text-lg font-medium text-gray-900'>
-          No Artist Selected
+          {t('recruiterArtistProfile.noArtist.title')}
         </h3>
         <p className='mt-1 text-sm text-gray-500'>
-          Please go back and select an artist to view their profile.
+          {t('recruiterArtistProfile.noArtist.message')}
         </p>
         <button
           onClick={() => navigate(-1)}
           className='mt-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover'>
-          Browse Artists
+          {t('recruiterArtistProfile.noArtist.browse')}
         </button>
       </div>
     )
   }
+
+  // Show backend enum values (e.g. FULL_TIME) translated; leave free text as entered.
+  const enumOrText = (value: string) => (/^[A-Z][A-Z0-9_]*$/.test(value) ? tEnum(value) : value)
 
   const handleOpenHireModal = () => {
     setIsHireModalOpen(true)
@@ -394,7 +400,7 @@ export const ArtistProfilePage = () => {
         message,
       })
 
-      toast.success(`Hire request sent to ${artist.name}! Status: ${hireRequest.status}`)
+      toast.success(t('recruiterArtistProfile.toast.hireRequestSent', { name: artist.name, status: tEnum(hireRequest.status) }))
       setIsHireModalOpen(false)
 
       // Update state to show pending status
@@ -409,10 +415,10 @@ export const ArtistProfilePage = () => {
 
       // Check if error is about duplicate request
       if (error.response?.data?.error?.includes('already have a pending hire request')) {
-        toast.error('You already have a pending hire request for this artist')
+        toast.error(t('recruiterArtistProfile.toast.alreadyPending'))
         setHasPendingRequest(true)
       } else {
-        toast.error('Failed to send hire request. Please try again.')
+        toast.error(t('recruiterArtistProfile.toast.hireRequestFailed'))
       }
     }
   }
@@ -431,7 +437,7 @@ export const ArtistProfilePage = () => {
           <button
             onClick={() => navigate(-1)}
             className='text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors'
-            aria-label='Back to Browse Artists'>
+            aria-label={t('recruiterArtistProfile.backAria')}>
             <svg
               xmlns='http://www.w3.org/2000/svg'
               width='24'
@@ -447,20 +453,20 @@ export const ArtistProfilePage = () => {
             </svg>
           </button>
           <div className="flex items-baseline gap-4">
-            <h2 className='text-3xl font-bold text-gray-900'>Artist Profile</h2>
+            <h2 className='text-3xl font-bold text-gray-900'>{t('recruiterArtistProfile.title')}</h2>
             {isOwner && (
               <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
                 <button
                   onClick={() => setActiveTab('profile')}
                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  Profile
+                  {t('recruiterArtistProfile.tabs.profile')}
                 </button>
                 <button
                   onClick={() => setActiveTab('audience')}
                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'audience' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  Audience
+                  {t('recruiterArtistProfile.tabs.audience')}
                 </button>
               </div>
             )}
@@ -480,7 +486,7 @@ export const ArtistProfilePage = () => {
                 {artist.coverPhotoUrl ? (
                   <img
                     src={artist.coverPhotoUrl}
-                    alt='Cover'
+                    alt={t('recruiterArtistProfile.hero.coverAlt')}
                     className='w-full h-40 object-cover cursor-pointer hover:opacity-95 transition-opacity'
                     onClick={() => setCoverPreviewOpen(true)}
                   />
@@ -503,18 +509,18 @@ export const ArtistProfilePage = () => {
                         <h3 className='text-2xl font-bold text-gray-900'>{artist.name}</h3>
                         {artist.isVerified && (
                           <span className='inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-full'>
-                            <CheckCircleIcon className='h-3.5 w-3.5' /> Verified
+                            <CheckCircleIcon className='h-3.5 w-3.5' /> {t('recruiterArtistProfile.hero.verified')}
                           </span>
                         )}
                         {artist.isPremium && (
-                          <span className='px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 rounded-full'>Premium</span>
+                          <span className='px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 rounded-full'>{t('recruiterArtistProfile.hero.premium')}</span>
                         )}
                       </div>
                       <p className='text-sm text-primary font-medium mt-0.5'>{artist.category}</p>
                     </div>
                   </div>
                   <p className='text-sm text-gray-600 leading-relaxed'>
-                    {artist.bio || 'No biography provided.'}
+                    {artist.bio || t('recruiterArtistProfile.hero.noBio')}
                   </p>
                   <div className='mt-3 max-w-md'>
                     <ProfileCompletionBar percentage={artist.profileCompletionPercentage || 0} />
@@ -524,7 +530,7 @@ export const ArtistProfilePage = () => {
 
               {/* Skills */}
               <Card>
-                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Skills</h4>
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.skills')}</h4>
                 {artist.skills.length > 0 ? (
                   <div className='flex flex-wrap gap-2'>
                     {artist.skills.map(skill => (
@@ -534,75 +540,75 @@ export const ArtistProfilePage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className='text-sm text-gray-500'>No skills listed.</p>
+                  <p className='text-sm text-gray-500'>{t('recruiterArtistProfile.sections.noSkills')}</p>
                 )}
               </Card>
 
               {/* Overview */}
               <Card>
-                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Overview</h4>
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.overview')}</h4>
                 <div className='grid grid-cols-2 sm:grid-cols-3 gap-y-5 gap-x-4 text-sm'>
                   {artist.location && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Location</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.location')}</p>
                       <p className='font-medium text-gray-800'>{artist.location}</p>
                     </div>
                   )}
                   {(artist.experienceYears != null || artist.experienceLevel) && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Experience</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.experience')}</p>
                       <p className='font-medium text-gray-800'>
-                        {artist.experienceYears != null ? `${artist.experienceYears} yrs` : ''}
+                        {artist.experienceYears != null ? t('common.units.yearsShort', { count: artist.experienceYears }) : ''}
                         {artist.experienceYears != null && artist.experienceLevel ? ' · ' : ''}
-                        {artist.experienceLevel || ''}
+                        {artist.experienceLevel ? tEnum(artist.experienceLevel) : ''}
                       </p>
                     </div>
                   )}
                   {artist.gender && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Gender</p>
-                      <p className='font-medium text-gray-800 capitalize'>{artist.gender.toLowerCase()}</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.gender')}</p>
+                      <p className='font-medium text-gray-800 capitalize'>{tEnum(artist.gender)}</p>
                     </div>
                   )}
                   {artist.dateOfBirth && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Date of Birth</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.dateOfBirth')}</p>
                       <p className='font-medium text-gray-800'>{artist.dateOfBirth}</p>
                     </div>
                   )}
                   {artist.maritalStatus && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Marital Status</p>
-                      <p className='font-medium text-gray-800 capitalize'>{artist.maritalStatus.toLowerCase()}</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.maritalStatus')}</p>
+                      <p className='font-medium text-gray-800 capitalize'>{tEnum(artist.maritalStatus)}</p>
                     </div>
                   )}
                   {artist.availability && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Availability</p>
-                      <p className='font-medium text-gray-800'>{artist.availability}</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.availability')}</p>
+                      <p className='font-medium text-gray-800'>{enumOrText(artist.availability)}</p>
                     </div>
                   )}
                   {artist.preferredJobType && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Preferred Job Type</p>
-                      <p className='font-medium text-gray-800'>{artist.preferredJobType}</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.preferredJobType')}</p>
+                      <p className='font-medium text-gray-800'>{tEnum(artist.preferredJobType)}</p>
                     </div>
                   )}
                   {artist.workSchedule && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Work Schedule</p>
-                      <p className='font-medium text-gray-800'>{artist.workSchedule}</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.workSchedule')}</p>
+                      <p className='font-medium text-gray-800'>{enumOrText(artist.workSchedule)}</p>
                     </div>
                   )}
                   {artist.hourlyRate != null && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Per Day</p>
-                      <p className='font-medium text-gray-800'>₹ {artist.hourlyRate.toLocaleString('en-IN')}/hr</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.perDay')}</p>
+                      <p className='font-medium text-gray-800'>{t('recruiterArtistProfile.fields.hourlyRateValue', { amount: artist.hourlyRate.toLocaleString('en-IN') })}</p>
                     </div>
                   )}
                   {(artist.expectedSalaryMin != null || artist.expectedSalaryMax != null) && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Expected Salary</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.expectedSalary')}</p>
                       <p className='font-medium text-gray-800'>
                         ₹{' '}
                         {artist.expectedSalaryMin != null ? artist.expectedSalaryMin.toLocaleString('en-IN') : ''}
@@ -613,14 +619,14 @@ export const ArtistProfilePage = () => {
                   )}
                   {artist.lastActive && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Last Active</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.lastActive')}</p>
                       <p className='font-medium text-gray-800'>{new Date(artist.lastActive).toLocaleDateString()}</p>
                     </div>
                   )}
                   {artist.hasPassport !== undefined && (
                     <div>
-                      <p className='text-xs text-gray-500 mb-0.5'>Passport</p>
-                      <p className='font-medium text-gray-800'>{artist.hasPassport ? 'Yes' : 'No'}</p>
+                      <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.passport')}</p>
+                      <p className='font-medium text-gray-800'>{artist.hasPassport ? t('common.actions.yes') : t('common.actions.no')}</p>
                     </div>
                   )}
                 </div>
@@ -629,7 +635,7 @@ export const ArtistProfilePage = () => {
               {/* Languages */}
               {artist.languages && artist.languages.length > 0 && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Languages</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.languages')}</h4>
                   <div className='flex flex-wrap gap-2'>
                     {artist.languages.map(lang => (
                       <span key={lang} className='px-3 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 rounded-full'>
@@ -643,7 +649,7 @@ export const ArtistProfilePage = () => {
               {/* Genres */}
               {artist.genres && artist.genres.length > 0 && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Genres</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.genres')}</h4>
                   <div className='flex flex-wrap gap-2'>
                     {artist.genres.map(genre => (
                       <span key={genre} className='px-3 py-1.5 text-sm font-medium bg-amber-50 text-amber-700 rounded-full'>
@@ -657,7 +663,7 @@ export const ArtistProfilePage = () => {
               {/* Comfortable Areas */}
               {artist.comfortableAreas && artist.comfortableAreas.length > 0 && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Comfortable Areas</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.comfortableAreas')}</h4>
                   <div className='flex flex-wrap gap-2'>
                     {artist.comfortableAreas.map(area => (
                       <span key={area} className='px-3 py-1.5 text-sm font-medium bg-green-50 text-green-700 rounded-full'>
@@ -671,7 +677,7 @@ export const ArtistProfilePage = () => {
               {/* Travel Cities */}
               {artist.travelCities && artist.travelCities.length > 0 && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Willing to Travel</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.travel')}</h4>
                   <div className='flex flex-wrap gap-2'>
                     {artist.travelCities.map(city => (
                       <span key={city} className='px-3 py-1.5 text-sm font-medium bg-purple-50 text-purple-700 rounded-full'>
@@ -685,60 +691,60 @@ export const ArtistProfilePage = () => {
               {/* Physical Attributes */}
               {(artist.height != null || artist.weight != null || artist.hairColor || artist.eyeColor || artist.complexion || artist.shoeSize) && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Physical Attributes</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.physical')}</h4>
                   <div className='grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-4 text-sm'>
                     {artist.height != null && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Height</p>
-                        <p className='font-medium text-gray-800'>{artist.height} ft</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.height')}</p>
+                        <p className='font-medium text-gray-800'>{t('recruiterArtistProfile.fields.heightValue', { value: artist.height })}</p>
                       </div>
                     )}
                     {artist.weight != null && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Weight</p>
-                        <p className='font-medium text-gray-800'>{artist.weight} kg</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.weight')}</p>
+                        <p className='font-medium text-gray-800'>{t('recruiterArtistProfile.fields.weightValue', { value: artist.weight })}</p>
                       </div>
                     )}
                     {artist.hairColor && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Hair Color</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.hairColor')}</p>
                         <p className='font-medium text-gray-800'>{artist.hairColor}</p>
                       </div>
                     )}
                     {artist.hairLength && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Hair Length</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.hairLength')}</p>
                         <p className='font-medium text-gray-800'>{artist.hairLength}</p>
                       </div>
                     )}
                     {artist.eyeColor && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Eye Color</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.eyeColor')}</p>
                         <p className='font-medium text-gray-800'>{artist.eyeColor}</p>
                       </div>
                     )}
                     {artist.complexion && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Complexion</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.complexion')}</p>
                         <p className='font-medium text-gray-800'>{artist.complexion}</p>
                       </div>
                     )}
                     {artist.shoeSize && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Shoe Size</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.shoeSize')}</p>
                         <p className='font-medium text-gray-800'>{artist.shoeSize}</p>
                       </div>
                     )}
                     {artist.hasTattoo !== undefined && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Tattoo</p>
-                        <p className='font-medium text-gray-800'>{artist.hasTattoo ? 'Yes' : 'No'}</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.tattoo')}</p>
+                        <p className='font-medium text-gray-800'>{artist.hasTattoo ? t('common.actions.yes') : t('common.actions.no')}</p>
                       </div>
                     )}
                     {artist.hasMole !== undefined && (
                       <div>
-                        <p className='text-xs text-gray-500 mb-0.5'>Mole</p>
-                        <p className='font-medium text-gray-800'>{artist.hasMole ? 'Yes' : 'No'}</p>
+                        <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.mole')}</p>
+                        <p className='font-medium text-gray-800'>{artist.hasMole ? t('common.actions.yes') : t('common.actions.no')}</p>
                       </div>
                     )}
                   </div>
@@ -748,7 +754,7 @@ export const ArtistProfilePage = () => {
               {/* Achievements */}
               {artist.achievements && artist.achievements.length > 0 && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Achievements</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.achievements')}</h4>
                   <ul className='space-y-2'>
                     {artist.achievements.map((achievement, i) => (
                       <li key={i} className='flex items-start gap-2 text-sm text-gray-700'>
@@ -763,7 +769,7 @@ export const ArtistProfilePage = () => {
               {/* Certifications */}
               {artist.certifications && artist.certifications.length > 0 && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Certifications</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.certifications')}</h4>
                   <ul className='space-y-2'>
                     {artist.certifications.map((cert, i) => (
                       <li key={i} className='flex items-start gap-2 text-sm text-gray-700'>
@@ -778,7 +784,7 @@ export const ArtistProfilePage = () => {
               {/* Video */}
               {artist.videoUrl && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Video</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.video')}</h4>
                   <video
                     src={artist.videoUrl}
                     controls
@@ -793,32 +799,32 @@ export const ArtistProfilePage = () => {
 
               {/* Actions */}
               <Card>
-                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Actions</h4>
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.actions')}</h4>
                 {checkingPendingRequest ? (
-                  <div className='w-full py-2.5 text-center text-sm text-gray-500'>Checking status...</div>
+                  <div className='w-full py-2.5 text-center text-sm text-gray-500'>{t('recruiterArtistProfile.hire.checking')}</div>
                 ) : hasPendingRequest ? (
                   <div className='w-full py-2.5 px-4 bg-amber-50 border border-amber-200 rounded-lg text-center'>
                     <div className='flex items-center justify-center gap-2'>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                       </svg>
-                      <span className='text-sm font-semibold text-amber-800'>Pending Hire Request</span>
+                      <span className='text-sm font-semibold text-amber-800'>{t('recruiterArtistProfile.hire.pendingTitle')}</span>
                     </div>
-                    <p className='text-xs text-amber-600 mt-1'>You already sent a hire request to this artist</p>
+                    <p className='text-xs text-amber-600 mt-1'>{t('recruiterArtistProfile.hire.pendingMessage')}</p>
                   </div>
                 ) : (
                   <button
                     onClick={handleOpenHireModal}
                     className='w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary'>
                     <BriefcaseIcon className='mr-2 h-5 w-5' />
-                    Send Hire Request
+                    {t('recruiterArtistProfile.hire.send')}
                   </button>
                 )}
               </Card>
 
               {/* Contact & Links */}
               <Card>
-                <h4 className='text-lg font-semibold text-gray-800 mb-4'>Contact & Links</h4>
+                <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.contact')}</h4>
                 <ul className='space-y-3 text-sm'>
                   {artist.email && (
                     <li className='flex items-center gap-3'>
@@ -846,7 +852,7 @@ export const ArtistProfilePage = () => {
                     <li className='flex items-center gap-3'>
                       <LinkIcon className='h-4 w-4 text-gray-400 shrink-0' />
                       <a href={artist.portfolioUrl} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline truncate'>
-                        Portfolio
+                        {t('recruiterArtistProfile.fields.portfolio')}
                       </a>
                     </li>
                   )}
@@ -864,17 +870,17 @@ export const ArtistProfilePage = () => {
               {/* Stats */}
               {(artist.totalApplications !== undefined || artist.totalHires !== undefined) && (
                 <Card>
-                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>Stats</h4>
+                  <h4 className='text-lg font-semibold text-gray-800 mb-4'>{t('recruiterArtistProfile.sections.stats')}</h4>
                   <div className='space-y-3 text-sm'>
                     {artist.totalApplications !== undefined && (
                       <div className='flex justify-between'>
-                        <span className='text-gray-500'>Total Applications</span>
+                        <span className='text-gray-500'>{t('recruiterArtistProfile.fields.totalApplications')}</span>
                         <span className='font-semibold text-gray-800'>{artist.totalApplications}</span>
                       </div>
                     )}
                     {artist.totalHires !== undefined && (
                       <div className='flex justify-between'>
-                        <span className='text-gray-500'>Total Hires</span>
+                        <span className='text-gray-500'>{t('recruiterArtistProfile.fields.totalHires')}</span>
                         <span className='font-semibold text-gray-800'>{artist.totalHires}</span>
                       </div>
                     )}
@@ -899,7 +905,7 @@ export const ArtistProfilePage = () => {
               setPhotoPreviewOpen(false)
             }}
             className='absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors'
-            aria-label='Close preview'>
+            aria-label={t('recruiterArtistProfile.preview.close')}>
             <XIcon className='h-6 w-6' />
           </button>
           <img
@@ -924,12 +930,12 @@ export const ArtistProfilePage = () => {
               setCoverPreviewOpen(false)
             }}
             className='absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors'
-            aria-label='Close preview'>
+            aria-label={t('recruiterArtistProfile.preview.close')}>
             <XIcon className='h-6 w-6' />
           </button>
           <img
             src={artist.coverPhotoUrl}
-            alt='Cover'
+            alt={t('recruiterArtistProfile.hero.coverAlt')}
             className='max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl'
             onClick={(e) => e.stopPropagation()}
           />

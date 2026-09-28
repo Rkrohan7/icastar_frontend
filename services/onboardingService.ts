@@ -1,6 +1,7 @@
 import api from './apiClient'
 import { invalidateUserCache } from './userService'
 import { invalidateArtistProfileCache } from './artistService'
+import { translate } from '@/i18n'
 
 export interface OnboardingData {
   category: string
@@ -46,13 +47,13 @@ export const onboardingService = {
       })
       return {
         success: true,
-        message: response.data.message || 'Onboarding completed successfully',
+        message: response.data.message || translate('services.onboarding.completed'),
       }
     } catch (error: any) {
       console.error('Onboarding submission failed:', error)
       throw new Error(
         error.response?.data?.message ||
-          'Failed to complete onboarding. Please try again.',
+          translate('services.onboarding.failed'),
       )
     }
   },
@@ -70,13 +71,13 @@ export const onboardingService = {
       invalidateArtistProfileCache()
       return {
         success: true,
-        message: response.data.message || 'Onboarding completed successfully',
+        message: response.data.message || translate('services.onboarding.completed'),
       }
     } catch (error: any) {
       console.error('Onboarding JSON submission failed:', error)
       throw new Error(
         error.response?.data?.message ||
-          'Failed to complete onboarding. Please try again.',
+          translate('services.onboarding.failed'),
       )
     }
   },
@@ -98,12 +99,12 @@ export const onboardingService = {
       // Normalize to expected shape
       return (data || []).map((it: any) => ({
         id: String(it.id ?? it.artistTypeId ?? it.typeId ?? ''),
-        name: String(it.name ?? it.typeName ?? 'Unknown'),
+        name: String(it.name ?? it.typeName ?? translate('services.fallback.unknown')),
         description: String(it.description ?? it.summary ?? ''),
       }))
     } catch (error) {
       console.error('Failed to fetch categories:', error)
-      throw new Error('Failed to load categories. Please try again.')
+      throw new Error(translate('services.onboarding.categoriesFailed'))
     }
   },
 
@@ -113,7 +114,7 @@ export const onboardingService = {
       return response.data
     } catch (error) {
       console.error('Failed to fetch skills:', error)
-      throw new Error('Failed to load skills. Please try again.')
+      throw new Error(translate('services.onboarding.skillsFailed'))
     }
   },
 
@@ -123,7 +124,7 @@ export const onboardingService = {
       return response.data
     } catch (error) {
       console.error('Failed to fetch languages:', error)
-      throw new Error('Failed to load languages. Please try again.')
+      throw new Error(translate('services.onboarding.languagesFailed'))
     }
   },
 
@@ -145,7 +146,7 @@ export const onboardingService = {
       return response.data
     } catch (error) {
       console.error('Media upload failed:', error)
-      throw new Error('Failed to upload media. Please try again.')
+      throw new Error(translate('services.onboarding.mediaUploadFailed'))
     }
   },
 }

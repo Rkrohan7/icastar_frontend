@@ -5,6 +5,7 @@ import { Pagination } from '../../components/Pagination'
 import { SearchIcon } from '../../components/icons/IconComponents'
 import { useNavigate } from 'react-router-dom'
 import usePageParam from '../../hooks/usePageParam'
+import { useTranslation } from '@/i18n'
 
 // Format date to readable format: "22 Dec 2025, 12:36 PM"
 const formatDate = (iso?: string) => {
@@ -26,6 +27,7 @@ const formatDate = (iso?: string) => {
 }
 
 export const PastHiresPage = () => {
+  const { t, tEnum } = useTranslation()
   const [currentPage, setCurrentPage] = usePageParam('page', 1)
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
@@ -74,7 +76,7 @@ export const PastHiresPage = () => {
         setTotalPages(res.totalPages)
       } catch (e: any) {
         console.error('Error fetching hires:', e)
-        setError(e?.message || 'Failed to load hires')
+        setError(e?.message || t('pastHires.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -97,8 +99,8 @@ export const PastHiresPage = () => {
   return (
     <div>
       <div className='mb-6'>
-        <h2 className='text-3xl font-bold text-gray-900'>Past Hires</h2>
-        <p className='text-gray-600 mt-2'>All candidates you have successfully hired</p>
+        <h2 className='text-3xl font-bold text-gray-900'>{t('pastHires.title')}</h2>
+        <p className='text-gray-600 mt-2'>{t('pastHires.subtitle')}</p>
       </div>
 
       <Card className='mb-6'>
@@ -107,7 +109,7 @@ export const PastHiresPage = () => {
             <label
               htmlFor='search-hires'
               className='block text-sm font-medium text-gray-700'>
-              Search by Name, Title, or Skill
+              {t('pastHires.searchLabel')}
             </label>
             <div className='relative mt-1'>
               <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3'>
@@ -117,7 +119,7 @@ export const PastHiresPage = () => {
                 type='text'
                 id='search-hires'
                 className='block w-full rounded-lg border-gray-300 bg-white pl-10 shadow-sm transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5'
-                placeholder='e.g., Elaine Benes, Copywriter, SEO'
+                placeholder={t('pastHires.searchPlaceholder')}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -127,7 +129,7 @@ export const PastHiresPage = () => {
             <label
               htmlFor='job-filter'
               className='block text-sm font-medium text-gray-700'>
-              Filter by Job
+              {t('pastHires.jobFilterLabel')}
             </label>
             <select
               id='job-filter'
@@ -136,7 +138,7 @@ export const PastHiresPage = () => {
               onChange={e => setJobFilter(e.target.value)}>
               {jobTitles.map(title => (
                 <option key={title} value={title}>
-                  {title === 'All' ? 'All Jobs' : title}
+                  {title === 'All' ? t('pastHires.allJobs') : title}
                 </option>
               ))}
             </select>
@@ -145,7 +147,7 @@ export const PastHiresPage = () => {
             <button
               onClick={handleClearFilters}
               className='w-full justify-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors'>
-              Clear
+              {t('pastHires.clear')}
             </button>
           </div>
         </div>
@@ -159,40 +161,40 @@ export const PastHiresPage = () => {
                 <th
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Artist
+                  {t('pastHires.table.artist')}
                 </th>
                 <th
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Job Title
+                  {t('pastHires.table.jobTitle')}
                 </th>
                 <th
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Hired On
+                  {t('pastHires.table.hiredOn')}
                 </th>
                 <th
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Status
+                  {t('common.labels.status')}
                 </th>
                 <th
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Salary
+                  {t('common.labels.salary')}
                 </th>
                 <th
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Rating
+                  {t('pastHires.table.rating')}
                 </th>
                 <th
                   scope='col'
                   className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Feedback
+                  {t('pastHires.table.feedback')}
                 </th>
                 <th scope='col' className='relative px-6 py-3'>
-                  <span className='sr-only'>Actions</span>
+                  <span className='sr-only'>{t('common.labels.actions')}</span>
                 </th>
               </tr>
             </thead>
@@ -202,7 +204,7 @@ export const PastHiresPage = () => {
                   <td colSpan={8} className='text-center py-12 px-6'>
                     <div className='flex flex-col items-center justify-center'>
                       <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600 mb-3'></div>
-                      <p className='text-sm text-gray-500'>Loading your past hires...</p>
+                      <p className='text-sm text-gray-500'>{t('pastHires.loading')}</p>
                     </div>
                   </td>
                 </tr>
@@ -229,7 +231,7 @@ export const PastHiresPage = () => {
                         </div>
                         <div className='ml-4'>
                           <div className='text-sm font-semibold text-gray-900'>
-                            {hire.artistName || 'Unknown Artist'}
+                            {hire.artistName || t('pastHires.unknownArtist')}
                           </div>
                           <div className='text-xs text-gray-500'>
                             {hire.artistEmail || '—'}
@@ -252,11 +254,11 @@ export const PastHiresPage = () => {
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap'>
                       <span className='px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800'>
-                        HIRED
+                        {t('pastHires.hiredBadge')}
                       </span>
                       {hire.isCompleted && (
                         <span className='ml-2 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700'>
-                          Completed
+                          {tEnum('COMPLETED')}
                         </span>
                       )}
                     </td>
@@ -294,7 +296,7 @@ export const PastHiresPage = () => {
                       <button
                         onClick={() => handleViewDetails(hire)}
                         className='inline-flex items-center px-3 py-1.5 border border-amber-300 rounded-lg text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors'>
-                        View
+                        {t('common.actions.view')}
                         <svg className='ml-1.5 h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
                         </svg>
@@ -307,12 +309,12 @@ export const PastHiresPage = () => {
                   <td colSpan={8} className='text-center py-16 px-6'>
                     <SearchIcon className='mx-auto h-12 w-12 text-gray-400' />
                     <h3 className='mt-2 text-lg font-medium text-gray-900'>
-                      No Past Hires Found
+                      {t('pastHires.empty.title')}
                     </h3>
                     <p className='mt-1 text-sm text-gray-500'>
                       {searchTerm || jobFilter !== 'All'
-                        ? 'Try adjusting your search or filter criteria.'
-                        : 'You haven\'t hired any candidates yet.'}
+                        ? t('pastHires.empty.filtered')
+                        : t('pastHires.empty.none')}
                     </p>
                   </td>
                 </tr>

@@ -16,18 +16,20 @@ import superAdminService, {
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
+import { useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
-const STATUS_OPTIONS: { label: string; value: AuditionAdminStatus | '' }[] = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'Scheduled', value: 'SCHEDULED' },
-  { label: 'In Progress', value: 'IN_PROGRESS' },
-  { label: 'Completed', value: 'COMPLETED' },
-  { label: 'Approved', value: 'APPROVED' },
-  { label: 'Rejected', value: 'REJECTED' },
-  { label: 'Cancelled', value: 'CANCELLED' },
+// '' = no filter. Enum values are labelled with tEnum(value) at render time.
+const STATUS_OPTIONS: { labelKey?: string; value: AuditionAdminStatus | '' }[] = [
+  { labelKey: 'adminAuditions.allStatuses', value: '' },
+  { value: 'PENDING' },
+  { value: 'SCHEDULED' },
+  { value: 'IN_PROGRESS' },
+  { value: 'COMPLETED' },
+  { value: 'APPROVED' },
+  { value: 'REJECTED' },
+  { value: 'CANCELLED' },
 ]
 
 interface Props {
@@ -36,6 +38,7 @@ interface Props {
 }
 
 export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title }) => {
+  const { t, tEnum } = useTranslation()
   const [list, setList] = useState<SuperAdminAudition[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -66,9 +69,9 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
     } catch (err: any) {
       const s = err?.response?.status
       const m = err?.response?.data?.message
-      if (s === 401) setError('Unauthorized — log in as admin.')
-      else if (s === 403) setError('Access denied — admin role required.')
-      else setError(m || err?.message || 'Unable to load auditions.')
+      if (s === 401) setError(t('adminAuditions.errors.unauthorized'))
+      else if (s === 403) setError(t('adminAuditions.errors.forbidden'))
+      else setError(m || err?.message || t('adminAuditions.errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -92,7 +95,7 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
               setPage(0)
               setSearch(term)
             }}
-            placeholder='Search by title, project or recruiter...'
+            placeholder={t('adminAuditions.searchPlaceholder')}
           />
           <div className='flex-1 relative'>
             <SearchIcon className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
@@ -103,7 +106,7 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
                 setPage(0)
                 setType(e.target.value)
               }}
-              placeholder='Filter by type (e.g. LIVE_VIDEO)...'
+              placeholder={t('adminAuditions.typePlaceholder')}
               className='w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </div>
@@ -115,34 +118,34 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
             }}
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>{o.labelKey ? t(o.labelKey) : tEnum(o.value)}</option>
             ))}
           </select>
         </div>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {list.length} of {totalItems.toLocaleString()} auditions
+          {t('adminAuditions.showing', { shown: list.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <div className='py-16 text-center text-gray-500'>Loading...</div>
+          <div className='py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
         ) : error ? (
           <div className='py-16 text-center text-red-600'>{error}</div>
         ) : list.length === 0 ? (
-          <div className='py-16 text-center text-gray-500'>No auditions found</div>
+          <div className='py-16 text-center text-gray-500'>{t('adminAuditions.empty')}</div>
         ) : (
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50 border-b border-gray-200'>
                 <tr>
-                  <Th>Audition</Th>
-                  <Th>Artist</Th>
-                  <Th>Recruiter</Th>
-                  <Th>Type</Th>
-                  <Th>Scheduled</Th>
-                  <Th>Status</Th>
-                  <Th>Actions</Th>
+                  <Th>{t('adminAuditions.table.audition')}</Th>
+                  <Th>{t('adminAuditions.table.artist')}</Th>
+                  <Th>{t('adminAuditions.table.recruiter')}</Th>
+                  <Th>{t('common.labels.type')}</Th>
+                  <Th>{t('adminAuditions.table.scheduled')}</Th>
+                  <Th>{t('common.labels.status')}</Th>
+                  <Th>{t('common.labels.actions')}</Th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
@@ -162,10 +165,10 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
                     </td>
                     <td className='px-4 py-3 text-xs'>
                       <span className='inline-block px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium'>
-                        {(a.auditionType || 'N/A').replace(/_/g, ' ')}
+                        {a.auditionType ? tEnum(a.auditionType) : t('common.status.notAvailable')}
                       </span>
                       {a.durationMinutes && (
-                        <p className='text-gray-500 mt-1'>{a.durationMinutes} min</p>
+                        <p className='text-gray-500 mt-1'>{t('adminAuditions.durationMinutes', { count: a.durationMinutes })}</p>
                       )}
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-700'>
@@ -181,7 +184,7 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
                       <button
                         onClick={() => setEditing(a)}
                         className='p-1.5 text-gray-600 hover:bg-gray-100 rounded'
-                        title='Update status'>
+                        title={t('adminAuditions.updateStatus')}>
                         <EditIcon className='h-4 w-4' />
                       </button>
                     </td>
@@ -218,6 +221,7 @@ const Th: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 )
 
 const AuditionStatusBadge: React.FC<{ status: AuditionAdminStatus }> = ({ status }) => {
+  const { tEnum } = useTranslation()
   const cfg: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
     SCHEDULED: { bg: 'bg-blue-50', text: 'text-blue-700', icon: <CalendarIcon className='h-3 w-3' /> },
     IN_PROGRESS: { bg: 'bg-yellow-50', text: 'text-yellow-700', icon: null },
@@ -231,7 +235,7 @@ const AuditionStatusBadge: React.FC<{ status: AuditionAdminStatus }> = ({ status
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
       {c.icon}
-      {status}
+      {tEnum(status)}
     </span>
   )
 }
@@ -241,6 +245,7 @@ const AuditionStatusModal: React.FC<{
   onClose: () => void
   onSaved: () => void
 }> = ({ audition, onClose, onSaved }) => {
+  const { t, tEnum } = useTranslation()
   const [status, setStatus] = useState<AuditionAdminStatus>(audition.status || 'SCHEDULED')
   const [feedback, setFeedback] = useState('')
   const [rating, setRating] = useState<number>(0)
@@ -258,7 +263,7 @@ const AuditionStatusModal: React.FC<{
       onSaved()
     } catch (e: any) {
       const m = e?.response?.data?.message
-      setErr(m || e?.message || 'Failed to update status')
+      setErr(m || e?.message || t('adminAuditions.errors.statusFailed'))
     } finally {
       setSaving(false)
     }
@@ -268,7 +273,7 @@ const AuditionStatusModal: React.FC<{
     <div className='fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4' onClick={onClose}>
       <div className='bg-white rounded-xl shadow-xl max-w-md w-full p-6' onClick={(e) => e.stopPropagation()}>
         <div className='flex items-center justify-between mb-4'>
-          <h2 className='text-lg font-bold text-gray-900'>Update Audition Status</h2>
+          <h2 className='text-lg font-bold text-gray-900'>{t('adminAuditions.modal.title')}</h2>
           <button onClick={onClose} className='p-1 hover:bg-gray-100 rounded'>
             <XIcon className='h-5 w-5' />
           </button>
@@ -279,26 +284,26 @@ const AuditionStatusModal: React.FC<{
         </p>
         <div className='space-y-3'>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Status</label>
+            <label className='text-xs font-medium text-gray-600'>{t('common.labels.status')}</label>
             <select
               value={status} onChange={(e) => setStatus(e.target.value as AuditionAdminStatus)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
               {STATUS_OPTIONS.filter((o) => o.value).map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>{tEnum(o.value)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Feedback</label>
+            <label className='text-xs font-medium text-gray-600'>{t('adminAuditions.modal.feedback')}</label>
             <textarea
               value={feedback} onChange={(e) => setFeedback(e.target.value)}
               rows={3}
-              placeholder='Optional feedback...'
+              placeholder={t('adminAuditions.modal.feedbackPlaceholder')}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </div>
           <div>
-            <label className='text-xs font-medium text-gray-600'>Rating (1-5)</label>
+            <label className='text-xs font-medium text-gray-600'>{t('adminAuditions.modal.rating')}</label>
             <div className='flex gap-1 mt-1'>
               {[1, 2, 3, 4, 5].map((r) => (
                 <button
@@ -318,12 +323,12 @@ const AuditionStatusModal: React.FC<{
         </div>
         <div className='mt-6 flex justify-end gap-2'>
           <button onClick={onClose} className='px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50'>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={save} disabled={saving}
             className='px-4 py-2 text-sm font-medium bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] disabled:opacity-50'>
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('common.actions.saving') : t('common.actions.save')}
           </button>
         </div>
       </div>
@@ -332,8 +337,9 @@ const AuditionStatusModal: React.FC<{
 }
 
 // Approvals view: same component, pre-filtered to PENDING
-export const SuperAdminAuditionApprovalsPage: React.FC = () => (
-  <SuperAdminAuditionsPage initialStatus='PENDING' title='Auditions awaiting approval' />
-)
+export const SuperAdminAuditionApprovalsPage: React.FC = () => {
+  const { t } = useTranslation()
+  return <SuperAdminAuditionsPage initialStatus='PENDING' title={t('adminAuditions.approvalsTitle')} />
+}
 
 export default SuperAdminAuditionsPage

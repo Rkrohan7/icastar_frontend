@@ -8,6 +8,7 @@ import superAdminService, { InterviewItem } from '../../services/superAdminServi
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
+import { useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
@@ -20,6 +21,7 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export const SuperAdminInterviewsPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [list, setList] = useState<InterviewItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -43,15 +45,15 @@ export const SuperAdminInterviewsPage: React.FC = () => {
       } catch (e: any) {
         const s = e?.response?.status
         const m = e?.response?.data?.message
-        if (s === 401) setError('Unauthorized — log in as admin.')
-        else if (s === 403) setError('Access denied — admin role required.')
-        else setError(m || e?.message || 'Unable to load interviews.')
+        if (s === 401) setError(t('adminInterviews.errors.unauthorized'))
+        else if (s === 403) setError(t('adminInterviews.errors.accessDenied'))
+        else setError(m || e?.message || t('adminInterviews.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [page, status, search])
+  }, [page, status, search, t])
 
   return (
     <div className='p-6 space-y-4'>
@@ -62,7 +64,7 @@ export const SuperAdminInterviewsPage: React.FC = () => {
             setPage(0)
             setSearch(term)
           }}
-          placeholder='Search by artist, job or recruiter...'
+          placeholder={t('adminInterviews.searchPlaceholder')}
         />
         <select
           value={status}
@@ -72,21 +74,23 @@ export const SuperAdminInterviewsPage: React.FC = () => {
           }}
           className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s === 'All Statuses' ? '' : s}>{s.replace(/_/g, ' ')}</option>
+            <option key={s} value={s === 'All Statuses' ? '' : s}>
+              {s === 'All Statuses' ? t('adminInterviews.allStatuses') : tEnum(s)}
+            </option>
           ))}
         </select>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {list.length} of {totalItems.toLocaleString()} interviews
+          {t('adminInterviews.showing', { shown: list.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       {loading ? (
-        <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>Loading...</div>
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
       ) : error ? (
         <div className='bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl'>{error}</div>
       ) : list.length === 0 ? (
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center text-gray-500'>
-          No interviews found
+          {t('adminInterviews.empty')}
         </div>
       ) : (
         <div className='space-y-3'>
@@ -99,36 +103,36 @@ export const SuperAdminInterviewsPage: React.FC = () => {
                     <h3 className='font-semibold text-gray-900'>
                       {i.interviewScheduledAt
                         ? new Date(i.interviewScheduledAt).toLocaleString()
-                        : 'Not scheduled'}
+                        : t('adminInterviews.notScheduled')}
                     </h3>
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         STATUS_COLOR[i.status || ''] || 'bg-gray-100 text-gray-600'
                       }`}>
-                      {(i.status || 'N/A').replace(/_/g, ' ')}
+                      {i.status ? tEnum(i.status) : t('common.status.notAvailable')}
                     </span>
                   </div>
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-3 text-sm'>
                     <div>
-                      <p className='text-xs text-gray-500'>Artist</p>
+                      <p className='text-xs text-gray-500'>{t('adminInterviews.labels.artist')}</p>
                       <p className='font-medium text-gray-900 flex items-center gap-1'>
                         <UserCircleIcon className='h-3 w-3' /> {i.artistName || '—'}
                       </p>
                     </div>
                     <div>
-                      <p className='text-xs text-gray-500'>Job</p>
+                      <p className='text-xs text-gray-500'>{t('adminInterviews.labels.job')}</p>
                       <p className='font-medium text-gray-900 flex items-center gap-1'>
                         <BriefcaseIcon className='h-3 w-3' /> {i.jobTitle || '—'}
                       </p>
                     </div>
                     <div>
-                      <p className='text-xs text-gray-500'>Recruiter</p>
+                      <p className='text-xs text-gray-500'>{t('adminInterviews.labels.recruiter')}</p>
                       <p className='font-medium text-gray-900'>{i.recruiterName || '—'}</p>
                     </div>
                   </div>
                   {i.interviewNotes && (
                     <div className='mt-3 p-3 bg-gray-50 rounded-lg'>
-                      <p className='text-xs text-gray-500 mb-1'>Notes</p>
+                      <p className='text-xs text-gray-500 mb-1'>{t('adminInterviews.labels.notes')}</p>
                       <p className='text-sm text-gray-700'>{i.interviewNotes}</p>
                     </div>
                   )}

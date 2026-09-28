@@ -1,4 +1,5 @@
 import { ArtistProfile } from './artistService'
+import { translate } from '@/i18n'
 
 // Public (no-auth) endpoint. Uses a plain fetch so the axios auth
 // interceptor never attaches a token — the profile must load for anyone.
@@ -116,9 +117,9 @@ export async function getPublicArtistProfile(userId: string | number): Promise<A
   if (!res.ok || json.success === false) {
     const msg: string = json?.error?.message ?? ''
     if (res.status === 404 || msg.toLowerCase().includes('not found')) {
-      throw new Error('Profile not found')
+      throw new Error(translate('services.publicArtist.notFound'))
     }
-    throw new Error('Failed to load profile')
+    throw new Error(translate('services.publicArtist.loadFailed'))
   }
 
   // Response shape: { success: true, data: { ...fields } }

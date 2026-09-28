@@ -1,0 +1,86 @@
+import { defineMessages } from '../defineMessages'
+
+export default defineMessages({
+  en: {
+    title: 'Candidates',
+    subtitle: 'Track all your hire requests and candidates',
+    stats: {
+      totalRequests: 'Total Requests',
+      accepted: 'Accepted',
+      declined: 'Declined',
+      acceptanceRate: 'Acceptance Rate',
+    },
+    searchPlaceholder: 'Search by artist name, job title...',
+    allStatuses: 'All Statuses',
+    table: {
+      artist: 'Artist',
+      jobTitle: 'Job Title',
+      status: 'Status',
+      sentOn: 'Sent On',
+      emailSent: 'Email Sent',
+      actions: 'Actions',
+      loading: 'Loading candidates...',
+      empty: 'No candidates found',
+    },
+    rowActions: {
+      viewProfile: 'View Artist Profile',
+      updateStatus: 'Update Status',
+      sendReminder: 'Send Reminder',
+      withdraw: 'Withdraw Request',
+    },
+    pagination: {
+      showing: 'Showing {{from}} to {{to}} of {{total}} results',
+    },
+    confirmWithdraw: 'Are you sure you want to withdraw this hire request?',
+    toast: {
+      loadFailed: 'Failed to load candidates',
+      statusUpdated: 'Status updated successfully',
+      statusUpdateFailed: 'Failed to update status',
+      withdrawn: 'Hire request withdrawn',
+      withdrawFailed: 'Failed to withdraw request',
+      reminderSent: 'Reminder email sent to artist',
+      reminderFailed: 'Failed to send reminder',
+    },
+  },
+  mr: {
+    title: 'उमेदवार',
+    subtitle: 'तुमच्या सर्व नियुक्ती विनंत्या आणि उमेदवारांचा मागोवा घ्या',
+    stats: {
+      totalRequests: 'एकूण विनंत्या',
+      accepted: 'स्वीकारल्या',
+      declined: 'नाकारल्या',
+      acceptanceRate: 'स्वीकृती दर',
+    },
+    searchPlaceholder: 'कलाकाराचे नाव, नोकरीचे शीर्षक यानुसार शोधा...',
+    allStatuses: 'सर्व स्थिती',
+    table: {
+      artist: 'कलाकार',
+      jobTitle: 'नोकरीचे शीर्षक',
+      status: 'स्थिती',
+      sentOn: 'पाठवल्याची तारीख',
+      emailSent: 'ईमेल पाठवला',
+      actions: 'क्रिया',
+      loading: 'उमेदवार लोड होत आहेत...',
+      empty: 'कोणतेही उमेदवार सापडले नाहीत',
+    },
+    rowActions: {
+      viewProfile: 'कलाकाराचे प्रोफाइल पहा',
+      updateStatus: 'स्थिती अपडेट करा',
+      sendReminder: 'स्मरणपत्र पाठवा',
+      withdraw: 'विनंती मागे घ्या',
+    },
+    pagination: {
+      showing: '{{total}} पैकी {{from}} ते {{to}} निकाल दाखवत आहे',
+    },
+    confirmWithdraw: 'तुम्हाला खात्री आहे की तुम्ही ही नियुक्ती विनंती मागे घेऊ इच्छिता?',
+    toast: {
+      loadFailed: 'उमेदवार लोड करता आले नाहीत',
+      statusUpdated: 'स्थिती यशस्वीरित्या अपडेट झाली',
+      statusUpdateFailed: 'स्थिती अपडेट करता आली नाही',
+      withdrawn: 'नियुक्ती विनंती मागे घेतली',
+      withdrawFailed: 'विनंती मागे घेता आली नाही',
+      reminderSent: 'कलाकाराला स्मरणपत्र ईमेल पाठवला',
+      reminderFailed: 'स्मरणपत्र पाठवता आले नाही',
+    },
+  },
+})

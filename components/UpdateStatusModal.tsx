@@ -1,6 +1,17 @@
 import React, { useState } from 'react'
 import { HireRequestStatus } from '@/types'
 import Icon from './Icon'
+import { useTranslation } from '@/i18n'
+
+const STATUS_OPTIONS: HireRequestStatus[] = [
+  'PENDING',
+  'VIEWED',
+  'ACCEPTED',
+  'DECLINED',
+  'HIRED',
+  'WITHDRAWN',
+  'EXPIRED',
+]
 
 interface UpdateStatusModalProps {
   isOpen: boolean
@@ -17,6 +28,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
   currentStatus,
   artistName,
 }) => {
+  const { t, tEnum } = useTranslation()
   const [selectedStatus, setSelectedStatus] = useState<HireRequestStatus>(currentStatus)
   const [notes, setNotes] = useState('')
 
@@ -30,7 +42,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Update Status</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t('updateStatusModal.title')}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -41,39 +53,37 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
 
         <div className="p-6 space-y-4">
           <p className="text-sm text-gray-600">
-            Update hire request status for <span className="font-semibold">{artistName}</span>
+            {t('updateStatusModal.descriptionBefore')}<span className="font-semibold">{artistName}</span>{t('updateStatusModal.descriptionAfter')}
           </p>
 
           {/* Status Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
+              {t('common.labels.status')}
             </label>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value as HireRequestStatus)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
-              <option value="PENDING">Pending</option>
-              <option value="VIEWED">Viewed</option>
-              <option value="ACCEPTED">Accepted</option>
-              <option value="DECLINED">Declined</option>
-              <option value="HIRED">Hired</option>
-              <option value="WITHDRAWN">Withdrawn</option>
-              <option value="EXPIRED">Expired</option>
+              {STATUS_OPTIONS.map(status => (
+                <option key={status} value={status}>
+                  {tEnum(status)}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes (Optional)
+              {t('updateStatusModal.notesLabel')}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Add any additional notes or comments..."
+              placeholder={t('updateStatusModal.notesPlaceholder')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
             />
           </div>
@@ -84,13 +94,13 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={handleSubmit}
             className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover"
           >
-            Update Status
+            {t('updateStatusModal.submit')}
           </button>
         </div>
       </div>

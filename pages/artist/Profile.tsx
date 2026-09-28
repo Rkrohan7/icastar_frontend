@@ -14,6 +14,7 @@ import ExperienceSection, {
 } from '@/components/experience/ExperienceSection'
 import type { ArtistEducation, ArtistExperience } from '@/services/artistService'
 import EducationSection from '@/components/education/EducationSection'
+import { useTranslation } from '@/i18n'
 
 interface ArtistProfile {
   category: string
@@ -94,6 +95,7 @@ const Profile: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
   const navigate = useNavigate()
+  const { t, tEnum } = useTranslation()
 
   // Face Verification state
   const [isFaceModalOpen, setIsFaceModalOpen] = useState(false)
@@ -256,7 +258,7 @@ const Profile: React.FC = () => {
   // "Share Profile" opens a popup that shows the generated link + a Copy option.
   const handleShareProfile = () => {
     if (!userId) {
-      toast.error('Your profile link is not ready yet. Please refresh and try again.')
+      toast.error(t('artistProfile.toast.linkNotReady'))
       return
     }
     setLinkCopied(false)
@@ -268,10 +270,10 @@ const Profile: React.FC = () => {
     try {
       await navigator.clipboard.writeText(shareLink)
       setLinkCopied(true)
-      toast.success('Profile link copied!')
+      toast.success(t('artistProfile.toast.linkCopied'))
       setTimeout(() => setLinkCopied(false), 2000)
     } catch {
-      toast.error('Could not copy link')
+      toast.error(t('artistProfile.toast.copyFailed'))
     }
   }
 
@@ -341,11 +343,11 @@ const Profile: React.FC = () => {
 
       await artistService.updateMyProfile(payload)
       setIsEditing(false)
-      toast.success('Profile updated successfully!')
+      toast.success(t('artistProfile.toast.profileUpdated'))
       await fetchProfile()
     } catch (error) {
       console.error('Error updating profile:', error)
-      toast.error('Failed to update profile')
+      toast.error(t('artistProfile.toast.profileUpdateFailed'))
     } finally {
       setSaving(false)
     }
@@ -373,10 +375,10 @@ const Profile: React.FC = () => {
       applyExperiences(list =>
         exp.id != null ? list.map(e => (e.id === exp.id ? merged : e)) : [...list, merged],
       )
-      toast.success(exp.id != null ? 'Experience updated' : 'Experience added')
+      toast.success(exp.id != null ? t('artistProfile.toast.experienceUpdated') : t('artistProfile.toast.experienceAdded'))
     } catch (error) {
       console.error('Error saving experience:', error)
-      toast.error('Failed to save experience')
+      toast.error(t('artistProfile.toast.experienceSaveFailed'))
       throw error
     }
   }
@@ -385,10 +387,10 @@ const Profile: React.FC = () => {
     try {
       if (exp.id != null) await artistService.deleteExperience(exp.id)
       applyExperiences(list => list.filter((e, i) => (exp.id != null ? e.id !== exp.id : i !== index)))
-      toast.success('Experience deleted')
+      toast.success(t('artistProfile.toast.experienceDeleted'))
     } catch (error) {
       console.error('Error deleting experience:', error)
-      toast.error('Failed to delete experience')
+      toast.error(t('artistProfile.toast.experienceDeleteFailed'))
     }
   }
 
@@ -407,10 +409,10 @@ const Profile: React.FC = () => {
       applyEducations(list =>
         edu.id != null ? list.map(e => (e.id === edu.id ? merged : e)) : [...list, merged],
       )
-      toast.success(edu.id != null ? 'Education updated' : 'Education added')
+      toast.success(edu.id != null ? t('artistProfile.toast.educationUpdated') : t('artistProfile.toast.educationAdded'))
     } catch (error) {
       console.error('Error saving education:', error)
-      toast.error('Failed to save education')
+      toast.error(t('artistProfile.toast.educationSaveFailed'))
       throw error
     }
   }
@@ -419,10 +421,10 @@ const Profile: React.FC = () => {
     try {
       if (edu.id != null) await artistService.deleteEducation(edu.id)
       applyEducations(list => list.filter((e, i) => (edu.id != null ? e.id !== edu.id : i !== index)))
-      toast.success('Education deleted')
+      toast.success(t('artistProfile.toast.educationDeleted'))
     } catch (error) {
       console.error('Error deleting education:', error)
-      toast.error('Failed to delete education')
+      toast.error(t('artistProfile.toast.educationDeleteFailed'))
     }
   }
 
@@ -452,9 +454,9 @@ const Profile: React.FC = () => {
         videoRef.current.srcObject = stream
       }
     } catch (err: any) {
-      setCameraError('Camera access denied. Please allow camera permission and try again.')
+      setCameraError(t('artistProfile.faceModal.cameraDenied'))
     }
-  }, [])
+  }, [t])
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -502,9 +504,9 @@ const Profile: React.FC = () => {
         videoRef.current.srcObject = stream
       }
     } catch (err: any) {
-      setCameraError('Camera access denied.')
+      setCameraError(t('artistProfile.faceModal.cameraDeniedShort'))
     }
-  }, [])
+  }, [t])
 
   const handleSubmitFaceVerification = useCallback(async () => {
     if (!capturedBlob) return
@@ -515,30 +517,30 @@ const Profile: React.FC = () => {
       await artistService.submitFaceVerification(fileUrl)
       setFaceVerifyStatus('submitted')
       setLocalFaceVerified(true)
-      toast.success("Face verification submitted! We'll review and update your status.")
+      toast.success(t('artistProfile.toast.faceSubmitted'))
       setTimeout(() => closeFaceModal(), 1500)
     } catch (err: any) {
-      toast.error('Failed to submit face verification. Please try again.')
+      toast.error(t('artistProfile.toast.faceSubmitFailed'))
       setFaceVerifyStatus('captured')
     }
-  }, [capturedBlob, closeFaceModal])
+  }, [capturedBlob, closeFaceModal, t])
 
   const handleViewDocument = (docType: string) => {
-    toast.info(`Viewing ${docType} document`)
+    toast.info(t('artistProfile.toast.viewingDocument', { docType }))
     // Add document viewing logic here
   }
 
   const handleUploadDocument = async (file: File, docType: string) => {
-    const toastId = toast.loading(`Uploading ${docType}...`)
+    const toastId = toast.loading(t('artistProfile.toast.uploadingDocument', { docType }))
     try {
       // Simulate upload
       await new Promise(resolve => setTimeout(resolve, 1500))
       toast.dismiss(toastId)
-      toast.success(`${docType} uploaded successfully`)
+      toast.success(t('artistProfile.toast.documentUploaded', { docType }))
       // Refresh profile data or update state here
     } catch (error) {
       toast.dismiss(toastId)
-      toast.error(`Failed to upload ${docType}`)
+      toast.error(t('artistProfile.toast.documentUploadFailed', { docType }))
       console.error('Upload error:', error)
     }
   }
@@ -557,13 +559,13 @@ const Profile: React.FC = () => {
         <div className='bg-amber-100 p-4 rounded-full mb-4'>
           <Icon name='User' size={24} className='text-amber-600' />
         </div>
-        <h2 className='text-2xl font-bold text-gray-800 mb-2'>Profile Not Found</h2>
-        <p className='text-gray-600 mb-6'>Complete your profile to get started</p>
+        <h2 className='text-2xl font-bold text-gray-800 mb-2'>{t('artistProfile.notFound.title')}</h2>
+        <p className='text-gray-600 mb-6'>{t('artistProfile.notFound.subtitle')}</p>
         <button
           onClick={() => navigate('/settings')}
           className='bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-6 rounded-lg transition-colors'
         >
-          Complete Profile
+          {t('artistProfile.notFound.cta')}
         </button>
       </div>
     )
@@ -572,25 +574,25 @@ const Profile: React.FC = () => {
   const renderActorDetails = () => (
     <div className='space-y-6'>
       <div className='bg-white rounded-xl p-6 shadow-sm'>
-        <h3 className='text-lg font-semibold text-gray-800 mb-4'>Actor Details</h3>
+        <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.actor.title')}</h3>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div>
-            <p className='text-sm text-gray-500 mb-2'>Actor Type</p>
+            <p className='text-sm text-gray-500 mb-2'>{t('artistProfile.actor.actorType')}</p>
             {isEditing ? (
               <select
                 value={currentProfile?.actorType || 'skilled'}
                 onChange={(e) => handleInputChange('actorType', e.target.value as 'skilled' | 'known')}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
               >
-                <option value='skilled'>Skilled Actor</option>
-                <option value='known'>Known Actor</option>
+                <option value='skilled'>{t('artistProfile.actor.skilled')}</option>
+                <option value='known'>{t('artistProfile.actor.known')}</option>
               </select>
             ) : (
-              <p className='font-medium'>{currentProfile?.actorType === 'known' ? 'Known Actor' : 'Skilled Actor'}</p>
+              <p className='font-medium'>{currentProfile?.actorType === 'known' ? t('artistProfile.actor.known') : t('artistProfile.actor.skilled')}</p>
             )}
           </div>
           <div>
-            <p className='text-sm text-gray-500 mb-2'>Age</p>
+            <p className='text-sm text-gray-500 mb-2'>{t('common.labels.age')}</p>
             {isEditing ? (
               <input
                 type='number'
@@ -599,17 +601,17 @@ const Profile: React.FC = () => {
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
               />
             ) : (
-              <p className='font-medium'>{currentProfile?.age} years</p>
+              <p className='font-medium'>{t('artistProfile.actor.ageYears', { age: currentProfile?.age ?? '' })}</p>
             )}
           </div>
           <div>
-            <p className='text-sm text-gray-500 mb-2'>Height</p>
+            <p className='text-sm text-gray-500 mb-2'>{t('artistProfile.fields.height')}</p>
             {isEditing ? (
               <input
                 type='text'
                 value={currentProfile?.height || ''}
                 onChange={(e) => handleInputChange('height', e.target.value)}
-                placeholder="e.g., 5'8&quot;"
+                placeholder={t('artistProfile.actor.heightPlaceholder')}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
               />
             ) : (
@@ -617,7 +619,7 @@ const Profile: React.FC = () => {
             )}
           </div>
           <div>
-            <p className='text-sm text-gray-500 mb-2'>Weight</p>
+            <p className='text-sm text-gray-500 mb-2'>{t('artistProfile.fields.weight')}</p>
             {isEditing ? (
               <input
                 type='number'
@@ -626,7 +628,7 @@ const Profile: React.FC = () => {
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
               />
             ) : (
-              <p className='font-medium'>{currentProfile?.weight} kg</p>
+              <p className='font-medium'>{t('artistProfile.details.weightKg', { weight: currentProfile?.weight ?? '' })}</p>
             )}
           </div>
         </div>
@@ -637,30 +639,30 @@ const Profile: React.FC = () => {
   const renderDancerDetails = () => (
     <div className='space-y-6'>
       <div className='bg-white rounded-xl p-6 shadow-sm'>
-        <h3 className='text-lg font-semibold text-gray-800 mb-4'>Dancer Details</h3>
+        <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.dancer.title')}</h3>
         <div className='space-y-4'>
           <div>
-            <p className='text-sm text-gray-500 mb-2'>Experience Years</p>
+            <p className='text-sm text-gray-500 mb-2'>{t('artistProfile.dancer.experienceYears')}</p>
             {isEditing ? (
               <input
                 type='text'
                 value={currentProfile?.experienceYears || ''}
                 onChange={(e) => handleInputChange('experienceYears', e.target.value)}
-                placeholder='e.g., 5 years'
+                placeholder={t('artistProfile.dancer.experiencePlaceholder')}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
               />
             ) : (
-              <p className='font-medium'>{currentProfile?.experienceYears} years</p>
+              <p className='font-medium'>{t('artistProfile.dancer.yearsValue', { value: currentProfile?.experienceYears ?? '' })}</p>
             )}
           </div>
           <div>
-            <p className='text-sm text-gray-500 mb-2'>Dance Styles</p>
+            <p className='text-sm text-gray-500 mb-2'>{t('artistProfile.dancer.danceStyles')}</p>
             {isEditing ? (
               <input
                 type='text'
                 value={currentProfile?.danceStyles?.join(', ') || ''}
                 onChange={(e) => handleInputChange('danceStyles', e.target.value.split(',').map((s: string) => s.trim()))}
-                placeholder='e.g., Ballet, Hip Hop, Contemporary'
+                placeholder={t('artistProfile.dancer.danceStylesPlaceholder')}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
               />
             ) : (
@@ -674,25 +676,24 @@ const Profile: React.FC = () => {
             )}
           </div>
           <div>
-            <p className='text-sm text-gray-500 mb-2'>Dance Showreel</p>
+            <p className='text-sm text-gray-500 mb-2'>{t('artistProfile.dancer.showreel')}</p>
             {isEditing ? (
               <div className="space-y-4">
                 <VideoUpload
                   currentVideoUrl={currentProfile?.danceVideo}
                   uploadType="DANCE_SHOWREEL"
-                  label="Upload Dance Showreel"
-                  description="Show your best dance performance (max 100MB)"
+                  label={t('artistProfile.dancer.uploadShowreel')}
+                  description={t('artistProfile.dancer.showreelDescription')}
                   onUploadSuccess={(fileUrl) => handleInputChange('danceVideo', fileUrl)}
-                  maxSizeMB={100}
                 />
-                <div className="text-center text-gray-500 text-sm">OR</div>
+                <div className="text-center text-gray-500 text-sm">{t('artistProfile.or')}</div>
                 <div>
-                  <label className='text-xs font-medium text-gray-500'>YouTube/Vimeo URL</label>
+                  <label className='text-xs font-medium text-gray-500'>{t('artistProfile.dancer.videoUrlLabel')}</label>
                   <input
                     type='url'
                     value={currentProfile?.danceVideo || ''}
                     onChange={(e) => handleInputChange('danceVideo', e.target.value)}
-                    placeholder='e.g., https://youtube.com/watch?v=...'
+                    placeholder={t('artistProfile.dancer.videoUrlPlaceholder')}
                     className='w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                   />
                 </div>
@@ -703,7 +704,7 @@ const Profile: React.FC = () => {
                   <iframe
                     src={currentProfile.danceVideo}
                     className='w-full h-64 rounded-lg'
-                    title='Dance Showreel'
+                    title={t('artistProfile.dancer.showreel')}
                     allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
                     allowFullScreen
                   ></iframe>
@@ -712,7 +713,7 @@ const Profile: React.FC = () => {
                 <video src={currentProfile.danceVideo} controls className='w-full rounded-lg' />
               )
             ) : (
-              <p className='text-gray-500'>No showreel uploaded</p>
+              <p className='text-gray-500'>{t('artistProfile.dancer.noShowreel')}</p>
             )}
           </div>
         </div>
@@ -737,7 +738,7 @@ const Profile: React.FC = () => {
       <div className='space-y-6'>
         <div className='bg-white rounded-xl p-6 shadow-sm'>
           <h3 className='text-lg font-semibold text-gray-800 mb-4'>
-            {currentProfile?.artistType?.displayName ?? 'Role'} Details
+            {t('artistProfile.dynamic.title', { name: currentProfile?.artistType?.displayName ?? t('common.labels.role') })}
           </h3>
           <div className='grid grid-cols-1 gap-6'>
             {fields.map((field) => {
@@ -796,18 +797,18 @@ const Profile: React.FC = () => {
                           type="text"
                           value={val}
                           readOnly
-                          placeholder="Upload a file..."
+                          placeholder={t('artistProfile.dynamic.uploadFilePlaceholder')}
                           className='flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50'
                         />
                         <label className="cursor-pointer bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                          Upload
+                          {t('common.actions.upload')}
                           <input type="file" className="hidden" onChange={(e) => {
                             if (e.target.files?.[0]) handleDynamicFieldChange(field.name, e.target.files[0].name) // limited mock
                           }} />
                         </label>
                       </div>
                     ) : (
-                      val ? <span className="text-amber-600 font-medium">{val}</span> : <span className="text-gray-400">No file uploaded</span>
+                      val ? <span className="text-amber-600 font-medium">{val}</span> : <span className="text-gray-400">{t('artistProfile.dynamic.noFile')}</span>
                     )}
                   </div>
                 )
@@ -887,7 +888,7 @@ const Profile: React.FC = () => {
     // Helper to format display value
     const formatDisplayValue = (value: any, key?: string): string => {
       if (value === null || value === undefined) return ''
-      if (key === 'hourlyRate') return value ? `₹${value}/hr` : ''
+      if (key === 'hourlyRate') return value ? t('artistProfile.completion.perHour', { value }) : ''
       if (typeof value === 'number') return String(value)
       if (Array.isArray(value)) {
         const joined = value.join(', ')
@@ -915,23 +916,23 @@ const Profile: React.FC = () => {
     if (!profile) return emptyResult
 
     const fieldsList = [
-      { key: 'firstName', label: 'First Name', value: profile.firstName },
-      { key: 'lastName', label: 'Last Name', value: profile.lastName },
-      { key: 'email', label: 'Email', value: profile.email },
-      { key: 'phone', label: 'Phone', value: profile.phone },
-      { key: 'city', label: 'City', value: profile.city },
-      { key: 'gender', label: 'Gender', value: profile.gender },
-      { key: 'dateOfBirth', label: 'Date of Birth', value: profile.dateOfBirth },
-      { key: 'bio', label: 'Bio', value: profile.bio },
-      { key: 'languages', label: 'Languages', value: profile.languages },
-      { key: 'experienceYears', label: 'Experience', value: profile.experiences?.length ? profile.experiences : profile.experienceYears },
-      { key: 'skills', label: 'Skills', value: profile.skills },
-      { key: 'height', label: 'Height', value: profile.height },
-      { key: 'weight', label: 'Weight', value: profile.weight },
-      { key: 'profilePhoto', label: 'Photo', value: profile.profilePhoto },
-      { key: 'hourlyRate', label: 'Hourly Rate', value: profile.hourlyRate },
-      { key: 'comfortableAreas', label: 'Comfortable Areas', value: profile.comfortableAreas },
-      { key: 'portfolioUrls', label: 'Portfolio Links', value: profile.portfolioUrls },
+      { key: 'firstName', label: t('common.labels.firstName'), value: profile.firstName },
+      { key: 'lastName', label: t('common.labels.lastName'), value: profile.lastName },
+      { key: 'email', label: t('common.labels.email'), value: profile.email },
+      { key: 'phone', label: t('common.labels.phone'), value: profile.phone },
+      { key: 'city', label: t('common.labels.city'), value: profile.city },
+      { key: 'gender', label: t('common.labels.gender'), value: profile.gender },
+      { key: 'dateOfBirth', label: t('artistProfile.fields.dateOfBirth'), value: profile.dateOfBirth },
+      { key: 'bio', label: t('common.labels.bio'), value: profile.bio },
+      { key: 'languages', label: t('common.labels.languages'), value: profile.languages },
+      { key: 'experienceYears', label: t('common.labels.experience'), value: profile.experiences?.length ? profile.experiences : profile.experienceYears },
+      { key: 'skills', label: t('common.labels.skills'), value: profile.skills },
+      { key: 'height', label: t('artistProfile.fields.height'), value: profile.height },
+      { key: 'weight', label: t('artistProfile.fields.weight'), value: profile.weight },
+      { key: 'profilePhoto', label: t('artistProfile.fields.photo'), value: profile.profilePhoto },
+      { key: 'hourlyRate', label: t('artistProfile.fields.hourlyRate'), value: profile.hourlyRate },
+      { key: 'comfortableAreas', label: t('artistProfile.fields.comfortableAreas'), value: profile.comfortableAreas },
+      { key: 'portfolioUrls', label: t('artistProfile.fields.portfolioLinks'), value: profile.portfolioUrls },
     ]
 
     // Add dynamic fields to completion check
@@ -974,7 +975,7 @@ const Profile: React.FC = () => {
     <>
       <div className='max-w-6xl mx-auto px-4 py-8'>
         <div className='flex justify-between items-center mb-8'>
-          <h1 className='text-3xl font-bold text-gray-900'>My Profile</h1>
+          <h1 className='text-3xl font-bold text-gray-900'>{t('common.nav.myProfile')}</h1>
           <div className='flex gap-3'>
             {isEditing ? (
               <>
@@ -983,7 +984,7 @@ const Profile: React.FC = () => {
                   className='flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg transition-colors font-semibold'
                 >
                   <Icon name='X' size={16} />
-                  Cancel
+                  {t('common.actions.cancel')}
                 </button>
                 <button
                   onClick={handleSaveProfile}
@@ -991,7 +992,7 @@ const Profile: React.FC = () => {
                   className='flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-colors font-semibold disabled:opacity-50'
                 >
                   <Icon name='Save' size={16} />
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? t('common.actions.saving') : t('common.actions.saveChanges')}
                 </button>
               </>
             ) : (
@@ -1001,14 +1002,14 @@ const Profile: React.FC = () => {
                   className='flex items-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors'
                 >
                   <Icon name='Share2' size={16} />
-                  Share Profile
+                  {t('artistProfile.header.shareProfile')}
                 </button>
                 <button
                   onClick={handleEditProfile}
                   className='flex items-center gap-2 bg-white border border-amber-600 text-amber-600 hover:bg-amber-50 px-4 py-2 rounded-lg transition-colors'
                 >
                   <Icon name='Edit' size={16} />
-                  Edit Profile
+                  {t('artistProfile.header.editProfile')}
                 </button>
               </>
             )}
@@ -1025,7 +1026,7 @@ const Profile: React.FC = () => {
                   <ImageUpload
                     currentImageUrl={currentProfile?.profilePhoto}
                     uploadType="PROFILE_PHOTO"
-                    label="Profile Photo"
+                    label={t('artistProfile.card.profilePhoto')}
                     aspectRatio="circle"
                     onUploadSuccess={(fileUrl) => handleInputChange('profilePhoto', fileUrl)}
                   />
@@ -1039,7 +1040,7 @@ const Profile: React.FC = () => {
                     if (currentProfile?.profilePhoto) setPhotoPreviewOpen(true)
                   }}
                   role={currentProfile?.profilePhoto ? 'button' : undefined}
-                  aria-label={currentProfile?.profilePhoto ? 'View profile photo' : undefined}>
+                  aria-label={currentProfile?.profilePhoto ? t('artistProfile.card.viewProfilePhoto') : undefined}>
                   {currentProfile?.profilePhoto ? (
                     <img
                       src={currentProfile.profilePhoto}
@@ -1069,7 +1070,7 @@ const Profile: React.FC = () => {
                       setPhotoPreviewOpen(false)
                     }}
                     className='absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors'
-                    aria-label='Close preview'>
+                    aria-label={t('artistProfile.card.closePreview')}>
                     <Icon name='X' size={24} />
                   </button>
                   <img
@@ -1084,7 +1085,7 @@ const Profile: React.FC = () => {
               {isEditing ? (
                 <div className='space-y-3 text-left'>
                   <div>
-                    <label className='text-xs font-medium text-gray-500'>Full Name</label>
+                    <label className='text-xs font-medium text-gray-500'>{t('common.labels.fullName')}</label>
                     <input
                       type='text'
                       value={currentProfile?.fullName || ''}
@@ -1101,7 +1102,7 @@ const Profile: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className='text-xs font-medium text-gray-500'>Date of Birth</label>
+                    <label className='text-xs font-medium text-gray-500'>{t('artistProfile.fields.dateOfBirth')}</label>
                     <input
                       type='date'
                       value={currentProfile?.dateOfBirth ? currentProfile.dateOfBirth.split('T')[0] : ''}
@@ -1110,17 +1111,17 @@ const Profile: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className='text-xs font-medium text-gray-500'>Gender</label>
+                    <label className='text-xs font-medium text-gray-500'>{t('common.labels.gender')}</label>
                     <select
                       value={currentProfile?.gender || ''}
                       onChange={(e) => handleInputChange('gender', e.target.value)}
                       className='w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     >
-                      <option value="">Select Gender</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                      <option value="OTHER">Other</option>
-                      <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                      <option value="">{t('artistProfile.card.selectGender')}</option>
+                      <option value="MALE">{tEnum('MALE')}</option>
+                      <option value="FEMALE">{tEnum('FEMALE')}</option>
+                      <option value="OTHER">{tEnum('OTHER')}</option>
+                      <option value="PREFER_NOT_TO_SAY">{tEnum('PREFER_NOT_TO_SAY')}</option>
                     </select>
                   </div>
                 </div>
@@ -1141,7 +1142,7 @@ const Profile: React.FC = () => {
                             className='inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium'>
                             {p.displayName}
                             {years != null && years > 0 && (
-                              <span className='ml-1 text-amber-500'>· {years} yrs</span>
+                              <span className='ml-1 text-amber-500'>· {t('common.units.yearsShort', { count: years })}</span>
                             )}
                           </span>
                         )
@@ -1152,18 +1153,18 @@ const Profile: React.FC = () => {
                   )}
                   <div className='mt-2 text-gray-600 space-y-1'>
                     <p>{currentProfile?.city}</p>
-                    {currentProfile?.dateOfBirth && <p className='text-xs text-gray-500'>Born: {new Date(currentProfile.dateOfBirth).toLocaleDateString()}</p>}
-                    {currentProfile?.gender && <p className='text-xs text-gray-500'>{currentProfile.gender}</p>}
+                    {currentProfile?.dateOfBirth && <p className='text-xs text-gray-500'>{t('artistProfile.card.born', { date: new Date(currentProfile.dateOfBirth).toLocaleDateString() })}</p>}
+                    {currentProfile?.gender && <p className='text-xs text-gray-500'>{tEnum(currentProfile.gender)}</p>}
                   </div>
                 </>
               )}
 
               <div className='mt-6 pt-6 border-t border-gray-100'>
-                <h3 className='text-sm font-medium text-gray-500 mb-3'>Contact Information</h3>
+                <h3 className='text-sm font-medium text-gray-500 mb-3'>{t('artistProfile.card.contactInformation')}</h3>
                 {isEditing ? (
                   <div className='space-y-3 text-left'>
                     <div>
-                      <label className='text-xs font-medium text-gray-500'>Email</label>
+                      <label className='text-xs font-medium text-gray-500'>{t('common.labels.email')}</label>
                       <input
                         type='email'
                         value={currentProfile?.email || ''}
@@ -1172,7 +1173,7 @@ const Profile: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className='text-xs font-medium text-gray-500'>Phone</label>
+                      <label className='text-xs font-medium text-gray-500'>{t('common.labels.phone')}</label>
                       <input
                         type='tel'
                         value={currentProfile?.phone || ''}
@@ -1195,13 +1196,13 @@ const Profile: React.FC = () => {
                 )}
 
                 <div className='mt-4 pt-4 border-t border-gray-100'>
-                  <h3 className='text-sm font-medium text-gray-500 mb-3'>Languages</h3>
+                  <h3 className='text-sm font-medium text-gray-500 mb-3'>{t('common.labels.languages')}</h3>
                   {isEditing ? (
                     <input
                       type='text'
                       value={currentProfile?.languages || ''}
                       onChange={(e) => handleInputChange('languages', e.target.value)}
-                      placeholder='e.g., English, Hindi, Tamil'
+                      placeholder={t('artistProfile.card.languagesPlaceholder')}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
@@ -1219,15 +1220,15 @@ const Profile: React.FC = () => {
 
             {/* Profile Completion */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Profile Completion</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.completion.title')}</h3>
               <div className='mb-4'>
                 <div className='flex justify-between items-center mb-2'>
-                  <span className='text-sm font-medium text-gray-700'>{profileCompletion.percentage}% Complete</span>
+                  <span className='text-sm font-medium text-gray-700'>{t('artistProfile.completion.percentComplete', { percentage: profileCompletion.percentage })}</span>
                   <span className={`text-xs font-medium px-2 py-1 rounded-full ${profileCompletion.percentage >= 80 ? 'bg-green-100 text-green-700' :
                     profileCompletion.percentage >= 50 ? 'bg-amber-100 text-amber-700' :
                       'bg-red-100 text-red-700'
                     }`}>
-                    {profileCompletion.percentage >= 80 ? 'Good' : profileCompletion.percentage >= 50 ? 'Needs Work' : 'Incomplete'}
+                    {profileCompletion.percentage >= 80 ? t('artistProfile.completion.good') : profileCompletion.percentage >= 50 ? t('artistProfile.completion.needsWork') : t('artistProfile.completion.incomplete')}
                   </span>
                 </div>
                 <div className='w-full bg-gray-200 rounded-full h-3'>
@@ -1240,13 +1241,13 @@ const Profile: React.FC = () => {
                   />
                 </div>
                 <p className='text-xs text-gray-500 mt-2 text-center'>
-                  {profileCompletion.filled} of {profileCompletion.total} fields completed
+                  {t('artistProfile.completion.fieldsCompleted', { filled: profileCompletion.filled, total: profileCompletion.total })}
                 </p>
               </div>
 
               {/* All Fields Status */}
               <div className='mt-4 space-y-2'>
-                <p className='text-xs font-medium text-gray-500 mb-2'>Field Status:</p>
+                <p className='text-xs font-medium text-gray-500 mb-2'>{t('artistProfile.completion.fieldStatus')}</p>
                 <div className='max-h-48 overflow-y-auto space-y-1.5'>
                   {profileCompletion.fields.map((field, index) => (
                     <div key={index} className='flex items-center justify-between text-xs py-1.5 px-2 rounded bg-gray-50'>
@@ -1261,7 +1262,7 @@ const Profile: React.FC = () => {
                       ) : (
                         <span className='flex items-center gap-1 text-red-500'>
                           <Icon name='X' size={12} />
-                          Missing
+                          {t('artistProfile.completion.missing')}
                         </span>
                       )}
                     </div>
@@ -1274,42 +1275,42 @@ const Profile: React.FC = () => {
                   onClick={handleEditProfile}
                   className='mt-4 w-full bg-amber-50 hover:bg-amber-100 text-amber-700 text-sm font-medium py-2 px-4 rounded-lg transition-colors'
                 >
-                  Complete Your Profile
+                  {t('artistProfile.completion.completeYourProfile')}
                 </button>
               )}
             </div>
 
             {/* Cover Photo */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Cover Photo</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.coverPhoto.title')}</h3>
               {isEditing ? (
                 <ImageUpload
                   currentImageUrl={currentProfile?.coverPhoto}
                   uploadType="COVER_PHOTO"
-                  label="Cover Photo"
+                  label={t('artistProfile.coverPhoto.title')}
                   aspectRatio="wide"
                   onUploadSuccess={(fileUrl) => handleInputChange('coverPhoto', fileUrl)}
                 />
               ) : currentProfile?.coverPhoto ? (
                 <img
                   src={currentProfile.coverPhoto}
-                  alt="Cover"
+                  alt={t('artistProfile.coverPhoto.alt')}
                   className='w-full h-40 object-cover rounded-lg'
                 />
               ) : (
-                <p className='text-gray-500 text-sm'>No cover photo uploaded</p>
+                <p className='text-gray-500 text-sm'>{t('artistProfile.coverPhoto.empty')}</p>
               )}
             </div>
 
             {/* ID Proof */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>ID Proof</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.idProof.title')}</h3>
               {isEditing ? (
                 <DocumentUpload
                   currentDocumentUrl={currentProfile?.idProof}
                   uploadType="ID_PROOF"
-                  label="ID Proof"
-                  description="Upload Aadhaar, PAN, Passport, or Driving License for verification"
+                  label={t('artistProfile.idProof.title')}
+                  description={t('artistProfile.idProof.description')}
                   onUploadSuccess={(fileUrl) => handleInputChange('idProof', fileUrl)}
                 />
               ) : currentProfile?.idProof ? (
@@ -1319,9 +1320,9 @@ const Profile: React.FC = () => {
                       <Icon name='FileText' size={20} />
                     </div>
                     <div>
-                      <p className='text-sm font-medium text-gray-900'>ID Document</p>
+                      <p className='text-sm font-medium text-gray-900'>{t('artistProfile.idProof.document')}</p>
                       <p className='text-xs text-gray-500'>
-                        {currentProfile.idProofVerified ? 'Verified ✓' : 'Pending Verification'}
+                        {currentProfile.idProofVerified ? t('artistProfile.verification.verified') : t('artistProfile.verification.pendingVerification')}
                       </p>
                     </div>
                   </div>
@@ -1331,30 +1332,30 @@ const Profile: React.FC = () => {
                     rel='noopener noreferrer'
                     className='text-amber-600 hover:text-amber-700 text-sm font-medium'
                   >
-                    View
+                    {t('common.actions.view')}
                   </a>
                 </div>
               ) : (
-                <p className='text-gray-500 text-sm'>No ID proof uploaded</p>
+                <p className='text-gray-500 text-sm'>{t('artistProfile.idProof.empty')}</p>
               )}
             </div>
 
             {/* Verification Badge */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Verification</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.verification.title')}</h3>
               <div className='space-y-4'>
                 <div className={`flex items-center p-3 rounded-lg ${profile.idProof ? (profile.idProofVerified ? 'bg-green-50' : 'bg-yellow-50') : 'bg-amber-50'}`}>
                   <div className={`p-2 rounded-full ${profile.idProof ? (profile.idProofVerified ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600') : 'bg-amber-100 text-amber-600'}`}>
                     <Icon name={profile.idProof ? (profile.idProofVerified ? 'CheckCircle' : 'Clock') : 'AlertCircle'} size={20} />
                   </div>
                   <div className='ml-3'>
-                    <p className='text-sm font-medium text-gray-900'>ID Proof</p>
+                    <p className='text-sm font-medium text-gray-900'>{t('artistProfile.idProof.title')}</p>
                     <p className='text-xs text-gray-500'>
                       {profile.idProof
                         ? profile.idProofVerified
-                          ? 'Verified ✓'
-                          : 'Pending Verification'
-                        : 'Not Uploaded'}
+                          ? t('artistProfile.verification.verified')
+                          : t('artistProfile.verification.pendingVerification')
+                        : t('artistProfile.verification.notUploaded')}
                     </p>
                   </div>
                 </div>
@@ -1363,9 +1364,9 @@ const Profile: React.FC = () => {
                     <Icon name={(profile.faceVerification || localFaceVerified) ? 'CheckCircle' : 'AlertCircle'} size={20} />
                   </div>
                   <div className='ml-3 flex-1'>
-                    <p className='text-sm font-medium text-gray-900'>Face Verification</p>
+                    <p className='text-sm font-medium text-gray-900'>{t('artistProfile.verification.faceVerification')}</p>
                     <p className='text-xs text-gray-500'>
-                      {profile.faceVerification ? 'Verified ✓' : localFaceVerified ? 'Pending Review' : 'Not Verified'}
+                      {profile.faceVerification ? t('artistProfile.verification.verified') : localFaceVerified ? t('artistProfile.verification.pendingReview') : t('artistProfile.verification.notVerified')}
                     </p>
                   </div>
                   {profile.faceVerification ? (
@@ -1375,14 +1376,14 @@ const Profile: React.FC = () => {
                       rel='noopener noreferrer'
                       className='ml-2 flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 px-3 py-1.5 rounded-lg transition-colors'>
                       <Icon name='Eye' size={14} />
-                      View
+                      {t('common.actions.view')}
                     </a>
                   ) : !localFaceVerified && (
                     <button
                       onClick={openFaceModal}
                       className='ml-2 flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-lg transition-colors'>
                       <Icon name='Camera' size={14} />
-                      Start
+                      {t('artistProfile.verification.start')}
                     </button>
                   )}
                 </div>
@@ -1394,14 +1395,14 @@ const Profile: React.FC = () => {
           <div className='lg:col-span-2 space-y-6'>
             {/* About Section */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>About</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.about.title')}</h3>
               {isEditing ? (
                 <textarea
                   value={currentProfile?.bio || ''}
                   onChange={(e) => handleInputChange('bio', e.target.value)}
                   rows={4}
                   className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none'
-                  placeholder='Tell us about yourself...'
+                  placeholder={t('artistProfile.about.placeholder')}
                 />
               ) : (
                 <p className='text-gray-600'>{currentProfile?.bio}</p>
@@ -1431,10 +1432,10 @@ const Profile: React.FC = () => {
 
             {/* Additional Core Details */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Details</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.details.title')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Skills</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('common.labels.skills')}</label>
                   {isEditing ? (
                     <div className='space-y-2'>
                       <div className='flex flex-wrap gap-2 min-h-[44px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-amber-500 focus-within:border-transparent'>
@@ -1464,11 +1465,11 @@ const Profile: React.FC = () => {
                             }
                           }}
                           onBlur={() => { if (skillInput.trim()) handleAddSkill(skillInput) }}
-                          placeholder={parseSkillsArray(currentProfile?.skills).length === 0 ? 'Type skill & press Enter' : 'Add more...'}
+                          placeholder={parseSkillsArray(currentProfile?.skills).length === 0 ? t('artistProfile.details.skillPlaceholder') : t('artistProfile.details.addMore')}
                           className='flex-1 min-w-[120px] outline-none text-sm text-gray-700 bg-transparent py-1'
                         />
                       </div>
-                      <p className='text-xs text-gray-400'>Press Enter or comma to add a skill</p>
+                      <p className='text-xs text-gray-400'>{t('artistProfile.details.skillHint')}</p>
                     </div>
                   ) : (
                     <div className='flex flex-wrap gap-2'>
@@ -1484,7 +1485,7 @@ const Profile: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Height & Weight</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.details.heightWeight')}</label>
                   <div className="flex gap-2">
                     {isEditing ? (
                       <>
@@ -1492,29 +1493,29 @@ const Profile: React.FC = () => {
                           type='text'
                           value={currentProfile?.height || ''}
                           onChange={(e) => handleInputChange('height', e.target.value)}
-                          placeholder="Height (e.g. 5'8)"
+                          placeholder={t('artistProfile.details.heightPlaceholder')}
                           className='w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                         />
                         <input
                           type='number'
                           value={currentProfile?.weight || ''}
                           onChange={(e) => handleInputChange('weight', Number(e.target.value))}
-                          placeholder="Weight (kg)"
+                          placeholder={t('artistProfile.details.weightPlaceholder')}
                           className='w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                         />
                       </>
                     ) : (
-                      <p className='text-gray-600'>{currentProfile?.height || '-'} / {currentProfile?.weight ? `${currentProfile.weight} kg` : '-'}</p>
+                      <p className='text-gray-600'>{currentProfile?.height || '-'} / {currentProfile?.weight ? t('artistProfile.details.weightKg', { weight: currentProfile.weight }) : '-'}</p>
                     )}
                   </div>
                 </div>
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Experience (Years)</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.details.experienceYears')}</label>
                   {currentProfile?.experiences?.length ? (
                     // Derived from the Experience section once entries exist
                     <p className='text-gray-600'>
                       {formatMonths(totalExperienceMonths(currentProfile.experiences)) || '-'}
-                      <span className='block text-xs text-gray-400'>Calculated from your experience</span>
+                      <span className='block text-xs text-gray-400'>{t('artistProfile.details.calculatedFromExperience')}</span>
                     </p>
                   ) : isEditing ? (
                     <input
@@ -1528,7 +1529,7 @@ const Profile: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Per Day
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.details.perDay')}
                   </label>
                   {isEditing ? (
                     <input
@@ -1538,7 +1539,7 @@ const Profile: React.FC = () => {
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
-                    <p className='text-gray-600'>{currentProfile?.hourlyRate ? `₹${currentProfile.hourlyRate}/day` : '-'}</p>
+                    <p className='text-gray-600'>{currentProfile?.hourlyRate ? t('artistProfile.details.perDayValue', { value: currentProfile.hourlyRate }) : '-'}</p>
                   )}
                 </div>
               </div>
@@ -1546,18 +1547,18 @@ const Profile: React.FC = () => {
 
             {/* Physical Attributes */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Physical Attributes</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.physical.title')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {/* Hair Color */}
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Hair Color</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.physical.hairColor')}</label>
                   {isEditing ? (
                     <input
                       type='text'
                       value={currentProfile?.hairColor || ''}
                       onChange={(e) => handleInputChange('hairColor', e.target.value)}
-                      placeholder="e.g., Black, Brown"
+                      placeholder={t('artistProfile.physical.hairColorPlaceholder')}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
@@ -1567,13 +1568,13 @@ const Profile: React.FC = () => {
 
                 {/* Hair Length */}
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Hair Length</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.physical.hairLength')}</label>
                   {isEditing ? (
                     <input
                       type='text'
                       value={currentProfile?.hairLength || ''}
                       onChange={(e) => handleInputChange('hairLength', e.target.value)}
-                      placeholder="e.g., Short, Medium, Long"
+                      placeholder={t('artistProfile.physical.hairLengthPlaceholder')}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
@@ -1583,13 +1584,13 @@ const Profile: React.FC = () => {
 
                 {/* Eye Color */}
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Eye Color</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.physical.eyeColor')}</label>
                   {isEditing ? (
                     <input
                       type='text'
                       value={currentProfile?.eyeColor || ''}
                       onChange={(e) => handleInputChange('eyeColor', e.target.value)}
-                      placeholder="e.g., Brown, Blue"
+                      placeholder={t('artistProfile.physical.eyeColorPlaceholder')}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
@@ -1599,13 +1600,13 @@ const Profile: React.FC = () => {
 
                 {/* Complexion */}
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Complexion</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.physical.complexion')}</label>
                   {isEditing ? (
                     <input
                       type='text'
                       value={currentProfile?.complexion || ''}
                       onChange={(e) => handleInputChange('complexion', e.target.value)}
-                      placeholder="e.g., Fair, Wheatish"
+                      placeholder={t('artistProfile.physical.complexionPlaceholder')}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
@@ -1615,13 +1616,13 @@ const Profile: React.FC = () => {
 
                 {/* Shoe Size */}
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Shoe Size</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.physical.shoeSize')}</label>
                   {isEditing ? (
                     <input
                       type='text'
                       value={currentProfile?.shoeSize || ''}
                       onChange={(e) => handleInputChange('shoeSize', e.target.value)}
-                      placeholder="e.g., 8, 9, 10"
+                      placeholder={t('artistProfile.physical.shoeSizePlaceholder')}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
@@ -1631,7 +1632,7 @@ const Profile: React.FC = () => {
 
                 {/* Features (Checkboxes) */}
                 <div className="md:col-span-2">
-                  <label className='text-sm font-medium text-gray-700 block mb-2'>Features</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-2'>{t('artistProfile.physical.features')}</label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <div className="flex items-center gap-2">
                       {isEditing ? (
@@ -1642,7 +1643,7 @@ const Profile: React.FC = () => {
                             onChange={(e) => handleInputChange('hasTattoo', e.target.checked)}
                             className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                           />
-                          <label className='text-sm text-gray-700'>Has Tattoo</label>
+                          <label className='text-sm text-gray-700'>{t('artistProfile.physical.hasTattoo')}</label>
                         </>
                       ) : (
                         <>
@@ -1651,7 +1652,7 @@ const Profile: React.FC = () => {
                             size={18}
                             className={currentProfile?.hasTattoo ? 'text-amber-600' : 'text-gray-400'}
                           />
-                          <span className='text-sm text-gray-700'>Has Tattoo</span>
+                          <span className='text-sm text-gray-700'>{t('artistProfile.physical.hasTattoo')}</span>
                         </>
                       )}
                     </div>
@@ -1665,7 +1666,7 @@ const Profile: React.FC = () => {
                             onChange={(e) => handleInputChange('hasMole', e.target.checked)}
                             className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                           />
-                          <label className='text-sm text-gray-700'>Has Mole</label>
+                          <label className='text-sm text-gray-700'>{t('artistProfile.physical.hasMole')}</label>
                         </>
                       ) : (
                         <>
@@ -1674,7 +1675,7 @@ const Profile: React.FC = () => {
                             size={18}
                             className={currentProfile?.hasMole ? 'text-amber-600' : 'text-gray-400'}
                           />
-                          <span className='text-sm text-gray-700'>Has Mole</span>
+                          <span className='text-sm text-gray-700'>{t('artistProfile.physical.hasMole')}</span>
                         </>
                       )}
                     </div>
@@ -1688,7 +1689,7 @@ const Profile: React.FC = () => {
                             onChange={(e) => handleInputChange('hasPassport', e.target.checked)}
                             className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                           />
-                          <label className='text-sm text-gray-700'>Has Passport</label>
+                          <label className='text-sm text-gray-700'>{t('artistProfile.physical.hasPassport')}</label>
                         </>
                       ) : (
                         <>
@@ -1697,7 +1698,7 @@ const Profile: React.FC = () => {
                             size={18}
                             className={currentProfile?.hasPassport ? 'text-amber-600' : 'text-gray-400'}
                           />
-                          <span className='text-sm text-gray-700'>Has Passport</span>
+                          <span className='text-sm text-gray-700'>{t('artistProfile.physical.hasPassport')}</span>
                         </>
                       )}
                     </div>
@@ -1708,29 +1709,29 @@ const Profile: React.FC = () => {
 
             {/* Personal Information */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Personal Information</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.personal.title')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {/* Marital Status */}
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Marital Status</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.personal.maritalStatus')}</label>
                   {isEditing ? (
                     <select
                       value={currentProfile?.maritalStatus || ''}
                       onChange={(e) => handleInputChange('maritalStatus', e.target.value)}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     >
-                      <option value="">Select</option>
-                      <option value="SINGLE">Single</option>
-                      <option value="MARRIED">Married</option>
-                      <option value="DIVORCED">Divorced</option>
-                      <option value="WIDOWED">Widowed</option>
-                      <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                      <option value="">{t('common.actions.select')}</option>
+                      <option value="SINGLE">{tEnum('SINGLE')}</option>
+                      <option value="MARRIED">{tEnum('MARRIED')}</option>
+                      <option value="DIVORCED">{tEnum('DIVORCED')}</option>
+                      <option value="WIDOWED">{tEnum('WIDOWED')}</option>
+                      <option value="PREFER_NOT_TO_SAY">{tEnum('PREFER_NOT_TO_SAY')}</option>
                     </select>
                   ) : (
                     <p className='text-gray-600'>
                       {currentProfile?.maritalStatus
-                        ? currentProfile.maritalStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                        ? tEnum(currentProfile.maritalStatus)
                         : '-'}
                     </p>
                   )}
@@ -1738,7 +1739,7 @@ const Profile: React.FC = () => {
 
                 {/* Comfortable Areas */}
                 <div>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Comfortable Areas</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.fields.comfortableAreas')}</label>
                   {isEditing ? (
                     <div className='space-y-2'>
                       <div className='flex flex-wrap gap-2 min-h-[44px] p-2 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-amber-500 focus-within:border-transparent'>
@@ -1768,11 +1769,11 @@ const Profile: React.FC = () => {
                             }
                           }}
                           onBlur={() => { if (areaInput.trim()) handleAddArea(areaInput) }}
-                          placeholder={parseSkillsArray(currentProfile?.comfortableAreas).length === 0 ? 'Type area & press Enter' : 'Add more...'}
+                          placeholder={parseSkillsArray(currentProfile?.comfortableAreas).length === 0 ? t('artistProfile.personal.areaPlaceholder') : t('artistProfile.details.addMore')}
                           className='flex-1 min-w-[120px] outline-none text-sm text-gray-700 bg-transparent py-1'
                         />
                       </div>
-                      <p className='text-xs text-gray-400'>Press Enter or comma to add an area</p>
+                      <p className='text-xs text-gray-400'>{t('artistProfile.personal.areaHint')}</p>
                     </div>
                   ) : (
                     <div className='flex flex-wrap gap-2'>
@@ -1790,13 +1791,13 @@ const Profile: React.FC = () => {
 
                 {/* Travel Cities */}
                 <div className='md:col-span-2'>
-                  <label className='text-sm font-medium text-gray-700 block mb-1'>Willing to Travel To</label>
+                  <label className='text-sm font-medium text-gray-700 block mb-1'>{t('artistProfile.personal.travelTo')}</label>
                   {isEditing ? (
                     <input
                       type='text'
                       value={parseSkillsArray(currentProfile?.travelCities).join(', ')}
                       onChange={(e) => handleInputChange('travelCities', e.target.value)}
-                      placeholder='e.g., Mumbai, Delhi, Bangalore'
+                      placeholder={t('artistProfile.personal.travelPlaceholder')}
                       className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
                     />
                   ) : (
@@ -1818,7 +1819,7 @@ const Profile: React.FC = () => {
 
             {/* Portfolio URLs */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Portfolio Links</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.fields.portfolioLinks')}</h3>
               {isEditing ? (
                 <div className='space-y-3'>
                   {(currentProfile?.portfolioUrls ?? []).map((url, i) => (
@@ -1852,7 +1853,7 @@ const Profile: React.FC = () => {
                     className='flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm font-medium'
                   >
                     <Icon name='Plus' size={16} />
-                    Add Portfolio Link
+                    {t('artistProfile.portfolio.add')}
                   </button>
                 </div>
               ) : (currentProfile?.portfolioUrls?.length ?? 0) > 0 ? (
@@ -1871,26 +1872,25 @@ const Profile: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className='text-gray-500 text-sm'>No portfolio links added yet.</p>
+                <p className='text-gray-500 text-sm'>{t('artistProfile.portfolio.empty')}</p>
               )}
             </div>
 
             {/* Profile Video */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>Profile Video</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.profileVideo.title')}</h3>
               {isEditing ? (
                 <div className='space-y-4'>
                   <VideoUpload
                     currentVideoUrl={currentProfile?.videoUrl}
                     uploadType="AUDITION_VIDEO"
-                    label="Upload Profile Video"
-                    description="Introduction or showreel video (max 100MB)"
+                    label={t('artistProfile.profileVideo.upload')}
+                    description={t('artistProfile.profileVideo.description')}
                     onUploadSuccess={(fileUrl) => handleInputChange('videoUrl', fileUrl)}
-                    maxSizeMB={100}
                   />
-                  <div className='text-center text-gray-500 text-sm'>OR</div>
+                  <div className='text-center text-gray-500 text-sm'>{t('artistProfile.or')}</div>
                   <div>
-                    <label className='text-xs font-medium text-gray-500'>YouTube / Vimeo URL</label>
+                    <label className='text-xs font-medium text-gray-500'>{t('artistProfile.profileVideo.urlLabel')}</label>
                     <input
                       type='url'
                       value={currentProfile?.videoUrl || ''}
@@ -1905,7 +1905,7 @@ const Profile: React.FC = () => {
                   <iframe
                     src={currentProfile.videoUrl}
                     className='w-full h-64 rounded-lg'
-                    title='Profile Video'
+                    title={t('artistProfile.profileVideo.title')}
                     allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
                     allowFullScreen
                   />
@@ -1913,14 +1913,14 @@ const Profile: React.FC = () => {
                   <video src={currentProfile.videoUrl} controls className='w-full rounded-lg' />
                 )
               ) : (
-                <p className='text-gray-500 text-sm'>No profile video added yet.</p>
+                <p className='text-gray-500 text-sm'>{t('artistProfile.profileVideo.empty')}</p>
               )}
             </div>
 
             {/* Documents Section */}
             {profile.category?.toLowerCase() === 'dancer' && profile.danceVideo && (
               <div className='bg-white rounded-xl p-6 shadow-sm'>
-                <h3 className='text-lg font-semibold text-gray-800 mb-4'>Documents</h3>
+                <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.documents.title')}</h3>
                 <div className='space-y-4'>
                   <div className='flex items-center justify-between p-3 border border-gray-200 rounded-lg'>
                     <div className='flex items-center gap-3'>
@@ -1928,8 +1928,8 @@ const Profile: React.FC = () => {
                         <Icon name='Film' size={20} />
                       </div>
                       <div>
-                        <p className='text-sm font-medium text-gray-900'>Dance Showreel</p>
-                        <p className='text-xs text-gray-500'>YouTube Link</p>
+                        <p className='text-sm font-medium text-gray-900'>{t('artistProfile.dancer.showreel')}</p>
+                        <p className='text-xs text-gray-500'>{t('artistProfile.documents.youtubeLink')}</p>
                       </div>
                     </div>
                     <a
@@ -1938,7 +1938,7 @@ const Profile: React.FC = () => {
                       rel='noopener noreferrer'
                       className='text-amber-600 hover:text-amber-700 text-sm font-medium'
                     >
-                      Watch
+                      {t('artistProfile.documents.watch')}
                     </a>
                   </div>
                 </div>
@@ -1962,12 +1962,12 @@ const Profile: React.FC = () => {
             <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100'>
               <div className='flex items-center gap-2'>
                 <Icon name='Share2' size={18} className='text-primary' />
-                <h3 className='text-lg font-semibold text-gray-900'>Share Profile</h3>
+                <h3 className='text-lg font-semibold text-gray-900'>{t('artistProfile.header.shareProfile')}</h3>
               </div>
               <button
                 onClick={() => setShareModalOpen(false)}
                 className='text-gray-400 hover:text-gray-600 transition-colors'
-                aria-label='Close'
+                aria-label={t('common.actions.close')}
               >
                 <Icon name='X' size={20} />
               </button>
@@ -1975,7 +1975,7 @@ const Profile: React.FC = () => {
 
             <div className='px-6 py-5'>
               <p className='text-sm text-gray-500 mb-3'>
-                Anyone with this link can view your profile — no login needed.
+                {t('artistProfile.share.description')}
               </p>
 
               <div className='flex items-center gap-2'>
@@ -1993,7 +1993,7 @@ const Profile: React.FC = () => {
                   }`}
                 >
                   <Icon name={linkCopied ? 'Check' : 'Copy'} size={16} />
-                  {linkCopied ? 'Copied' : 'Copy'}
+                  {linkCopied ? t('artistProfile.share.copied') : t('common.actions.copy')}
                 </button>
               </div>
             </div>
@@ -2009,7 +2009,7 @@ const Profile: React.FC = () => {
             <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100'>
               <div className='flex items-center gap-2'>
                 <Icon name='Camera' size={20} className='text-amber-500' />
-                <h3 className='text-lg font-semibold text-gray-900'>Face Verification</h3>
+                <h3 className='text-lg font-semibold text-gray-900'>{t('artistProfile.verification.faceVerification')}</h3>
               </div>
               <button onClick={closeFaceModal} className='text-gray-400 hover:text-gray-600'>
                 <Icon name='X' size={20} />
@@ -2027,7 +2027,7 @@ const Profile: React.FC = () => {
                   <button
                     onClick={retakePhoto}
                     className='px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg transition-colors'>
-                    Try Again
+                    {t('common.actions.tryAgain')}
                   </button>
                 </div>
               ) : (
@@ -2043,7 +2043,7 @@ const Profile: React.FC = () => {
                         className='w-full h-full object-cover'
                       />
                     ) : (
-                      <img src={capturedImage} alt='Captured' className='w-full h-full object-cover' />
+                      <img src={capturedImage} alt={t('artistProfile.faceModal.capturedAlt')} className='w-full h-full object-cover' />
                     )}
                     {/* Face guide overlay */}
                     {!capturedImage && (
@@ -2064,7 +2064,7 @@ const Profile: React.FC = () => {
                   {/* Instructions */}
                   {!capturedImage && (
                     <p className='text-xs text-gray-500 text-center mb-4'>
-                      Center your face in the oval. Make sure your face is well-lit and clearly visible.
+                      {t('artistProfile.faceModal.instructions')}
                     </p>
                   )}
 
@@ -2075,7 +2075,7 @@ const Profile: React.FC = () => {
                         onClick={capturePhoto}
                         className='flex items-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-colors'>
                         <Icon name='Camera' size={18} />
-                        Capture Photo
+                        {t('artistProfile.faceModal.capture')}
                       </button>
                     )}
 
@@ -2085,13 +2085,13 @@ const Profile: React.FC = () => {
                           onClick={retakePhoto}
                           className='flex items-center gap-2 px-5 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors'>
                           <Icon name='RefreshCw' size={16} />
-                          Retake
+                          {t('artistProfile.faceModal.retake')}
                         </button>
                         <button
                           onClick={handleSubmitFaceVerification}
                           className='flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-colors'>
                           <Icon name='Send' size={16} />
-                          Submit
+                          {t('common.actions.submit')}
                         </button>
                       </>
                     )}
@@ -2099,7 +2099,7 @@ const Profile: React.FC = () => {
                     {faceVerifyStatus === 'uploading' && (
                       <div className='flex items-center gap-2 text-amber-600'>
                         <div className='animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-amber-500' />
-                        <span className='text-sm font-medium'>Submitting...</span>
+                        <span className='text-sm font-medium'>{t('common.actions.submitting')}</span>
                       </div>
                     )}
                   </div>

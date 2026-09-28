@@ -1,6 +1,7 @@
 import React from 'react'
 import { useLocation } from 'react-router-dom'
 import { ClockIcon } from '../../components/icons/IconComponents'
+import { useTranslation } from '@/i18n'
 
 interface AdminComingSoonPageProps {
   title?: string
@@ -8,9 +9,10 @@ interface AdminComingSoonPageProps {
 }
 
 export const AdminComingSoonPage: React.FC<AdminComingSoonPageProps> = ({ title, description }) => {
+  const { t } = useTranslation()
   const location = useLocation()
   const pathLabel = location.pathname.replace('/admin/', '').replace(/\//g, ' › ')
-  const resolvedTitle = title || pathLabel || 'This section'
+  const resolvedTitle = title || pathLabel || t('adminComingSoon.fallbackTitle')
 
   return (
     <div className='p-6'>
@@ -22,11 +24,10 @@ export const AdminComingSoonPage: React.FC<AdminComingSoonPageProps> = ({ title,
           {resolvedTitle}
         </h2>
         <p className='text-sm text-gray-500 max-w-md mb-1'>
-          {description ||
-            'Backend API for this section is not available yet. The menu link works so the navigation flow can be reviewed.'}
+          {description || t('adminComingSoon.description')}
         </p>
         <p className='text-xs text-gray-400 mt-2'>
-          Route: <code className='bg-gray-100 px-1.5 py-0.5 rounded'>{location.pathname}</code>
+          {t('adminComingSoon.route')} <code className='bg-gray-100 px-1.5 py-0.5 rounded'>{location.pathname}</code>
         </p>
       </div>
     </div>

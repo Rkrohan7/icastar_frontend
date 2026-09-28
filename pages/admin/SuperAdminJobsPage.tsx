@@ -16,26 +16,29 @@ import superAdminService, {
 import { Pagination } from './SuperAdminRecruitersPage'
 import usePageParam from '../../hooks/usePageParam'
 import BulkUploadJobsModal from './BulkUploadJobsModal'
+import { useTranslation } from '@/i18n'
 
-const STATUS_OPTIONS: { label: string; value: JobStatus | '' }[] = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Closed', value: 'CLOSED' },
-  { label: 'Draft', value: 'DRAFT' },
-  { label: 'Expired', value: 'EXPIRED' },
+// Labels come from tEnum(value); the empty value is the "All …" filter option.
+const STATUS_OPTIONS: { value: JobStatus | '' }[] = [
+  { value: '' },
+  { value: 'ACTIVE' },
+  { value: 'CLOSED' },
+  { value: 'DRAFT' },
+  { value: 'EXPIRED' },
 ]
 
-const TYPE_OPTIONS: { label: string; value: JobType | '' }[] = [
-  { label: 'All Types', value: '' },
-  { label: 'Full Time', value: 'FULL_TIME' },
-  { label: 'Part Time', value: 'PART_TIME' },
-  { label: 'Contract', value: 'CONTRACT' },
-  { label: 'Freelance', value: 'FREELANCE' },
+const TYPE_OPTIONS: { value: JobType | '' }[] = [
+  { value: '' },
+  { value: 'FULL_TIME' },
+  { value: 'PART_TIME' },
+  { value: 'CONTRACT' },
+  { value: 'FREELANCE' },
 ]
 
 const PAGE_SIZE = 20
 
 export const SuperAdminJobsPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [jobs, setJobs] = useState<SuperAdminJob[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -74,16 +77,16 @@ export const SuperAdminJobsPage: React.FC = () => {
         console.error('Failed to load jobs:', err)
         const status = err?.response?.status
         const apiMsg = err?.response?.data?.message
-        if (status === 401) setError('Unauthorized — please log in as an admin.')
-        else if (status === 403) setError('Access denied — admin role required.')
-        else if (status === 404) setError('Endpoint not found — check backend route /super-admin/jobs.')
-        else setError(apiMsg || err?.message || 'Unable to load jobs.')
+        if (status === 401) setError(t('adminJobs.errors.unauthorized'))
+        else if (status === 403) setError(t('adminJobs.errors.accessDenied'))
+        else if (status === 404) setError(t('adminJobs.errors.notFound'))
+        else setError(apiMsg || err?.message || t('adminJobs.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
     fetch()
-  }, [page, search, status, jobType, reloadKey])
+  }, [page, search, status, jobType, reloadKey, t])
 
   const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,12 +97,12 @@ export const SuperAdminJobsPage: React.FC = () => {
   return (
     <div className='p-6 space-y-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-xl font-semibold text-gray-900'>Jobs</h1>
+        <h1 className='text-xl font-semibold text-gray-900'>{t('common.nav.jobs')}</h1>
         <button
           onClick={() => setShowBulkUpload(true)}
           className='flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[#E36A3A] text-white hover:bg-[#d05c2e]'>
           <PlusIcon className='h-4 w-4' />
-          Bulk Upload Jobs
+          {t('adminJobs.bulkUpload')}
         </button>
       </div>
 
@@ -111,7 +114,7 @@ export const SuperAdminJobsPage: React.FC = () => {
               type='text'
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder='Search by title or description...'
+              placeholder={t('adminJobs.searchPlaceholder')}
               className='w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
             />
           </form>
@@ -124,7 +127,7 @@ export const SuperAdminJobsPage: React.FC = () => {
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {o.value ? tEnum(o.value) : t('adminJobs.allStatuses')}
               </option>
             ))}
           </select>
@@ -137,35 +140,35 @@ export const SuperAdminJobsPage: React.FC = () => {
             className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
             {TYPE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {o.value ? tEnum(o.value) : t('adminJobs.allTypes')}
               </option>
             ))}
           </select>
         </div>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {jobs.length} of {totalItems.toLocaleString()} jobs
+          {t('adminJobs.showing', { shown: jobs.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <div className='py-16 text-center text-gray-500'>Loading...</div>
+          <div className='py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
         ) : error ? (
           <div className='py-16 text-center text-red-600'>{error}</div>
         ) : jobs.length === 0 ? (
-          <div className='py-16 text-center text-gray-500'>No jobs found</div>
+          <div className='py-16 text-center text-gray-500'>{t('adminJobs.empty')}</div>
         ) : (
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50 border-b border-gray-200'>
                 <tr>
-                  <Th>Job</Th>
-                  <Th>Recruiter</Th>
-                  <Th>Type</Th>
-                  <Th>Budget</Th>
-                  <Th>Activity</Th>
-                  <Th>Status</Th>
-                  <Th>Posted</Th>
+                  <Th>{t('adminJobs.columns.job')}</Th>
+                  <Th>{t('adminJobs.columns.recruiter')}</Th>
+                  <Th>{t('common.labels.type')}</Th>
+                  <Th>{t('common.labels.budget')}</Th>
+                  <Th>{t('adminJobs.columns.activity')}</Th>
+                  <Th>{t('common.labels.status')}</Th>
+                  <Th>{t('adminJobs.columns.posted')}</Th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
@@ -179,17 +182,17 @@ export const SuperAdminJobsPage: React.FC = () => {
                     <td className='px-4 py-3'>
                       <p className='font-medium text-gray-900'>{j.title || '—'}</p>
                       <p className='text-xs text-gray-500 flex items-center gap-1 mt-0.5'>
-                        <MapPinIcon className='h-3 w-3' /> {j.isRemote ? 'Remote' : (j.location || '—')}
+                        <MapPinIcon className='h-3 w-3' /> {j.isRemote ? t('adminJobs.remote') : (j.location || '—')}
                       </p>
                       <div className='flex gap-1 mt-1'>
                         {j.isFeatured && (
                           <span className='text-[10px] px-1.5 py-0.5 bg-yellow-50 text-yellow-700 rounded'>
-                            Featured
+                            {t('adminJobs.featured')}
                           </span>
                         )}
                         {j.isUrgent && (
                           <span className='text-[10px] px-1.5 py-0.5 bg-red-50 text-red-700 rounded'>
-                            Urgent
+                            {t('adminJobs.urgent')}
                           </span>
                         )}
                       </div>
@@ -200,20 +203,20 @@ export const SuperAdminJobsPage: React.FC = () => {
                     </td>
                     <td className='px-4 py-3'>
                       <span className='inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700'>
-                        {(j.jobType || 'N/A').replace(/_/g, ' ')}
+                        {j.jobType ? tEnum(j.jobType) : t('common.status.notAvailable')}
                       </span>
-                      <p className='text-xs text-gray-500 mt-1'>{j.experienceLevel || '—'}</p>
+                      <p className='text-xs text-gray-500 mt-1'>{j.experienceLevel ? tEnum(j.experienceLevel) : '—'}</p>
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-700'>
                       {j.currency || ''} {(j.budgetMin ?? 0).toLocaleString()}
-                      <p className='text-gray-500'>to {(j.budgetMax ?? 0).toLocaleString()}</p>
+                      <p className='text-gray-500'>{t('adminJobs.budgetTo', { amount: (j.budgetMax ?? 0).toLocaleString() })}</p>
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-700'>
                       <div className='flex items-center gap-1'>
-                        <FileTextIcon className='h-3 w-3' /> {j.applicationsCount ?? 0} apps
+                        <FileTextIcon className='h-3 w-3' /> {t('adminJobs.apps', { count: j.applicationsCount ?? 0 })}
                       </div>
                       <div className='flex items-center gap-1 text-gray-500 mt-0.5'>
-                        <EyeIcon className='h-3 w-3' /> {(j.viewsCount ?? 0).toLocaleString()} views
+                        <EyeIcon className='h-3 w-3' /> {t('adminJobs.views', { count: (j.viewsCount ?? 0).toLocaleString() })}
                       </div>
                     </td>
                     <td className='px-4 py-3'>
@@ -260,6 +263,7 @@ const Th: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 )
 
 const JobStatusBadge: React.FC<{ status: JobStatus }> = ({ status }) => {
+  const { tEnum } = useTranslation()
   const cfg: Record<JobStatus, { bg: string; text: string }> = {
     ACTIVE: { bg: 'bg-green-50', text: 'text-green-700' },
     CLOSED: { bg: 'bg-gray-50', text: 'text-gray-700' },
@@ -269,7 +273,7 @@ const JobStatusBadge: React.FC<{ status: JobStatus }> = ({ status }) => {
   const c = cfg[status]
   return (
     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
-      {status}
+      {tEnum(status)}
     </span>
   )
 }

@@ -1,4 +1,5 @@
 import apiClient, { uploadFile as apiUploadFile } from './apiClient'
+import { translate } from '@/i18n'
 
 export type UploadType = 'PROFILE_PHOTO' | 'COVER_PHOTO' | 'ID_PROOF' | 'AUDITION_VIDEO' | 'AUDITION_THUMBNAIL' | 'PORTFOLIO_IMAGE' | 'PORTFOLIO_VIDEO' | 'FACE_VERIFICATION' | 'DANCE_SHOWREEL' | 'BLOG_IMAGE'
 
@@ -19,6 +20,13 @@ export interface PresignedUrlResponse {
 export interface UploadProgressCallback {
   (progress: number): void
 }
+
+// Max upload size per file kind, in MB — used for validation and shown in upload hints.
+export const UPLOAD_LIMITS_MB = {
+  image: 5,
+  video: 100,
+  document: 10,
+} as const
 
 export const uploadService = {
   /**
@@ -167,29 +175,31 @@ export const uploadService = {
     const validations = {
       image: {
         types: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
-        maxSize: 5 * 1024 * 1024, // 5MB
-        error: 'Please upload a valid image (JPEG, PNG, WebP) under 5MB',
+        error: translate('fileUpload.validation.invalidImage', { max: UPLOAD_LIMITS_MB.image }),
       },
       video: {
         types: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
-        maxSize: 100 * 1024 * 1024, // 100MB
-        error: 'Please upload a valid video (MP4, MOV, AVI, WebM) under 100MB',
+        error: translate('fileUpload.validation.invalidVideo', { max: UPLOAD_LIMITS_MB.video }),
       },
       document: {
         types: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
-        maxSize: 10 * 1024 * 1024, // 10MB
-        error: 'Please upload a valid document (PDF, JPEG, PNG) under 10MB',
+        error: translate('fileUpload.validation.invalidDocument', { max: UPLOAD_LIMITS_MB.document }),
       },
     }
 
     const config = validations[type]
+    const maxSizeMB = UPLOAD_LIMITS_MB[type]
 
     if (!config.types.includes(file.type)) {
       return { valid: false, error: config.error }
     }
 
-    if (file.size > config.maxSize) {
-      return { valid: false, error: config.error }
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
+      return {
+        valid: false,
+        error: translate('fileUpload.validation.tooLarge', { size: sizeMB, max: maxSizeMB }),
+      }
     }
 
     return { valid: true }

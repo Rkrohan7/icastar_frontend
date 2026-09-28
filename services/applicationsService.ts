@@ -1,6 +1,7 @@
 import apiClient from './apiClient'
 import { PaginatedResult } from './types'
 import { cachedGet, invalidateCache } from './cache'
+import { translate } from '@/i18n'
 
 // My-applications list is re-fetched by the header badge and the page itself.
 // Cache 60s; applying to a job invalidates it so the new entry shows up.
@@ -88,7 +89,7 @@ export const applicationsService = {
         return {
           id: Number(it.id ?? it.applicationId ?? Math.random() * 100000),
           jobId: it.jobId ?? it.job_id,
-          jobTitle: it.jobTitle ?? it.title ?? 'Untitled Role',
+          jobTitle: it.jobTitle ?? it.title ?? translate('services.fallback.untitledRole'),
           company: it.company ?? it.companyName ?? it.orgName,
           appliedAt,
           status: String(it.status ?? it.applicationStatus ?? 'Applied').toUpperCase(),

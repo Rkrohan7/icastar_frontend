@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from '@/components/Icon'
 import type { ArtistExperience, EmploymentType } from '@/services/artistService'
+import { translate, useTranslation, type TranslateVars } from '@/i18n'
+
+type TFn = (key: string, vars?: TranslateVars) => string
 
 // Naukri-style "Employment" section: a list of experience cards with an
 // "Add experience" link and a modal to add / edit each entry. The parent owns
@@ -24,28 +27,31 @@ interface ExperienceSectionProps {
   hideHeader?: boolean
 }
 
-const EMPLOYMENT_TYPES: { value: EmploymentType; label: string }[] = [
-  { value: 'FULL_TIME', label: 'Full-time' },
-  { value: 'PART_TIME', label: 'Part-time' },
-  { value: 'FREELANCE', label: 'Freelance' },
-  { value: 'CONTRACT', label: 'Contract' },
-  { value: 'INTERNSHIP', label: 'Internship' },
+const EMPLOYMENT_TYPES: { value: EmploymentType; labelKey: string }[] = [
+  { value: 'FULL_TIME', labelKey: 'experienceSection.employmentTypes.fullTime' },
+  { value: 'PART_TIME', labelKey: 'experienceSection.employmentTypes.partTime' },
+  { value: 'FREELANCE', labelKey: 'experienceSection.employmentTypes.freelance' },
+  { value: 'CONTRACT', labelKey: 'experienceSection.employmentTypes.contract' },
+  { value: 'INTERNSHIP', labelKey: 'experienceSection.employmentTypes.internship' },
 ]
 
-const PROJECT_TYPES = [
-  'Film',
-  'Web Series',
-  'TV Serial',
-  'Short Film',
-  'Advertisement',
-  'Music Video',
-  'Theatre',
-  'Live Event / Show',
-  'Modelling / Photoshoot',
-  'Other',
+// `value` is what gets stored on the backend — keep it in English.
+const PROJECT_TYPES: { value: string; labelKey: string }[] = [
+  { value: 'Film', labelKey: 'experienceSection.projectTypes.film' },
+  { value: 'Web Series', labelKey: 'experienceSection.projectTypes.webSeries' },
+  { value: 'TV Serial', labelKey: 'experienceSection.projectTypes.tvSerial' },
+  { value: 'Short Film', labelKey: 'experienceSection.projectTypes.shortFilm' },
+  { value: 'Advertisement', labelKey: 'experienceSection.projectTypes.advertisement' },
+  { value: 'Music Video', labelKey: 'experienceSection.projectTypes.musicVideo' },
+  { value: 'Theatre', labelKey: 'experienceSection.projectTypes.theatre' },
+  { value: 'Live Event / Show', labelKey: 'experienceSection.projectTypes.liveEvent' },
+  { value: 'Modelling / Photoshoot', labelKey: 'experienceSection.projectTypes.modelling' },
+  { value: 'Other', labelKey: 'experienceSection.projectTypes.other' },
 ]
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].map(
+  m => `experienceSection.months.${m}`,
+)
 
 const now = new Date()
 const CURRENT_YEAR = now.getFullYear()
@@ -95,14 +101,16 @@ const mergedMonths = (list: ArtistExperience[]) => {
   return total
 }
 
-export const formatMonths = (months: number) => {
+// Pass `t` from useTranslation() when calling from a component; falls back to
+// the module-level translate() (current language) for existing callers.
+export const formatMonths = (months: number, t: TFn = translate) => {
   if (months <= 0) return ''
   const y = Math.floor(months / 12)
   const m = months % 12
-  const parts = []
-  if (y) parts.push(`${y} ${y === 1 ? 'yr' : 'yrs'}`)
-  if (m) parts.push(`${m} ${m === 1 ? 'mo' : 'mos'}`)
-  return parts.join(' ')
+  const years = y ? t('experienceSection.duration.years', { count: y }) : ''
+  const mos = m ? t('experienceSection.duration.months', { count: m }) : ''
+  if (years && mos) return t('experienceSection.duration.yearsAndMonths', { years, months: mos })
+  return years || mos
 }
 
 export const totalExperienceMonths = (list: ArtistExperience[] = []) => mergedMonths(list)
@@ -126,13 +134,21 @@ export const experienceYearsByProfession = (list: ArtistExperience[] = []) => {
   return out
 }
 
-const formatYearMonth = (date?: string | null) => {
+const formatYearMonth = (t: TFn, date?: string | null) => {
   const ym = parseYearMonth(date)
-  return ym ? `${MONTHS[ym.month - 1]} ${ym.year}` : ''
+  return ym ? `${t(MONTH_KEYS[ym.month - 1])} ${ym.year}` : ''
 }
 
-const employmentLabel = (value?: EmploymentType) =>
-  EMPLOYMENT_TYPES.find(t => t.value === value)?.label
+const employmentLabel = (t: TFn, value?: EmploymentType) => {
+  const type = EMPLOYMENT_TYPES.find(e => e.value === value)
+  return type ? t(type.labelKey) : undefined
+}
+
+// Known project types are shown translated; anything else is shown as stored.
+const projectTypeLabel = (t: TFn, value: string) => {
+  const type = PROJECT_TYPES.find(p => p.value === value)
+  return type ? t(type.labelKey) : value
+}
 
 // ----- modal ------------------------------------------------------------------
 
@@ -181,28 +197,31 @@ const MonthYear: React.FC<{
   onMonth: (v: string) => void
   onYear: (v: string) => void
   hasError: boolean
-}> = ({ month, year, onMonth, onYear, hasError }) => (
-  <div className='grid grid-cols-2 gap-3'>
-    <select
-      value={year}
-      onChange={e => onYear(e.target.value)}
-      className={`${inputCls} ${hasError ? 'border-red-500' : ''}`}>
-      <option value=''>Select year</option>
-      {YEARS.map(y => (
-        <option key={y} value={y}>{y}</option>
-      ))}
-    </select>
-    <select
-      value={month}
-      onChange={e => onMonth(e.target.value)}
-      className={`${inputCls} ${hasError ? 'border-red-500' : ''}`}>
-      <option value=''>Select month</option>
-      {MONTHS.map((m, i) => (
-        <option key={m} value={i + 1}>{m}</option>
-      ))}
-    </select>
-  </div>
-)
+}> = ({ month, year, onMonth, onYear, hasError }) => {
+  const { t } = useTranslation()
+  return (
+    <div className='grid grid-cols-2 gap-3'>
+      <select
+        value={year}
+        onChange={e => onYear(e.target.value)}
+        className={`${inputCls} ${hasError ? 'border-red-500' : ''}`}>
+        <option value=''>{t('experienceSection.modal.selectYear')}</option>
+        {YEARS.map(y => (
+          <option key={y} value={y}>{y}</option>
+        ))}
+      </select>
+      <select
+        value={month}
+        onChange={e => onMonth(e.target.value)}
+        className={`${inputCls} ${hasError ? 'border-red-500' : ''}`}>
+        <option value=''>{t('experienceSection.modal.selectMonth')}</option>
+        {MONTH_KEYS.map((m, i) => (
+          <option key={m} value={i + 1}>{t(m)}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
 
 interface ExperienceModalProps {
   initial: ArtistExperience | null
@@ -220,8 +239,10 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
   const [draft, setDraft] = useState<Draft>(() =>
     toDraft(initial, professionOptions.length === 1 ? String(professionOptions[0].id) : undefined),
   )
+  // Values are translation keys, resolved with t() at render
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -235,24 +256,24 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!draft.title.trim()) e.title = 'Please enter your role / title'
-    if (!draft.companyName.trim()) e.companyName = 'Please enter the company, production house or project'
-    if (professionOptions.length > 0 && !draft.artistTypeId) e.artistTypeId = 'Please select a profession'
+    if (!draft.title.trim()) e.title = 'experienceSection.errors.titleRequired'
+    if (!draft.companyName.trim()) e.companyName = 'experienceSection.errors.companyRequired'
+    if (professionOptions.length > 0 && !draft.artistTypeId) e.artistTypeId = 'experienceSection.errors.professionRequired'
     if (!draft.startMonth || !draft.startYear) {
-      e.start = 'Please select start month and year'
+      e.start = 'experienceSection.errors.startRequired'
     } else if (
       monthIndex({ year: Number(draft.startYear), month: Number(draft.startMonth) }) > nowIndex()
     ) {
-      e.start = 'Start date cannot be in the future'
+      e.start = 'experienceSection.errors.startInFuture'
     }
     if (!draft.isCurrent) {
       if (!draft.endMonth || !draft.endYear) {
-        e.end = 'Please select end month and year'
+        e.end = 'experienceSection.errors.endRequired'
       } else if (!e.start) {
         const s = monthIndex({ year: Number(draft.startYear), month: Number(draft.startMonth) })
         const en = monthIndex({ year: Number(draft.endYear), month: Number(draft.endMonth) })
-        if (en < s) e.end = 'End date cannot be before start date'
-        else if (en > nowIndex()) e.end = 'End date cannot be in the future'
+        if (en < s) e.end = 'experienceSection.errors.endBeforeStart'
+        else if (en > nowIndex()) e.end = 'experienceSection.errors.endInFuture'
       }
     }
     setErrors(e)
@@ -305,10 +326,10 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
         <div className='flex items-start justify-between px-6 py-4 border-b border-gray-100'>
           <div>
             <h3 className='text-lg font-semibold text-gray-900'>
-              {initial ? 'Edit experience' : 'Add experience'}
+              {initial ? t('experienceSection.editExperience') : t('experienceSection.addExperience')}
             </h3>
             <p className='text-xs text-gray-500 mt-0.5'>
-              Details like role, production house and duration help recruiters find you.
+              {t('experienceSection.modal.subtitle')}
             </p>
           </div>
           <button
@@ -316,34 +337,34 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
             onClick={onClose}
             disabled={saving}
             className='text-gray-400 hover:text-gray-600 transition-colors'
-            aria-label='Close'>
+            aria-label={t('common.actions.close')}>
             <Icon name='X' size={20} />
           </button>
         </div>
 
         <div className='px-6 py-5 space-y-5 overflow-y-auto'>
           <div>
-            <label className='block text-sm font-medium mb-2'>Is this your current work?</label>
+            <label className='block text-sm font-medium mb-2'>{t('experienceSection.modal.isCurrentLabel')}</label>
             <div className='flex gap-2'>
               <button type='button' className={pill(draft.isCurrent)} onClick={() => set({ isCurrent: true })}>
-                Yes
+                {t('common.actions.yes')}
               </button>
               <button type='button' className={pill(!draft.isCurrent)} onClick={() => set({ isCurrent: false })}>
-                No
+                {t('common.actions.no')}
               </button>
             </div>
           </div>
 
           <div>
-            <label className='block text-sm font-medium mb-2'>Employment type</label>
+            <label className='block text-sm font-medium mb-2'>{t('experienceSection.modal.employmentTypeLabel')}</label>
             <div className='flex flex-wrap gap-2'>
-              {EMPLOYMENT_TYPES.map(t => (
+              {EMPLOYMENT_TYPES.map(type => (
                 <button
-                  key={t.value}
+                  key={type.value}
                   type='button'
-                  className={pill(draft.employmentType === t.value)}
-                  onClick={() => set({ employmentType: t.value })}>
-                  {t.label}
+                  className={pill(draft.employmentType === type.value)}
+                  onClick={() => set({ employmentType: type.value })}>
+                  {t(type.labelKey)}
                 </button>
               ))}
             </div>
@@ -352,70 +373,70 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
           {professionOptions.length > 0 && (
             <div>
               <label className='block text-sm font-medium mb-2'>
-                Profession <span className='text-red-500'>*</span>
+                {t('experienceSection.modal.professionLabel')} <span className='text-red-500'>*</span>
               </label>
               <select
                 value={draft.artistTypeId}
                 onChange={e => set({ artistTypeId: e.target.value })}
                 className={`${inputCls} ${errors.artistTypeId ? 'border-red-500' : ''}`}>
-                <option value=''>Select profession</option>
+                <option value=''>{t('experienceSection.modal.selectProfession')}</option>
                 {professionOptions.map(p => (
                   <option key={p.id} value={String(p.id)}>{p.label}</option>
                 ))}
               </select>
-              {errors.artistTypeId && <p className='text-red-500 text-xs mt-1'>{errors.artistTypeId}</p>}
+              {errors.artistTypeId && <p className='text-red-500 text-xs mt-1'>{t(errors.artistTypeId)}</p>}
             </div>
           )}
 
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
             <div>
               <label className='block text-sm font-medium mb-2'>
-                Role / Title <span className='text-red-500'>*</span>
+                {t('experienceSection.modal.titleLabel')} <span className='text-red-500'>*</span>
               </label>
               <input
                 type='text'
                 value={draft.title}
                 maxLength={100}
                 onChange={e => set({ title: e.target.value })}
-                placeholder='e.g. Lead Actor, Choreographer'
+                placeholder={t('experienceSection.modal.titlePlaceholder')}
                 className={`${inputCls} ${errors.title ? 'border-red-500' : ''}`}
               />
-              {errors.title && <p className='text-red-500 text-xs mt-1'>{errors.title}</p>}
+              {errors.title && <p className='text-red-500 text-xs mt-1'>{t(errors.title)}</p>}
             </div>
             <div>
               <label className='block text-sm font-medium mb-2'>
-                Company / Production / Project <span className='text-red-500'>*</span>
+                {t('experienceSection.modal.companyLabel')} <span className='text-red-500'>*</span>
               </label>
               <input
                 type='text'
                 value={draft.companyName}
                 maxLength={150}
                 onChange={e => set({ companyName: e.target.value })}
-                placeholder='e.g. Yash Raj Films'
+                placeholder={t('experienceSection.modal.companyPlaceholder')}
                 className={`${inputCls} ${errors.companyName ? 'border-red-500' : ''}`}
               />
-              {errors.companyName && <p className='text-red-500 text-xs mt-1'>{errors.companyName}</p>}
+              {errors.companyName && <p className='text-red-500 text-xs mt-1'>{t(errors.companyName)}</p>}
             </div>
             <div>
-              <label className='block text-sm font-medium mb-2'>Project type</label>
+              <label className='block text-sm font-medium mb-2'>{t('experienceSection.modal.projectTypeLabel')}</label>
               <select
                 value={draft.projectType}
                 onChange={e => set({ projectType: e.target.value })}
                 className={inputCls}>
-                <option value=''>Select project type</option>
-                {PROJECT_TYPES.map(t => (
-                  <option key={t} value={t}>{t}</option>
+                <option value=''>{t('experienceSection.modal.selectProjectType')}</option>
+                {PROJECT_TYPES.map(type => (
+                  <option key={type.value} value={type.value}>{t(type.labelKey)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium mb-2'>Location</label>
+              <label className='block text-sm font-medium mb-2'>{t('common.labels.location')}</label>
               <input
                 type='text'
                 value={draft.location}
                 maxLength={100}
                 onChange={e => set({ location: e.target.value })}
-                placeholder='e.g. Mumbai'
+                placeholder={t('experienceSection.modal.locationPlaceholder')}
                 className={inputCls}
               />
             </div>
@@ -424,7 +445,7 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
             <div>
               <label className='block text-sm font-medium mb-2'>
-                Start date <span className='text-red-500'>*</span>
+                {t('experienceSection.modal.startDateLabel')} <span className='text-red-500'>*</span>
               </label>
               <MonthYear
                 month={draft.startMonth}
@@ -433,15 +454,15 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                 onYear={v => set({ startYear: v })}
                 hasError={!!errors.start}
               />
-              {errors.start && <p className='text-red-500 text-xs mt-1'>{errors.start}</p>}
+              {errors.start && <p className='text-red-500 text-xs mt-1'>{t(errors.start)}</p>}
             </div>
             <div>
               <label className='block text-sm font-medium mb-2'>
-                Worked till {!draft.isCurrent && <span className='text-red-500'>*</span>}
+                {t('experienceSection.modal.workedTillLabel')} {!draft.isCurrent && <span className='text-red-500'>*</span>}
               </label>
               {draft.isCurrent ? (
                 <div className='h-11 px-3 flex items-center rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600'>
-                  Present
+                  {t('experienceSection.present')}
                 </div>
               ) : (
                 <MonthYear
@@ -452,22 +473,22 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
                   hasError={!!errors.end}
                 />
               )}
-              {errors.end && <p className='text-red-500 text-xs mt-1'>{errors.end}</p>}
+              {errors.end && <p className='text-red-500 text-xs mt-1'>{t(errors.end)}</p>}
             </div>
           </div>
 
           <div>
-            <label className='block text-sm font-medium mb-2'>Work description</label>
+            <label className='block text-sm font-medium mb-2'>{t('experienceSection.modal.descriptionLabel')}</label>
             <textarea
               value={draft.description}
               maxLength={DESCRIPTION_MAX}
               rows={4}
               onChange={e => set({ description: e.target.value })}
-              placeholder='Describe your role, the project and what you worked on'
+              placeholder={t('experienceSection.modal.descriptionPlaceholder')}
               className='w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none transition'
             />
             <p className='text-xs text-gray-400 text-right mt-1'>
-              {DESCRIPTION_MAX - draft.description.length} character(s) left
+              {t('experienceSection.modal.charactersLeft', { count: DESCRIPTION_MAX - draft.description.length })}
             </p>
           </div>
         </div>
@@ -478,14 +499,14 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({
             onClick={onClose}
             disabled={saving}
             className='px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors'>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             type='button'
             onClick={handleSubmit}
             disabled={saving}
             className='px-6 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary/90 transition-colors disabled:opacity-60'>
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('common.actions.saving') : t('common.actions.save')}
           </button>
         </div>
       </div>
@@ -516,10 +537,12 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
       return (b.exp.startDate || '').localeCompare(a.exp.startDate || '')
     })
 
-  const total = formatMonths(totalExperienceMonths(experiences))
+  const { t } = useTranslation()
+
+  const total = formatMonths(totalExperienceMonths(experiences), t)
 
   const handleDelete = async (exp: ArtistExperience, index: number) => {
-    if (!window.confirm(`Delete "${exp.title}" at ${exp.companyName}?`)) return
+    if (!window.confirm(t('experienceSection.confirmDelete', { title: exp.title, company: exp.companyName }))) return
     try {
       setDeletingIndex(index)
       await onDelete(exp, index)
@@ -533,7 +556,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
       type='button'
       onClick={() => setEditingIndex(null)}
       className='text-sm font-semibold text-primary hover:underline'>
-      Add experience
+      {t('experienceSection.addExperience')}
     </button>
   )
 
@@ -542,15 +565,15 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
       {!hideHeader ? (
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='text-lg font-semibold text-gray-800'>Experience</h3>
-            {total && <p className='text-xs text-gray-500'>Total: {total}</p>}
+            <h3 className='text-lg font-semibold text-gray-800'>{t('common.labels.experience')}</h3>
+            {total && <p className='text-xs text-gray-500'>{t('experienceSection.total', { total })}</p>}
           </div>
           {experiences.length > 0 && addLink}
         </div>
       ) : (
         experiences.length > 0 && (
           <div className='flex items-center justify-between mb-3'>
-            <p className='text-sm text-gray-500'>{total && `Total: ${total}`}</p>
+            <p className='text-sm text-gray-500'>{total && t('experienceSection.total', { total })}</p>
             {addLink}
           </div>
         )
@@ -559,7 +582,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
       {experiences.length === 0 ? (
         <div className='border border-dashed border-gray-300 rounded-xl p-5 text-center'>
           <p className='text-sm text-gray-600'>
-            Add your work experience — roles, projects and production houses you have worked with.
+            {t('experienceSection.emptyText')}
           </p>
           {!readOnly && (
             <button
@@ -567,7 +590,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               onClick={() => setEditingIndex(null)}
               className='mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors'>
               <Icon name='Plus' size={16} />
-              Add experience
+              {t('experienceSection.addExperience')}
             </button>
           )}
         </div>
@@ -575,11 +598,12 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
         <ul className='divide-y divide-gray-100'>
           {sorted.map(({ exp, index }) => {
             const range = monthRange(exp)
-            const duration = range ? formatMonths(range[1] - range[0] + 1) : ''
-            const period = `${formatYearMonth(exp.startDate)} to ${
-              exp.isCurrent ? 'Present' : formatYearMonth(exp.endDate)
-            }`
-            const meta = [employmentLabel(exp.employmentType), `${period}${duration ? ` (${duration})` : ''}`, exp.location]
+            const duration = range ? formatMonths(range[1] - range[0] + 1, t) : ''
+            const period = t('experienceSection.period', {
+              start: formatYearMonth(t, exp.startDate),
+              end: exp.isCurrent ? t('experienceSection.present') : formatYearMonth(t, exp.endDate),
+            })
+            const meta = [employmentLabel(t, exp.employmentType), `${period}${duration ? ` (${duration})` : ''}`, exp.location]
               .filter(Boolean)
               .join(' · ')
             // Prefer the display label of the matching profession; backend may send the raw enum-style name
@@ -594,7 +618,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                       <p className='font-semibold text-gray-900'>{exp.title}</p>
                       {exp.isCurrent && (
                         <span className='px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[11px] font-medium'>
-                          Current
+                          {t('experienceSection.current')}
                         </span>
                       )}
                     </div>
@@ -605,7 +629,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                     <p className='text-xs text-gray-500 mt-0.5'>{meta}</p>
                     {exp.projectType && (
                       <span className='inline-block mt-2 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-xs font-medium'>
-                        {exp.projectType}
+                        {projectTypeLabel(t, exp.projectType)}
                       </span>
                     )}
                     {exp.description && (
@@ -618,7 +642,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                         type='button'
                         onClick={() => setEditingIndex(index)}
                         className='p-1.5 rounded-md text-gray-400 hover:text-primary hover:bg-gray-100 transition-colors'
-                        aria-label='Edit experience'>
+                        aria-label={t('experienceSection.editAria')}>
                         <Icon name='Pencil' size={16} />
                       </button>
                       <button
@@ -626,7 +650,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                         onClick={() => handleDelete(exp, index)}
                         disabled={deletingIndex === index}
                         className='p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors disabled:opacity-50'
-                        aria-label='Delete experience'>
+                        aria-label={t('experienceSection.deleteAria')}>
                         <Icon name='Trash2' size={16} />
                       </button>
                     </div>

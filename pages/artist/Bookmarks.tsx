@@ -15,6 +15,7 @@ import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { Switch } from '@/components/ui/switch'
 import usePageParam from '@/hooks/usePageParam'
+import { useTranslation } from '@/i18n'
 
 const BookmarkCard: React.FC<{
   bookmark: BookmarkedJobDto
@@ -23,6 +24,7 @@ const BookmarkCard: React.FC<{
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const navigate = useNavigate()
+  const { t, tEnum } = useTranslation()
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -36,7 +38,7 @@ const BookmarkCard: React.FC<{
 
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return t('common.status.notAvailable')
     return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
@@ -55,18 +57,18 @@ const BookmarkCard: React.FC<{
                   ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-600'
                   }`}>
-                  {bookmark.status || 'UNKNOWN'}
+                  {bookmark.status ? tEnum(bookmark.status) : t('common.status.unknown')}
                 </span>
               </div>
               <div className='flex items-center text-gray-500 text-sm gap-1'>
                 <Icon name='MapPin' size={14} className="flex-shrink-0" />
-                <span className="line-clamp-1">{bookmark.jobLocation || 'Remote / Not specified'}</span>
+                <span className="line-clamp-1">{bookmark.jobLocation || t('artistBookmarks.card.locationFallback')}</span>
               </div>
             </div>
             <button
               onClick={handleDelete}
               className='text-gray-400 hover:text-red-600 transition-colors p-2 -mr-2 -mt-2'
-              title="Remove Bookmark"
+              title={t('artistBookmarks.card.removeTitle')}
             >
               <Icon name='Trash2' size={18} />
             </button>
@@ -75,19 +77,19 @@ const BookmarkCard: React.FC<{
           <div className='space-y-3 mb-4'>
             <div className='flex flex-wrap gap-2 text-xs'>
               <span className='px-2.5 py-1 bg-gray-50 text-gray-700 border border-gray-100 rounded-md font-medium'>
-                {bookmark.experienceLevel || 'Not Specified'}
+                {bookmark.experienceLevel ? tEnum(bookmark.experienceLevel) : t('artistBookmarks.card.experienceFallback')}
               </span>
               <span className='px-2.5 py-1 bg-gray-50 text-gray-700 border border-gray-100 rounded-md font-medium'>
-                {bookmark.jobType || 'Full-time'}
+                {bookmark.jobType ? tEnum(bookmark.jobType) : t('artistBookmarks.card.jobTypeFallback')}
               </span>
             </div>
 
             <div className='flex items-center justify-between text-xs text-gray-500 pt-1'>
-              <div className="flex items-center gap-1.5" title="Total Applicants">
+              <div className="flex items-center gap-1.5" title={t('artistBookmarks.card.totalApplicants')}>
                 <Icon name='Users' size={14} />
                 <span className="font-medium">{bookmark.applicationsCount || 0}</span>
               </div>
-              <div className="flex items-center gap-1.5" title="Bookmarked Date">
+              <div className="flex items-center gap-1.5" title={t('artistBookmarks.card.bookmarkedDate')}>
                 <Icon name='Calendar' size={14} />
                 <span>{formatDate(bookmark.bookmarkedAt)}</span>
               </div>
@@ -98,7 +100,7 @@ const BookmarkCard: React.FC<{
             <div className='bg-yellow-50/50 rounded-lg p-3 text-sm border border-yellow-100/50' onClick={(e) => e.stopPropagation()}>
               <p className='font-semibold text-[10px] text-yellow-700 mb-1 uppercase tracking-wide flex items-center gap-1'>
                 <Icon name='StickyNote' size={10} />
-                My Notes
+                {t('artistBookmarks.card.myNotes')}
               </p>
               <div className={`text-gray-700 text-xs leading-relaxed ${!isExpanded && 'line-clamp-2'}`}>
                 {bookmark.notes}
@@ -111,7 +113,7 @@ const BookmarkCard: React.FC<{
                   }}
                   className="text-yellow-700 text-[10px] font-bold mt-1 hover:underline"
                 >
-                  {isExpanded ? 'SHOW LESS' : 'READ MORE'}
+                  {isExpanded ? t('artistBookmarks.card.showLess') : t('artistBookmarks.card.readMore')}
                 </button>
               )}
             </div>
@@ -122,18 +124,18 @@ const BookmarkCard: React.FC<{
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Bookmark?</AlertDialogTitle>
+            <AlertDialogTitle>{t('artistBookmarks.removeDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this job from your saved jobs?
+              {t('artistBookmarks.removeDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className='bg-red-600 hover:bg-red-700 text-white'
             >
-              Remove
+              {t('common.actions.remove')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -149,6 +151,7 @@ const Bookmarks: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [activeOnly, setActiveOnly] = useState(true)
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const PAGE_SIZE = 10
 
   const fetchBookmarks = async () => {
@@ -187,9 +190,9 @@ const Bookmarks: React.FC = () => {
       console.error('Failed to fetch bookmarks', error)
       if (error.response?.status === 401) {
         navigate('/login')
-        toast.error('Session expired. Please login again.')
+        toast.error(t('artistBookmarks.toast.sessionExpired'))
       } else {
-        toast.error('Failed to load bookmarks. Please try again.')
+        toast.error(t('artistBookmarks.toast.loadFailed'))
       }
     } finally {
       setLoading(false)
@@ -207,13 +210,13 @@ const Bookmarks: React.FC = () => {
 
     try {
       await bookmarksService.removeBookmark(id)
-      toast.success('Bookmark removed')
+      toast.success(t('artistBookmarks.toast.removed'))
       // No need to refetch if successful, as list is already updated. 
       // However, if we want to ensure total pages/counts are synced we could refetch silently, 
       // but for "remove" action, local update is usually sufficient and better UX.
     } catch (error) {
       console.error('Failed to remove bookmark', error)
-      toast.error('Failed to remove bookmark')
+      toast.error(t('artistBookmarks.toast.removeFailed'))
       // Revert on error
       setBookmarks(previousBookmarks)
     }
@@ -223,9 +226,9 @@ const Bookmarks: React.FC = () => {
     <div className='space-y-6 max-w-7xl mx-auto'>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Saved Jobs</h1>
+          <h1 className='text-3xl font-bold text-gray-900'>{t('artistBookmarks.title')}</h1>
           <p className='text-gray-500 mt-1'>
-            Your personally curated list of opportunities.
+            {t('artistBookmarks.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
@@ -235,7 +238,7 @@ const Bookmarks: React.FC = () => {
             id="active-only"
           />
           <label htmlFor="active-only" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-            Show only active jobs
+            {t('artistBookmarks.activeOnly')}
           </label>
         </div>
       </div>
@@ -264,17 +267,17 @@ const Bookmarks: React.FC = () => {
                 disabled={page === 0}
                 className="px-4 py-2 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Previous
+                {t('common.pagination.previous')}
               </button>
               <span className="text-sm text-gray-600">
-                Page {page + 1} of {totalPages}
+                {t('common.pagination.pageOf', { page: page + 1, total: totalPages })}
               </span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
                 className="px-4 py-2 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               >
-                Next
+                {t('common.pagination.next')}
               </button>
             </div>
           )}
@@ -285,10 +288,10 @@ const Bookmarks: React.FC = () => {
             <Icon name='Bookmark' size={40} className='text-primary' />
           </div>
           <h2 className='mt-4 text-xl font-bold text-gray-900'>
-            You haven’t bookmarked any jobs yet.
+            {t('artistBookmarks.empty.title')}
           </h2>
           <p className='mt-2 text-gray-500'>
-            {activeOnly ? "Try turning off the 'Active only' filter." : "Start exploring jobs and save the ones you love!"}
+            {activeOnly ? t('artistBookmarks.empty.activeOnlyHint') : t('artistBookmarks.empty.exploreHint')}
           </p>
         </div>
       )}

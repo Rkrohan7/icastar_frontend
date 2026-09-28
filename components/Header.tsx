@@ -12,6 +12,8 @@ import { toast } from 'react-toastify'
 import userService from '@/services/userService'
 import artistService from '@/services/artistService'
 import { getRecruiterProfile } from '@/services/recruiterProfileService'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useTranslation } from '@/i18n'
 const initialRecruiterData: Recruiter = {
   name: 'Alex Morgan',
   title: 'Recruiter',
@@ -29,6 +31,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const { t, tEnum } = useTranslation()
   const navigate = useNavigate()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [userProfile, setUserProfile] = useState<any>(null)
@@ -98,19 +101,20 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const firstName = userProfile?.firstName
   const lastName = userProfile?.lastName
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
-  const displayName = fullName || userProfile?.email || 'User'
-  const displayRole = userProfile?.role || localStorage.getItem('role') || 'User'
-  const displayRoleFormatted = displayRole.replace('ROLE_', '').toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase())
+  const displayName = fullName || userProfile?.email || t('header.fallbackUser')
+  const displayRole: string | null = userProfile?.role || localStorage.getItem('role')
+  const displayRoleFormatted = displayRole ? tEnum(displayRole.replace('ROLE_', '')) : t('header.fallbackUser')
 
   return (
     <header className='h-20 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 lg:justify-end lg:px-8 shrink-0'>
       <button
         onClick={onMenuClick}
         className='lg:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700'
-        aria-label='Open menu'>
+        aria-label={t('header.openMenu')}>
         <MenuIcon className='h-6 w-6' />
       </button>
       <div className='flex items-center space-x-3 sm:space-x-5'>
+        <LanguageSwitcher />
         <div className='relative' ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -121,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               <img
                 className='h-10 w-10 rounded-full object-cover'
                 src={recruiterPhoto || artistPhoto || userProfile?.avatarUrl || userProfile?.profilePicture}
-                alt='User avatar'
+                alt={t('header.userAvatar')}
               />
             ) : (
               <div className='h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center'>
@@ -155,24 +159,24 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   onClick={() => handleNavigation(Page.Profile)}
                   className='flex items-center w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100'>
                   <UserCircleIcon className='mr-3 h-5 w-5 text-gray-400' />
-                  My Profile
+                  {t('common.nav.myProfile')}
                 </button>
                 <button
                   onClick={() => handleNavigation(Page.Settings)}
                   className='flex items-center w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100'>
                   <CogIcon className='mr-3 h-5 w-5 text-gray-400' />
-                  Settings
+                  {t('common.nav.settings')}
                 </button>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     userService.logout();
-                    toast.success('You have been logged out successfully');
+                    toast.success(t('header.loggedOut'));
                     navigate('/auth');
                   }}
                   className='flex items-center w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100 mt-1 pt-2'>
                   <LogOutIcon className='mr-3 h-5 w-5 text-gray-400' />
-                  Logout
+                  {t('common.actions.logout')}
                 </button>
               </div>
             </div>

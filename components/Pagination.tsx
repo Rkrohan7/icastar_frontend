@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@/i18n';
 
 interface PaginationProps {
   currentPage: number;
@@ -36,6 +37,7 @@ const PaginationButton: React.FC<{
 };
 
 export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems, itemsPerPage, onPageChange, className = '' }) => {
+  const { t } = useTranslation();
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   if (totalPages <= 1) {
@@ -86,7 +88,7 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems,
   return (
     <div className={`flex justify-center items-center py-4 px-2 ${className}`}>
       <PaginationButton onClick={handlePrevious} disabled={currentPage === 1}>
-        Previous
+        {t('common.pagination.previous')}
       </PaginationButton>
       <div className="flex items-center">
         {pageNumbers.map((number, index) =>
@@ -106,7 +108,7 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems,
         )}
       </div>
       <PaginationButton onClick={handleNext} disabled={currentPage === totalPages}>
-        Next
+        {t('common.pagination.next')}
       </PaginationButton>
     </div>
   );

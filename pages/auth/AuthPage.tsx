@@ -4,6 +4,7 @@ import { ArrowRight, Star, Camera, Music, Instagram, Twitter, Facebook, Linkedin
 import { useNavigate, Link } from 'react-router-dom'
 import logo from '../../assets/icaster.png'
 import ctaBg from '../../assets/cta-bg.jpg'
+import { useTranslation } from '@/i18n'
 import {
   HeroSection,
   SearchRolesSection,
@@ -20,6 +21,7 @@ import {
 
 const AuthPage = () => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <div className='min-h-screen bg-white font-sans text-gray-900'>
@@ -38,7 +40,7 @@ const AuthPage = () => {
             className="hidden md:flex text-white hover:text-white hover:bg-white/10 text-lg font-semibold px-6 py-2 rounded-full transition-all"
             onClick={() => navigate('/auth')}
           >
-            Sign In
+            {t('common.actions.signIn')}
           </Button>
 
           {/* Sign Up - Primary Action */}
@@ -46,7 +48,7 @@ const AuthPage = () => {
             className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-8 py-6 text-lg font-bold shadow-xl hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all border border-orange-500/50"
             onClick={() => navigate('/auth')}
           >
-            Sign Up
+            {t('common.actions.signUp')}
           </Button>
         </div>
       </nav>
@@ -76,23 +78,23 @@ const AuthPage = () => {
       {/* Final CTA Section */}
       <section className='relative py-24 overflow-hidden'>
         <div className="absolute inset-0 z-0">
-          <img src={ctaBg} alt="Background" className="w-full h-full object-cover" />
+          <img src={ctaBg} alt={t('authPage.cta.backgroundAlt')} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-orange-900/90 to-amber-900/80 mix-blend-multiply"></div>
         </div>
 
         <div className='container mx-auto px-4 text-center relative z-10'>
           <h2 className='text-4xl md:text-5xl font-bold mb-6 text-white tracking-tight'>
-            Ready to Transform Your Career?
+            {t('authPage.cta.title')}
           </h2>
           <p className='text-xl text-white/90 mb-10 max-w-2xl mx-auto font-light leading-relaxed'>
-            Join the fastest growing community of artists and casting directors. Your next role is just a click away.
+            {t('authPage.cta.description')}
           </p>
           <Button
             size='lg'
             className='bg-white text-orange-700 hover:bg-gray-100 hover:text-orange-800 text-lg px-12 py-8 rounded-full shadow-2xl transition-transform hover:scale-105 font-bold border-2 border-transparent'
             onClick={() => navigate('/auth')}
           >
-            Get Started Today
+            {t('authPage.cta.button')}
             <ArrowRight className='ml-2 h-5 w-5' />
           </Button>
         </div>
@@ -105,30 +107,30 @@ const AuthPage = () => {
             <div className='col-span-1 md:col-span-1'>
               <img src={logo} alt="iCaster" className="h-10 w-auto mb-6 opacity-90 grayscale brightness-200" />
               <p className="text-gray-400 text-sm leading-relaxed">
-                The definitive platform for casting professionals and performing artists. Elevate your craft.
+                {t('authPage.footer.tagline')}
               </p>
             </div>
 
             <div>
-              <h4 className='font-bold mb-6 text-lg'>Platform</h4>
+              <h4 className='font-bold mb-6 text-lg'>{t('authPage.footer.platform')}</h4>
               <ul className='space-y-3 text-gray-400 text-sm'>
-                <li><Link to="/auth" className='hover:text-amber-500 transition-colors'>Browse Talent</Link></li>
-                <li><Link to="/auth" className='hover:text-amber-500 transition-colors'>Find Jobs</Link></li>
-                <li><Link to="/auth" className='hover:text-amber-500 transition-colors'>Pricing</Link></li>
+                <li><Link to="/auth" className='hover:text-amber-500 transition-colors'>{t('authPage.footer.browseTalent')}</Link></li>
+                <li><Link to="/auth" className='hover:text-amber-500 transition-colors'>{t('authPage.footer.findJobs')}</Link></li>
+                <li><Link to="/auth" className='hover:text-amber-500 transition-colors'>{t('authPage.footer.pricing')}</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className='font-bold mb-6 text-lg'>Company</h4>
+              <h4 className='font-bold mb-6 text-lg'>{t('authPage.footer.company')}</h4>
               <ul className='space-y-3 text-gray-400 text-sm'>
-                <li><a href="#" className='hover:text-amber-500 transition-colors'>About Us</a></li>
-                <li><a href="#" className='hover:text-amber-500 transition-colors'>Careers</a></li>
-                <li><a href="/blogs" className='hover:text-amber-500 transition-colors'>Blog</a></li>
+                <li><a href="#" className='hover:text-amber-500 transition-colors'>{t('authPage.footer.aboutUs')}</a></li>
+                <li><a href="#" className='hover:text-amber-500 transition-colors'>{t('authPage.footer.careers')}</a></li>
+                <li><a href="/blogs" className='hover:text-amber-500 transition-colors'>{t('authPage.footer.blog')}</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className='font-bold mb-6 text-lg'>Connect</h4>
+              <h4 className='font-bold mb-6 text-lg'>{t('authPage.footer.connect')}</h4>
               <div className="flex gap-4">
                 <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-amber-600 transition-colors text-white">
                   <Instagram className="h-5 w-5" />
@@ -144,11 +146,11 @@ const AuthPage = () => {
           </div>
 
           <div className='border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-500 text-sm'>
-            <p>© 2024 iCastar Inc. All rights reserved.</p>
+            <p>{t('authPage.footer.copyright')}</p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
-              <a href="#" className="hover:text-white transition-colors">Sitemap</a>
+              <Link to="/privacy" className="hover:text-white transition-colors">{t('authPage.footer.privacy')}</Link>
+              <Link to="/terms" className="hover:text-white transition-colors">{t('authPage.footer.terms')}</Link>
+              <a href="#" className="hover:text-white transition-colors">{t('authPage.footer.sitemap')}</a>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import superAdminService, {
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
+import { useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
@@ -24,6 +25,7 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export const SuperAdminAuditionApplicationsPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [list, setList] = useState<AuditionApplicationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -52,15 +54,15 @@ export const SuperAdminAuditionApplicationsPage: React.FC = () => {
       } catch (e: any) {
         const s = e?.response?.status
         const m = e?.response?.data?.message
-        if (s === 401) setError('Unauthorized — log in as admin.')
-        else if (s === 403) setError('Access denied — admin role required.')
-        else setError(m || e?.message || 'Unable to load audition applications.')
+        if (s === 401) setError(t('adminAuditionApplications.errors.unauthorized'))
+        else if (s === 403) setError(t('adminAuditionApplications.errors.accessDenied'))
+        else setError(m || e?.message || t('adminAuditionApplications.errors.loadFailed'))
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [page, status, search])
+  }, [page, status, search, t])
 
   return (
     <div className='p-6 space-y-4'>
@@ -71,7 +73,7 @@ export const SuperAdminAuditionApplicationsPage: React.FC = () => {
             setPage(0)
             setSearch(term)
           }}
-          placeholder='Search by artist or audition...'
+          placeholder={t('adminAuditionApplications.searchPlaceholder')}
         />
         <select
           value={status}
@@ -81,31 +83,33 @@ export const SuperAdminAuditionApplicationsPage: React.FC = () => {
           }}
           className='px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s === 'All Statuses' ? '' : s}>{s.replace(/_/g, ' ')}</option>
+            <option key={s} value={s === 'All Statuses' ? '' : s}>
+              {s === 'All Statuses' ? t('adminAuditionApplications.allStatuses') : tEnum(s)}
+            </option>
           ))}
         </select>
         <p className='text-xs text-gray-500 mt-3'>
-          Showing {list.length} of {totalItems.toLocaleString()} audition applications
+          {t('adminAuditionApplications.showing', { shown: list.length, total: totalItems.toLocaleString() })}
         </p>
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <div className='py-16 text-center text-gray-500'>Loading...</div>
+          <div className='py-16 text-center text-gray-500'>{t('common.status.loading')}</div>
         ) : error ? (
           <div className='py-16 text-center text-red-600'>{error}</div>
         ) : list.length === 0 ? (
-          <div className='py-16 text-center text-gray-500'>No applications found</div>
+          <div className='py-16 text-center text-gray-500'>{t('adminAuditionApplications.empty')}</div>
         ) : (
           <div className='overflow-x-auto'>
             <table className='w-full text-sm'>
               <thead className='bg-gray-50 border-b border-gray-200'>
                 <tr>
-                  <Th>Artist</Th>
-                  <Th>Audition</Th>
-                  <Th>Recruiter</Th>
-                  <Th>Status</Th>
-                  <Th>Applied</Th>
+                  <Th>{t('adminAuditionApplications.columns.artist')}</Th>
+                  <Th>{t('adminAuditionApplications.columns.audition')}</Th>
+                  <Th>{t('adminAuditionApplications.columns.recruiter')}</Th>
+                  <Th>{t('common.labels.status')}</Th>
+                  <Th>{t('adminAuditionApplications.columns.applied')}</Th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
@@ -133,7 +137,7 @@ export const SuperAdminAuditionApplicationsPage: React.FC = () => {
                         className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                           STATUS_COLOR[a.status || ''] || 'bg-gray-100 text-gray-600'
                         }`}>
-                        {(a.status || 'N/A').replace(/_/g, ' ')}
+                        {a.status ? tEnum(a.status) : t('common.status.notAvailable')}
                       </span>
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-500'>

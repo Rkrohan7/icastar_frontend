@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import blogService, { BlogPost } from '../../services/blogService'
+import { useTranslation } from '@/i18n'
 
 const formatDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
@@ -8,6 +9,7 @@ const formatDate = (iso?: string) =>
 const readingTime = (content: string) => Math.max(1, Math.round(content.trim().split(/\s+/).length / 200))
 
 const Header: React.FC = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   return (
     <header className='border-b border-gray-100 bg-white'>
@@ -16,7 +18,7 @@ const Header: React.FC = () => {
           iCastar
         </button>
         <Link to='/blogs' className='text-sm font-semibold text-orange-600 hover:underline'>
-          Blog
+          {t('blogs.navBlog')}
         </Link>
       </div>
     </header>
@@ -24,6 +26,7 @@ const Header: React.FC = () => {
 }
 
 export const BlogsPage: React.FC = () => {
+  const { t } = useTranslation()
   const [blogs, setBlogs] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -40,16 +43,16 @@ export const BlogsPage: React.FC = () => {
       <Header />
       <div className='container mx-auto px-4 py-12'>
         <div className='max-w-3xl mb-10'>
-          <h1 className='text-4xl font-extrabold text-gray-900'>From the iCastar blog</h1>
+          <h1 className='text-4xl font-extrabold text-gray-900'>{t('blogs.list.title')}</h1>
           <p className='text-gray-500 mt-2'>
-            Audition tips, casting news and stories from the industry.
+            {t('blogs.list.subtitle')}
           </p>
         </div>
 
         {loading ? (
-          <p className='py-16 text-center text-gray-500'>Loading blogs...</p>
+          <p className='py-16 text-center text-gray-500'>{t('blogs.list.loading')}</p>
         ) : blogs.length === 0 ? (
-          <p className='py-16 text-center text-gray-500'>No blogs published yet. Please check back soon.</p>
+          <p className='py-16 text-center text-gray-500'>{t('blogs.list.empty')}</p>
         ) : (
           <div className='grid gap-8 sm:grid-cols-2 lg:grid-cols-3'>
             {blogs.map(blog => (
@@ -88,6 +91,7 @@ export const BlogsPage: React.FC = () => {
 }
 
 export const BlogDetailPage: React.FC = () => {
+  const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const [blog, setBlog] = useState<BlogPost | null>(null)
   const [loading, setLoading] = useState(true)
@@ -106,7 +110,7 @@ export const BlogDetailPage: React.FC = () => {
     return (
       <div className='min-h-screen bg-white'>
         <Header />
-        <p className='py-24 text-center text-gray-500'>Loading...</p>
+        <p className='py-24 text-center text-gray-500'>{t('common.status.loading')}</p>
       </div>
     )
   }
@@ -116,9 +120,9 @@ export const BlogDetailPage: React.FC = () => {
       <div className='min-h-screen bg-white'>
         <Header />
         <div className='py-24 text-center'>
-          <p className='text-gray-600'>This blog is not available.</p>
+          <p className='text-gray-600'>{t('blogs.detail.notAvailable')}</p>
           <Link to='/blogs' className='mt-4 inline-block text-orange-600 font-semibold hover:underline'>
-            Back to all blogs
+            {t('blogs.detail.backToAll')}
           </Link>
         </div>
       </div>
@@ -130,11 +134,11 @@ export const BlogDetailPage: React.FC = () => {
       <Header />
       <article className='container mx-auto px-4 py-12 max-w-3xl'>
         <Link to='/blogs' className='text-sm font-medium text-orange-600 hover:underline'>
-          ← All blogs
+          {t('blogs.detail.allBlogs')}
         </Link>
         <h1 className='text-4xl font-extrabold text-gray-900 mt-4 mb-3'>{blog.title}</h1>
         <p className='text-sm text-gray-500'>
-          {[blog.authorName, formatDate(blog.publishedAt ?? blog.createdAt), `${readingTime(blog.content)} min read`]
+          {[blog.authorName, formatDate(blog.publishedAt ?? blog.createdAt), t('blogs.detail.minRead', { count: readingTime(blog.content) })]
             .filter(Boolean)
             .join(' · ')}
         </p>

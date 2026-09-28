@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import Icon from '../Icon'
+import { useTranslation } from '@/i18n'
 
 interface FileUploadProps {
   label: string
@@ -15,6 +16,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   multiple = false,
   onFilesUploaded,
 }) => {
+  const { t } = useTranslation()
   const [files, setFiles] = useState<File[]>([])
 
   const onDrop = useCallback(
@@ -60,14 +62,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
         />
         {isDragActive ? (
           <p className='text-primary font-semibold'>
-            Drop the files here...
+            {t('fileUpload.dropzone.dropHere')}
           </p>
         ) : (
           <p className='text-gray-500 text-sm'>
-            Drag & drop files here, or{' '}
+            {t('fileUpload.dropzone.before')}
             <span className='text-primary font-semibold'>
-              click to select
+              {t('fileUpload.dropzone.link')}
             </span>
+            {t('fileUpload.dropzone.after')}
           </p>
         )}
       </div>

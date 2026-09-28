@@ -7,6 +7,7 @@ import {
   SearchIcon,
   XIcon,
 } from '../../components/icons/IconComponents'
+import { useTranslation } from '@/i18n'
 
 const inputCls =
   'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
@@ -38,6 +39,7 @@ interface EditorProps {
 }
 
 const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState(() =>
     blog
       ? { ...blog, tagsText: blog.tags.join(', ') }
@@ -61,9 +63,9 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
       setUploadProgress(0)
       const url = await blogService.uploadCoverImage(file, setUploadProgress)
       set({ coverImageUrl: url })
-      toast.success('Image uploaded')
+      toast.success(t('adminBlogs.toast.imageUploaded'))
     } catch (error: any) {
-      toast.error(error?.message || 'Image upload failed')
+      toast.error(error?.message || t('adminBlogs.toast.imageUploadFailed'))
     } finally {
       setUploadProgress(null)
       if (fileRef.current) fileRef.current.value = ''
@@ -72,8 +74,8 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
 
   const save = async (status: BlogStatus) => {
     const e: Record<string, string> = {}
-    if (!draft.title.trim()) e.title = 'Title is required'
-    if (!draft.content.trim()) e.content = 'Content is required'
+    if (!draft.title.trim()) e.title = t('adminBlogs.editor.titleRequired')
+    if (!draft.content.trim()) e.content = t('adminBlogs.editor.contentRequired')
     setErrors(e)
     if (Object.keys(e).length > 0) return
 
@@ -84,7 +86,7 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
       content: draft.content,
       coverImageUrl: draft.coverImageUrl || undefined,
       authorName: draft.authorName?.trim() || undefined,
-      tags: draft.tagsText.split(',').map(t => t.trim()).filter(Boolean),
+      tags: draft.tagsText.split(',').map(tag => tag.trim()).filter(Boolean),
       status,
     }
     try {
@@ -92,10 +94,10 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
       const saved = blog
         ? await blogService.updateBlog(blog.id, payload)
         : await blogService.createBlog(payload)
-      toast.success(status === 'PUBLISHED' ? 'Blog published' : 'Draft saved')
+      toast.success(status === 'PUBLISHED' ? t('adminBlogs.toast.published') : t('adminBlogs.toast.draftSaved'))
       onSaved(saved, !blog)
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to save blog')
+      toast.error(error.response?.data?.message || t('adminBlogs.toast.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -105,7 +107,7 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
     <div className='fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 overflow-y-auto'>
       <div className='bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8'>
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200'>
-          <h3 className='text-lg font-bold text-gray-900'>{blog ? 'Edit blog' : 'New blog'}</h3>
+          <h3 className='text-lg font-bold text-gray-900'>{blog ? t('adminBlogs.editor.editTitle') : t('adminBlogs.editor.newTitle')}</h3>
           <button onClick={onClose} disabled={saving} className='text-gray-400 hover:text-gray-600'>
             <XIcon className='h-5 w-5' />
           </button>
@@ -113,20 +115,20 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
 
         <div className='px-6 py-5 space-y-5'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Title *</label>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>{t('common.labels.title')} *</label>
             <input
               className={`${inputCls} ${errors.title ? 'border-red-500' : ''}`}
               value={draft.title}
               maxLength={200}
               onChange={e => handleTitle(e.target.value)}
-              placeholder='e.g. 5 audition tips for new actors'
+              placeholder={t('adminBlogs.editor.titlePlaceholder')}
             />
             {errors.title && <p className='text-xs text-red-600 mt-1'>{errors.title}</p>}
           </div>
 
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>URL slug</label>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>{t('adminBlogs.editor.slug')}</label>
               <input
                 className={inputCls}
                 value={draft.slug}
@@ -139,20 +141,20 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
               <p className='text-xs text-gray-400 mt-1'>/blogs/{draft.slug || 'your-slug'}</p>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Author</label>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>{t('adminBlogs.editor.author')}</label>
               <input
                 className={inputCls}
                 value={draft.authorName}
                 maxLength={100}
                 onChange={e => set({ authorName: e.target.value })}
-                placeholder='iCastar Team'
+                placeholder={t('adminBlogs.editor.authorPlaceholder')}
               />
             </div>
           </div>
 
           {/* Cover image — uploaded straight to S3 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Cover image</label>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>{t('adminBlogs.editor.coverImage')}</label>
             {draft.coverImageUrl ? (
               <div className='relative w-full max-w-sm'>
                 <img src={draft.coverImageUrl} alt='' className='w-full h-44 object-cover rounded-lg border border-gray-200' />
@@ -171,9 +173,11 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
                 className='w-full max-w-sm h-44 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-[#E36A3A] hover:text-[#E36A3A] transition-colors'>
                 <ImageIcon className='h-8 w-8' />
                 <span className='text-sm font-medium'>
-                  {uploadProgress !== null ? `Uploading... ${uploadProgress}%` : 'Upload image'}
+                  {uploadProgress !== null
+                    ? t('adminBlogs.editor.uploadingProgress', { progress: uploadProgress })
+                    : t('adminBlogs.editor.uploadImage')}
                 </span>
-                <span className='text-xs text-gray-400'>JPEG, PNG or WebP · up to 5MB</span>
+                <span className='text-xs text-gray-400'>{t('adminBlogs.editor.imageRules')}</span>
               </button>
             )}
             <input
@@ -186,55 +190,55 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Short summary</label>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>{t('adminBlogs.editor.summary')}</label>
             <textarea
               className={inputCls}
               rows={2}
               maxLength={300}
               value={draft.excerpt}
               onChange={e => set({ excerpt: e.target.value })}
-              placeholder='One or two lines shown on the blog cards'
+              placeholder={t('adminBlogs.editor.summaryPlaceholder')}
             />
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Content *</label>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>{t('adminBlogs.editor.content')} *</label>
             <textarea
               className={`${inputCls} font-mono ${errors.content ? 'border-red-500' : ''}`}
               rows={12}
               value={draft.content}
               onChange={e => set({ content: e.target.value })}
-              placeholder='Write the blog here. Leave a blank line between paragraphs.'
+              placeholder={t('adminBlogs.editor.contentPlaceholder')}
             />
             {errors.content && <p className='text-xs text-red-600 mt-1'>{errors.content}</p>}
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>Tags</label>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>{t('adminBlogs.editor.tags')}</label>
             <input
               className={inputCls}
               value={draft.tagsText}
               onChange={e => set({ tagsText: e.target.value })}
-              placeholder='Auditions, Acting tips (comma separated)'
+              placeholder={t('adminBlogs.editor.tagsPlaceholder')}
             />
           </div>
         </div>
 
         <div className='flex flex-wrap justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl'>
           <button onClick={onClose} disabled={saving} className='px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100'>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={() => save('DRAFT')}
             disabled={saving}
             className='px-5 py-2 rounded-lg text-sm font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50'>
-            Save as draft
+            {t('adminBlogs.actions.saveDraft')}
           </button>
           <button
             onClick={() => save('PUBLISHED')}
             disabled={saving}
             className='px-5 py-2 rounded-lg text-sm font-semibold text-white bg-[#E36A3A] hover:bg-[#C95428] disabled:opacity-50'>
-            {saving ? 'Saving...' : 'Publish'}
+            {saving ? t('common.actions.saving') : t('adminBlogs.actions.publish')}
           </button>
         </div>
       </div>
@@ -243,6 +247,7 @@ const BlogEditor: React.FC<EditorProps> = ({ blog, onClose, onSaved }) => {
 }
 
 export const SuperAdminBlogsPage: React.FC = () => {
+  const { t, tEnum } = useTranslation()
   const [blogs, setBlogs] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -258,7 +263,7 @@ export const SuperAdminBlogsPage: React.FC = () => {
       setBlogs(items)
     } catch (err) {
       console.error('Failed to load blogs:', err)
-      setError('Unable to load blogs. Please try again.')
+      setError(t('adminBlogs.loadError'))
     } finally {
       setLoading(false)
     }
@@ -284,20 +289,20 @@ export const SuperAdminBlogsPage: React.FC = () => {
     try {
       const saved = await blogService.updateBlog(blog.id, { ...blog, status: next })
       setBlogs(prev => prev.map(b => (b.id === blog.id ? saved : b)))
-      toast.success(next === 'PUBLISHED' ? 'Blog published' : 'Blog moved to draft')
+      toast.success(next === 'PUBLISHED' ? t('adminBlogs.toast.published') : t('adminBlogs.toast.movedToDraft'))
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update status')
+      toast.error(error.response?.data?.message || t('adminBlogs.toast.statusFailed'))
     }
   }
 
   const remove = async (blog: BlogPost) => {
-    if (!window.confirm(`Delete "${blog.title}"? This cannot be undone.`)) return
+    if (!window.confirm(t('adminBlogs.confirmDelete', { title: blog.title }))) return
     try {
       await blogService.deleteBlog(blog.id)
       setBlogs(prev => prev.filter(b => b.id !== blog.id))
-      toast.success('Blog deleted')
+      toast.success(t('adminBlogs.toast.deleted'))
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete blog')
+      toast.error(error.response?.data?.message || t('adminBlogs.toast.deleteFailed'))
     }
   }
 
@@ -305,15 +310,15 @@ export const SuperAdminBlogsPage: React.FC = () => {
     <div className='p-6 space-y-6'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <h2 className='text-2xl font-bold text-gray-900'>Blog</h2>
+          <h2 className='text-2xl font-bold text-gray-900'>{t('adminBlogs.title')}</h2>
           <p className='text-sm text-gray-500 mt-0.5'>
-            Published posts appear on the landing page and on /blogs.
+            {t('adminBlogs.subtitle')}
           </p>
         </div>
         <button
           onClick={() => setEditing(null)}
           className='px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#E36A3A] hover:bg-[#C95428]'>
-          New Blog
+          {t('adminBlogs.newBlog')}
         </button>
       </div>
 
@@ -322,7 +327,7 @@ export const SuperAdminBlogsPage: React.FC = () => {
           <SearchIcon className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
           <input
             className={`${inputCls} pl-9`}
-            placeholder='Search by title'
+            placeholder={t('adminBlogs.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -331,36 +336,36 @@ export const SuperAdminBlogsPage: React.FC = () => {
           className={`${inputCls} w-44`}
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value as BlogStatus | 'ALL')}>
-          <option value='ALL'>All statuses</option>
-          <option value='PUBLISHED'>Published</option>
-          <option value='DRAFT'>Draft</option>
+          <option value='ALL'>{t('adminBlogs.allStatuses')}</option>
+          <option value='PUBLISHED'>{tEnum('PUBLISHED')}</option>
+          <option value='DRAFT'>{tEnum('DRAFT')}</option>
         </select>
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
-          <p className='py-16 text-center text-sm text-gray-500'>Loading blogs...</p>
+          <p className='py-16 text-center text-sm text-gray-500'>{t('adminBlogs.loading')}</p>
         ) : error ? (
           <div className='py-16 text-center'>
             <p className='text-sm text-red-600'>{error}</p>
             <button onClick={load} className='mt-3 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium'>
-              Retry
+              {t('common.actions.retry')}
             </button>
           </div>
         ) : visible.length === 0 ? (
           <div className='py-16 text-center'>
             <FileTextIcon className='mx-auto h-10 w-10 text-gray-300' />
             <p className='mt-2 text-sm text-gray-500'>
-              {blogs.length === 0 ? 'No blogs yet. Write your first one.' : 'No blogs match your filters.'}
+              {blogs.length === 0 ? t('adminBlogs.empty') : t('adminBlogs.noMatches')}
             </p>
           </div>
         ) : (
           <table className='min-w-full divide-y divide-gray-200'>
             <thead className='bg-gray-50'>
               <tr>
-                {['Blog', 'Status', 'Author', 'Published', ''].map(h => (
+                {['adminBlogs.table.blog', 'common.labels.status', 'adminBlogs.table.author', 'adminBlogs.table.published', ''].map(h => (
                   <th key={h} className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                    {h}
+                    {h ? t(h) : ''}
                   </th>
                 ))}
               </tr>
@@ -385,20 +390,20 @@ export const SuperAdminBlogsPage: React.FC = () => {
                   </td>
                   <td className='px-6 py-4'>
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${statusStyles[blog.status]}`}>
-                      {blog.status === 'PUBLISHED' ? 'Published' : 'Draft'}
+                      {tEnum(blog.status)}
                     </span>
                   </td>
                   <td className='px-6 py-4 text-sm text-gray-600'>{blog.authorName || '—'}</td>
                   <td className='px-6 py-4 text-sm text-gray-600'>{formatDate(blog.publishedAt ?? blog.createdAt)}</td>
                   <td className='px-6 py-4 text-right text-sm space-x-3 whitespace-nowrap'>
                     <button onClick={() => setEditing(blog)} className='font-medium text-gray-600 hover:text-gray-900'>
-                      Edit
+                      {t('common.actions.edit')}
                     </button>
                     <button onClick={() => toggleStatus(blog)} className='font-medium text-[#E36A3A] hover:underline'>
-                      {blog.status === 'PUBLISHED' ? 'Unpublish' : 'Publish'}
+                      {blog.status === 'PUBLISHED' ? t('adminBlogs.actions.unpublish') : t('adminBlogs.actions.publish')}
                     </button>
                     <button onClick={() => remove(blog)} className='font-medium text-red-600 hover:underline'>
-                      Delete
+                      {t('common.actions.delete')}
                     </button>
                   </td>
                 </tr>
