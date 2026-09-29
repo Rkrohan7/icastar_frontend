@@ -81,7 +81,7 @@ const PrivacyPolicyPage = () => {
 
                 <div>
                   <h4 className="font-bold text-gray-900 mb-2">{t('privacy.sections.s4.title')}</h4>
-                  <p>{t('privacy.sections.s4.emailBefore')}<a href="mailto:admin.icastar@gmail.com" className="text-orange-600 hover:text-orange-700 underline">admin.icastar@gmail.com</a>{t('privacy.sections.s4.emailAfter')}</p>
+                  <p>{t('privacy.sections.s4.emailBefore')}<a href="mailto:icastarhelp@gmail.com" className="text-orange-600 hover:text-orange-700 underline">icastarhelp@gmail.com</a>{t('privacy.sections.s4.emailAfter')}</p>
                 </div>
 
                 <div>
@@ -91,7 +91,7 @@ const PrivacyPolicyPage = () => {
 
                 <div>
                   <h4 className="font-bold text-gray-900 mb-2">{t('privacy.sections.s6.title')}</h4>
-                  <p>{t('privacy.sections.s6.emailBefore')}<a href="mailto:admin.icastar@gmail.com" className="text-orange-600 hover:text-orange-700 underline">admin.icastar@gmail.com</a>{t('privacy.sections.s6.emailAfter')}</p>
+                  <p>{t('privacy.sections.s6.emailBefore')}<a href="mailto:icastarhelp@gmail.com" className="text-orange-600 hover:text-orange-700 underline">icastarhelp@gmail.com</a>{t('privacy.sections.s6.emailAfter')}</p>
                 </div>
 
                 <div>
@@ -117,10 +117,10 @@ const PrivacyPolicyPage = () => {
                   {t('privacy.contact.text')}
                 </p>
                 <a
-                  href="mailto:admin.icastar@gmail.com"
+                  href="mailto:icastarhelp@gmail.com"
                   className="inline-block mt-3 text-orange-600 hover:text-orange-700 font-semibold underline"
                 >
-                  admin.icastar@gmail.com
+                  icastarhelp@gmail.com
                 </a>
               </div>
             </div>

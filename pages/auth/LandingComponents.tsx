@@ -906,17 +906,17 @@ export const AboutSection = () => {
                         <p className="text-gray-700 font-medium">
                             {t('landing.about.moreInfo')}{' '}
                             <a
-                                href="mailto:admin.icastar@gmail.com"
+                                href="mailto:icastarhelp@gmail.com"
                                 onClick={(e) => {
                                     e.preventDefault()
                                     window.open(
-                                        'https://mail.google.com/mail/?view=cm&fs=1&to=admin.icastar@gmail.com&su=Support%20Request%20-%20iCastar',
+                                        'https://mail.google.com/mail/?view=cm&fs=1&to=icastarhelp@gmail.com&su=Support%20Request%20-%20iCastar',
                                         '_blank',
                                         'noopener,noreferrer',
                                     )
                                 }}
                                 className="text-orange-600 hover:text-orange-700 underline">
-                                admin.icastar@gmail.com
+                                icastarhelp@gmail.com
                             </a>
                         </p>
                     </div>
@@ -1077,7 +1077,7 @@ export const FAQSection = () => {
                             {t('landing.faq.moreQuestions.text')}
                         </p>
                         <a
-                            href="mailto:admin.icastar@gmail.com"
+                            href="mailto:icastarhelp@gmail.com"
                             onClick={(e) => {
                                 // A bare mailto: does nothing when the browser has no default
                                 // mail app registered (common on desktop Chrome). Open Gmail's
@@ -1085,7 +1085,7 @@ export const FAQSection = () => {
                                 // the mailto href still serves right-click / native-client users.
                                 e.preventDefault()
                                 window.open(
-                                    'https://mail.google.com/mail/?view=cm&fs=1&to=admin.icastar@gmail.com&su=Support%20Request%20-%20iCastar',
+                                    'https://mail.google.com/mail/?view=cm&fs=1&to=icastarhelp@gmail.com&su=Support%20Request%20-%20iCastar',
                                     '_blank',
                                     'noopener,noreferrer',
                                 )
@@ -1093,7 +1093,7 @@ export const FAQSection = () => {
                             className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
                         >
                             <Send className="h-5 w-5" />
-                            {t('landing.faq.moreQuestions.emailUs', { email: 'admin.icastar@gmail.com' })}
+                            {t('landing.faq.moreQuestions.emailUs', { email: 'icastarhelp@gmail.com' })}
                         </a>
                     </div>
                 </div>

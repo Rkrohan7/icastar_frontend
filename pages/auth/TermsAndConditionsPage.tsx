@@ -101,10 +101,10 @@ const TermsAndConditionsPage = () => {
                   {t('terms.contact.text')}
                 </p>
                 <a
-                  href="mailto:admin.icastar@gmail.com"
+                  href="mailto:icastarhelp@gmail.com"
                   className="inline-block mt-3 text-orange-600 hover:text-orange-700 font-semibold underline"
                 >
-                  admin.icastar@gmail.com
+                  icastarhelp@gmail.com
                 </a>
               </div>
             </div>
