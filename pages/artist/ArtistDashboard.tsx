@@ -29,7 +29,7 @@ import {
 import artistDashboardService from '../../services/artistDashboardService'
 import { toast } from 'react-toastify'
 import ApplyJobModal from '../../components/ApplyJobModal'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 export const ArtistDashboard = () => {
   const navigate = useNavigate()
@@ -276,7 +276,7 @@ export const ArtistDashboard = () => {
           <p className='text-sm text-gray-600 mt-1'>{t('artistDashboard.subtitle')}</p>
         </div>
         <div className='text-sm text-gray-500'>
-          {t('artistDashboard.lastUpdated', { date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) })}
+          {t('artistDashboard.lastUpdated', { date: new Date().toLocaleDateString(dateLocale('en-US'), { month: 'short', day: 'numeric', year: 'numeric' }) })}
         </div>
       </div>
 

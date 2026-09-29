@@ -18,7 +18,7 @@ import {
 import Icon from '@/components/Icon'
 import UpdateStatusModal from '@/components/UpdateStatusModal'
 import usePageParam from '@/hooks/usePageParam'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const STATUS_OPTIONS: HireRequestStatus[] = ['PENDING', 'VIEWED', 'ACCEPTED', 'DECLINED', 'HIRED', 'WITHDRAWN', 'EXPIRED']
 
@@ -312,7 +312,7 @@ const CandidatesPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.sentAt).toLocaleDateString()}
+                      {new Date(request.sentAt).toLocaleDateString(dateLocale())}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {request.emailSent ? (

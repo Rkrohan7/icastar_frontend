@@ -4,7 +4,7 @@ import auditionService from '@/services/auditionService'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import usePageParam from '@/hooks/usePageParam'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 interface AuditionData {
   id: number
@@ -68,7 +68,7 @@ const getIconForFormat = (format: string): string => {
 const formatDate = (dateString: string): string => {
   if (!dateString) return 'TBD'
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return date.toLocaleDateString(dateLocale('en-GB'), { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 type TranslateFn = ReturnType<typeof useTranslation>['t']

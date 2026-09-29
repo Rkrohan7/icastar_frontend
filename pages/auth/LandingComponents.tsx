@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { useNavigate } from 'react-router-dom'
 import { getLandingStats, DEFAULT_LANDING_STATS, LandingStats } from '@/services/publicConfigService'
 import blogService, { BlogPost } from '@/services/blogService'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 // --- Mock Data ---
 
@@ -227,7 +227,7 @@ export const SearchRolesSection = () => {
         <section className="py-12 bg-white -mt-10 relative z-20">
             <div className="container mx-auto px-4">
                 {/* Search Bar Container */}
-                <div className="max-w-5xl mx-auto bg-white rounded-full shadow-2xl shadow-slate-200/50 border border-gray-100 p-2 mb-16 animate-in slide-in-from-bottom-8 duration-700 fade-in flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                <div className="max-w-5xl mx-auto bg-white rounded-3xl md:rounded-full shadow-2xl shadow-slate-200/50 border border-gray-100 p-2 mb-16 animate-in slide-in-from-bottom-8 duration-700 fade-in flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-100">
 
                     {/* Skills/Role Input */}
                     <div className="flex-1 px-6 py-3 flex items-center gap-3">
@@ -259,7 +259,7 @@ export const SearchRolesSection = () => {
                     {/* Location Input */}
                     <div className="flex-1 px-6 py-3 flex items-center gap-3">
                         <MapPin className="w-5 h-5 text-gray-400" />
-                        <div className="flex-1 hidden md:block">
+                        <div className="flex-1">
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('common.labels.location')}</label>
                             <Input
                                 type="text"
@@ -741,7 +741,7 @@ export const BlogSection = () => {
     if (loading || !enabled || blogs.length === 0) return null
 
     const formatDate = (iso?: string) =>
-        iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
+        iso ? new Date(iso).toLocaleDateString(dateLocale('en-IN'), { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
     return (
         <section className="py-20 bg-gray-50">

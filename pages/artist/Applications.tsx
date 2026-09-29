@@ -3,7 +3,7 @@ import Icon from '@/components/Icon'
 import { applicationsService, MyApplication } from '@/services/applicationsService'
 import placeholderLogo from '@/assets/icaster.png'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const statusClasses: Record<string, string> = {
   APPLIED: 'bg-blue-100 text-blue-800',
@@ -132,7 +132,7 @@ const Applications: React.FC = () => {
                   <td className='p-5 text-gray-700'>{app.company || '-'}</td>
                   <td className='p-5 text-gray-700'>
                     {app.appliedAt
-                      ? new Date(app.appliedAt).toLocaleDateString('en-US', {
+                      ? new Date(app.appliedAt).toLocaleDateString(dateLocale('en-US'), {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',

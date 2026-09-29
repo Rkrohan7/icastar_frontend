@@ -17,7 +17,7 @@ import ShareLinkModal from '@/components/ShareLinkModal'
 import { bookmarksService } from '@/services/bookmarksService'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 import usePageParam from '@/hooks/usePageParam'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 
 type JobCardProps = {
@@ -176,7 +176,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
       <div className='flex flex-col gap-3 mt-2 border-t border-gray-100 pt-4'>
         <div className="flex justify-between items-center text-xs text-gray-400 px-1">
-          <span>{postedDate ? new Date(postedDate).toLocaleDateString() : t('artistJobs.card.recently')}</span>
+          <span>{postedDate ? new Date(postedDate).toLocaleDateString(dateLocale()) : t('artistJobs.card.recently')}</span>
           {applicantsCount !== undefined && <span>{t('artistJobs.card.applicants', { count: applicantsCount })}</span>}
         </div>
         <div className='flex gap-2'>

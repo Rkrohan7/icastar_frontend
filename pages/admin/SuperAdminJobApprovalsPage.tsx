@@ -10,7 +10,7 @@ import superAdminService, { PendingJob } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
@@ -123,7 +123,7 @@ export const SuperAdminJobApprovalsPage: React.FC = () => {
                         </span>
                       )}
                       {j.submittedAt && (
-                        <span>{t('adminJobApprovals.submitted', { date: new Date(j.submittedAt).toLocaleDateString() })}</span>
+                        <span>{t('adminJobApprovals.submitted', { date: new Date(j.submittedAt).toLocaleDateString(dateLocale()) })}</span>
                       )}
                     </div>
                   </div>

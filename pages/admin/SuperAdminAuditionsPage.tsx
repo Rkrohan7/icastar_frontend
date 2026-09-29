@@ -16,7 +16,7 @@ import superAdminService, {
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
@@ -174,7 +174,7 @@ export const SuperAdminAuditionsPage: React.FC<Props> = ({ initialStatus, title 
                     <td className='px-4 py-3 text-xs text-gray-700'>
                       <div className='flex items-center gap-1'>
                         <CalendarIcon className='h-3 w-3' />
-                        {a.scheduledAt ? new Date(a.scheduledAt).toLocaleString() : '—'}
+                        {a.scheduledAt ? new Date(a.scheduledAt).toLocaleString(dateLocale()) : '—'}
                       </div>
                     </td>
                     <td className='px-4 py-3'>

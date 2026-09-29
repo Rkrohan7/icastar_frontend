@@ -16,7 +16,7 @@ import superAdminService, {
 import { Pagination } from './SuperAdminRecruitersPage'
 import usePageParam from '../../hooks/usePageParam'
 import BulkUploadJobsModal from './BulkUploadJobsModal'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 // Labels come from tEnum(value); the empty value is the "All …" filter option.
 const STATUS_OPTIONS: { value: JobStatus | '' }[] = [
@@ -223,7 +223,7 @@ export const SuperAdminJobsPage: React.FC = () => {
                       {j.status && <JobStatusBadge status={j.status} />}
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-500'>
-                      {j.createdAt ? new Date(j.createdAt).toLocaleDateString() : '—'}
+                      {j.createdAt ? new Date(j.createdAt).toLocaleDateString(dateLocale()) : '—'}
                     </td>
                   </tr>
                   )

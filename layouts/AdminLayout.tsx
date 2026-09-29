@@ -37,6 +37,10 @@ export const AdminLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  // Below lg the sidebar is an off-canvas drawer instead of a fixed column
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  // Labels are shown when the sidebar is expanded on desktop or open as the mobile drawer
+  const expanded = sidebarOpen || mobileNavOpen
   const [expandedSections, setExpandedSections] = useState<string[]>(['dashboard'])
 
   const navItems: AdminNavItem[] = [
@@ -131,6 +135,11 @@ export const AdminLayout: React.FC = () => {
     )
   }
 
+  const goTo = (path: string) => {
+    navigate(path)
+    setMobileNavOpen(false)
+  }
+
   const isActive = (path: string) => location.pathname === path
   const isParentActive = (item: AdminNavItem) => {
     if (item.children) {
@@ -141,14 +150,25 @@ export const AdminLayout: React.FC = () => {
 
   return (
     <div className='flex h-screen bg-gray-50 overflow-hidden'>
+      {/* Mobile drawer backdrop */}
+      {mobileNavOpen && (
+        <div
+          className='fixed inset-0 z-30 bg-black/40 lg:hidden'
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden='true'
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white text-gray-800 transition-all duration-300 flex flex-col shadow-2xl border-r border-gray-200`}>
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform lg:static lg:z-auto lg:translate-x-0 ${
+          mobileNavOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        } ${
+          sidebarOpen ? 'lg:w-64' : 'lg:w-20'
+        } bg-white text-gray-800 transition-all duration-300 flex flex-col lg:shadow-2xl border-r border-gray-200`}>
         {/* Header */}
         <div className='p-4 border-b border-gray-200 flex items-center justify-between'>
-          {sidebarOpen ? (
+          {expanded ? (
             <div>
               <h1 className='text-xl font-bold text-[#E36A3A]'>
                 {t('adminLayout.brand')}
@@ -159,14 +179,15 @@ export const AdminLayout: React.FC = () => {
             <ShieldCheckIcon className='h-8 w-8 text-[#E36A3A]' />
           )}
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => (mobileNavOpen ? setMobileNavOpen(false) : setSidebarOpen(!sidebarOpen))}
+            aria-label={t('adminLayout.toggleMenu')}
             className='p-2 hover:bg-gray-100 rounded-lg transition-colors'>
-            {sidebarOpen ? <XIcon className='h-5 w-5' /> : <MenuIcon className='h-5 w-5' />}
+            {expanded ? <XIcon className='h-5 w-5' /> : <MenuIcon className='h-5 w-5' />}
           </button>
         </div>
 
         {/* Search */}
-        {sidebarOpen && (
+        {expanded && (
           <div className='p-4'>
             <div className='relative'>
               <SearchIcon className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
@@ -188,7 +209,7 @@ export const AdminLayout: React.FC = () => {
                   if (item.children) {
                     toggleSection(item.labelKey)
                   } else {
-                    navigate(item.path)
+                    goTo(item.path)
                   }
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
@@ -198,9 +219,9 @@ export const AdminLayout: React.FC = () => {
                 }`}>
                 <div className='flex items-center gap-3'>
                   <item.icon className='h-5 w-5 flex-shrink-0' />
-                  {sidebarOpen && <span className='text-sm font-medium'>{t(item.labelKey)}</span>}
+                  {expanded && <span className='text-sm font-medium text-left'>{t(item.labelKey)}</span>}
                 </div>
-                {sidebarOpen && (
+                {expanded && (
                   <div className='flex items-center gap-2'>
                     {item.badge && (
                       <span className='bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full'>
@@ -223,12 +244,12 @@ export const AdminLayout: React.FC = () => {
               </button>
 
               {/* Submenu */}
-              {item.children && sidebarOpen && expandedSections.includes(item.labelKey) && (
+              {item.children && expanded && expandedSections.includes(item.labelKey) && (
                 <div className='ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-2'>
                   {item.children.map((child) => (
                     <button
                       key={child.labelKey}
-                      onClick={() => navigate(child.path)}
+                      onClick={() => goTo(child.path)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
                         isActive(child.path)
                           ? 'bg-[#E36A3A] text-white font-medium'
@@ -236,7 +257,7 @@ export const AdminLayout: React.FC = () => {
                       }`}>
                       <div className='flex items-center gap-2'>
                         <child.icon className='h-4 w-4' />
-                        <span>{t(child.labelKey)}</span>
+                        <span className='text-left'>{t(child.labelKey)}</span>
                       </div>
                       {child.badge && (
                         <span className='bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full'>
@@ -253,7 +274,7 @@ export const AdminLayout: React.FC = () => {
 
         {/* User Profile */}
         <div className='p-4 border-t border-gray-200'>
-          {sidebarOpen ? (
+          {expanded ? (
             <div className='flex items-center gap-3 mb-3'>
               <div className='h-10 w-10 rounded-full bg-gradient-to-br from-[#E36A3A] to-[#F6A57A] flex items-center justify-center text-white font-bold text-sm'>
                 AD
@@ -280,27 +301,35 @@ export const AdminLayout: React.FC = () => {
             title={t('common.actions.logout')}
             className='w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium text-white'>
             <LogOutIcon className='h-4 w-4' />
-            {sidebarOpen && <span>{t('common.actions.logout')}</span>}
+            {expanded && <span>{t('common.actions.logout')}</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className='flex-1 flex flex-col overflow-hidden'>
+      <div className='flex-1 min-w-0 flex flex-col overflow-hidden'>
         {/* Top Bar */}
-        <header className='bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm'>
-          <div>
-            <h2 className='text-2xl font-bold text-gray-900'>
-              {t(
-                navItems
-                  .flatMap((item) => [item, ...(item.children || [])])
-                  .find((item) => item.path === location.pathname)?.labelKey || 'common.nav.dashboard'
-              )}
-            </h2>
-            <p className='text-sm text-gray-500 mt-0.5'>{t('adminLayout.headerSubtitle')}</p>
+        <header className='bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-3 shadow-sm'>
+          <div className='flex items-center gap-3 min-w-0'>
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              aria-label={t('adminLayout.openMenu')}
+              className='lg:hidden p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0'>
+              <MenuIcon className='h-6 w-6 text-gray-600' />
+            </button>
+            <div className='min-w-0'>
+              <h2 className='text-lg sm:text-2xl font-bold text-gray-900 break-words'>
+                {t(
+                  navItems
+                    .flatMap((item) => [item, ...(item.children || [])])
+                    .find((item) => item.path === location.pathname)?.labelKey || 'common.nav.dashboard'
+                )}
+              </h2>
+              <p className='hidden sm:block text-sm text-gray-500 mt-0.5'>{t('adminLayout.headerSubtitle')}</p>
+            </div>
           </div>
 
-          <div className='flex items-center gap-4'>
+          <div className='flex items-center gap-2 sm:gap-4 shrink-0'>
             <LanguageSwitcher />
 
             {/* Notifications */}
@@ -310,7 +339,7 @@ export const AdminLayout: React.FC = () => {
             </button>
 
             {/* Quick Actions */}
-            <button className='px-4 py-2 bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] transition-colors font-medium text-sm flex items-center gap-2'>
+            <button className='hidden md:flex px-4 py-2 bg-[#E36A3A] text-white rounded-lg hover:bg-[#C95428] transition-colors font-medium text-sm items-center gap-2'>
               <ShieldCheckIcon className='h-4 w-4' />
               {t('adminLayout.quickAction')}
             </button>

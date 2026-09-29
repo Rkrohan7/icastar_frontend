@@ -8,7 +8,7 @@ import superAdminService, { InterviewItem } from '../../services/superAdminServi
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination } from './SuperAdminRecruitersPage'
 import AdminSearchBox from './AdminSearchBox'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
@@ -102,7 +102,7 @@ export const SuperAdminInterviewsPage: React.FC = () => {
                     <CalendarIcon className='h-5 w-5 text-[#E36A3A]' />
                     <h3 className='font-semibold text-gray-900'>
                       {i.interviewScheduledAt
-                        ? new Date(i.interviewScheduledAt).toLocaleString()
+                        ? new Date(i.interviewScheduledAt).toLocaleString(dateLocale())
                         : t('adminInterviews.notScheduled')}
                     </h3>
                     <span

@@ -17,7 +17,7 @@ import superAdminService, {
 import { Pagination, StatusBadge } from './SuperAdminRecruitersPage'
 import UserModerationActions from './UserModerationActions'
 import usePageParam from '../../hooks/usePageParam'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 // Labels come from tEnum(value); the empty value is the "All Statuses" option.
 const STATUS_OPTIONS: { value: AccountStatus | '' }[] = [
@@ -235,7 +235,7 @@ export const SuperAdminArtistsPage: React.FC = () => {
                       )}
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-500'>
-                      {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '—'}
+                      {a.createdAt ? new Date(a.createdAt).toLocaleDateString(dateLocale()) : '—'}
                     </td>
                     <td className='px-4 py-3'>
                       <button

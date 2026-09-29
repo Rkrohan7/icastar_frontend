@@ -12,7 +12,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom'
 import { recruiterApplicantsService } from '../../services/recruiterApplicantsService'
 import { toast } from 'react-toastify'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 // Interview type values are sent to the backend as-is; these keys give their display labels.
 const INTERVIEW_TYPE_KEYS: Record<string, string> = {
@@ -572,7 +572,7 @@ export const ApplicantProfilePage = () => {
                 <div className='flex justify-between items-center'>
                   <span className='text-sm text-gray-600'>{t('applicantProfile.interviewDetails.dateTime')}</span>
                   <span className='text-sm font-medium text-gray-900'>
-                    {new Date(`${interviewData.date}T${interviewData.time}`).toLocaleString('en-US', {
+                    {new Date(`${interviewData.date}T${interviewData.time}`).toLocaleString(dateLocale('en-US'), {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

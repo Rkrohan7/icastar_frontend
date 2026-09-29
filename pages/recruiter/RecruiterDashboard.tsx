@@ -34,7 +34,7 @@ import {
 import recruiterDashboardService from '../../services/recruiterDashboardService'
 import { ProjectCastingReport } from '../../components/ProjectCastingReport'
 import { toast } from 'react-toastify'
-import { translate, useTranslation, TranslateVars } from '@/i18n'
+import { dateLocale, translate, useTranslation, TranslateVars } from '@/i18n'
 
 type LatestApplicantRow = Applicant & { appliedAt: string }
 
@@ -285,13 +285,13 @@ export const RecruiterDashboard = () => {
   return (
     <div className='space-y-6'>
       {/* Page Header */}
-      <div className='flex items-center justify-between'>
-        <div>
+      <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='min-w-0'>
           <h1 className='text-2xl font-bold text-gray-900'>{t('common.nav.dashboard')}</h1>
           <p className='text-sm text-gray-600 mt-1'>{t('recruiterDashboard.welcome')}</p>
         </div>
-        <div className='text-sm text-gray-500'>
-          {t('recruiterDashboard.lastUpdated', { date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) })}
+        <div className='text-sm text-gray-500 sm:shrink-0'>
+          {t('recruiterDashboard.lastUpdated', { date: new Date().toLocaleDateString(dateLocale('en-US'), { month: 'short', day: 'numeric', year: 'numeric' }) })}
         </div>
       </div>
 

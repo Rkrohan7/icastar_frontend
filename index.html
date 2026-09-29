@@ -83,6 +83,33 @@
     }
   </script>
 
+  <!-- Marathi (Devanagari) typography. Applies only while the UI language is Marathi (<html lang="mr">). -->
+  <style>
+    /* Letter-spacing (tracking-*) breaks Devanagari conjuncts, so letters look jumbled. */
+    html[lang='mr'] body * {
+      letter-spacing: normal !important;
+    }
+
+    /* Large headings use a line-height of ~1; wrapped Marathi lines would collide (matras overlap). */
+    html[lang='mr'] :is(h1, h2, h3, [class*='text-3xl'], [class*='text-4xl'], [class*='text-5xl'],
+      [class*='text-6xl'], [class*='text-7xl'], [class*='text-8xl'], [class*='text-9xl']) {
+      line-height: 1.4 !important;
+    }
+
+    html[lang='mr'] :is(.leading-none, .leading-tight) {
+      line-height: 1.35 !important;
+    }
+
+    html[lang='mr'] .leading-snug {
+      line-height: 1.45 !important;
+    }
+
+    /* Longer Marathi words must wrap instead of spilling out of cards and buttons. */
+    html[lang='mr'] body {
+      overflow-wrap: break-word;
+    }
+  </style>
+
   <!-- Import Map -->
   <script type="importmap">
 {

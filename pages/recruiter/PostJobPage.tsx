@@ -29,7 +29,7 @@ import recruiterProjectsService, {
   artistPublicProfileUrl,
   mapSelectedArtist,
 } from '../../services/recruiterProjectsService'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 // Job['type'] values are UI values (not backend enums), so they have their own labels
 const JOB_TYPE_LABEL_KEYS: Record<Job['type'], string> = {
@@ -221,7 +221,7 @@ const SelectedArtistsCell: React.FC<{ artists?: SelectedArtist[] }> = ({ artists
 }
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return new Date(dateString).toLocaleDateString(dateLocale('en-US'), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

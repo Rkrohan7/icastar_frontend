@@ -14,7 +14,7 @@ import ExperienceSection, {
 } from '@/components/experience/ExperienceSection'
 import type { ArtistEducation, ArtistExperience } from '@/services/artistService'
 import EducationSection from '@/components/education/EducationSection'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 interface ArtistProfile {
   category: string
@@ -1153,7 +1153,7 @@ const Profile: React.FC = () => {
                   )}
                   <div className='mt-2 text-gray-600 space-y-1'>
                     <p>{currentProfile?.city}</p>
-                    {currentProfile?.dateOfBirth && <p className='text-xs text-gray-500'>{t('artistProfile.card.born', { date: new Date(currentProfile.dateOfBirth).toLocaleDateString() })}</p>}
+                    {currentProfile?.dateOfBirth && <p className='text-xs text-gray-500'>{t('artistProfile.card.born', { date: new Date(currentProfile.dateOfBirth).toLocaleDateString(dateLocale()) })}</p>}
                     {currentProfile?.gender && <p className='text-xs text-gray-500'>{tEnum(currentProfile.gender)}</p>}
                   </div>
                 </>

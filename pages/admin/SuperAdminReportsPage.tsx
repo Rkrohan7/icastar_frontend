@@ -9,7 +9,7 @@ import superAdminService, {
   JobReport,
   UserReport,
 } from '../../services/superAdminService'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 type Tab = 'users' | 'jobs'
 
@@ -218,7 +218,7 @@ const UserReportView: React.FC<{ report: UserReport }> = ({ report }) => {
       </div>
       <p className='text-xs text-gray-400 text-right'>
         {t('adminReports.generated', {
-          date: report.generatedAt ? new Date(report.generatedAt).toLocaleString() : '—',
+          date: report.generatedAt ? new Date(report.generatedAt).toLocaleString(dateLocale()) : '—',
         })}
       </p>
     </div>
@@ -292,7 +292,7 @@ const JobReportView: React.FC<{ report: JobReport }> = ({ report }) => {
 
       <p className='text-xs text-gray-400 text-right'>
         {t('adminReports.generated', {
-          date: report.generatedAt ? new Date(report.generatedAt).toLocaleString() : '—',
+          date: report.generatedAt ? new Date(report.generatedAt).toLocaleString(dateLocale()) : '—',
         })}
       </p>
     </div>

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import blogService, { BlogPost } from '../../services/blogService'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const formatDate = (iso?: string) =>
-  iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  iso ? new Date(iso).toLocaleDateString(dateLocale('en-IN'), { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
 const readingTime = (content: string) => Math.max(1, Math.round(content.trim().split(/\s+/).length / 200))
 

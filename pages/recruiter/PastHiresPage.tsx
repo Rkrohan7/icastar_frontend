@@ -5,18 +5,18 @@ import { Pagination } from '../../components/Pagination'
 import { SearchIcon } from '../../components/icons/IconComponents'
 import { useNavigate } from 'react-router-dom'
 import usePageParam from '../../hooks/usePageParam'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 // Format date to readable format: "22 Dec 2025, 12:36 PM"
 const formatDate = (iso?: string) => {
   if (!iso) return '—'
   try {
     const date = new Date(iso)
-    return date.toLocaleDateString('en-GB', {
+    return date.toLocaleDateString(dateLocale('en-GB'), {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
-    }) + ', ' + date.toLocaleTimeString('en-US', {
+    }) + ', ' + date.toLocaleTimeString(dateLocale('en-US'), {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true

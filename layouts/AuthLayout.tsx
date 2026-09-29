@@ -7,7 +7,7 @@ const AuthLayout: React.FC = () => {
     <div>
       <Outlet />
       {/* Auth and public pages have no shared header, so the language toggle floats */}
-      <LanguageSwitcher className='fixed bottom-4 right-4 z-50 shadow-md' />
+      <LanguageSwitcher compactOnMobile className='fixed bottom-4 right-4 z-50 shadow-md' />
     </div>
   )
 }

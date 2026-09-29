@@ -12,7 +12,7 @@ import {
   XCircleIcon,
   EyeIcon,
 } from '../../components/icons/IconComponents'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 export const AuditionApplicationsPage: React.FC = () => {
   const navigate = useNavigate()
@@ -119,7 +119,7 @@ export const AuditionApplicationsPage: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return t('common.status.notAvailable')
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(dateLocale('en-US'), {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

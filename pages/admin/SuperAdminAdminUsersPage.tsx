@@ -15,7 +15,7 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import { Pagination, StatusBadge } from './SuperAdminRecruitersPage'
-import { translate, useTranslation } from '@/i18n'
+import { dateLocale, translate, useTranslation } from '@/i18n'
 
 const PAGE_SIZE = 20
 
@@ -209,7 +209,7 @@ export const SuperAdminAdminUsersPage: React.FC = () => {
                         {a.accountStatus && <StatusBadge status={a.accountStatus} />}
                       </td>
                       <td className='px-4 py-3 text-xs text-gray-500'>
-                        {a.lastLoginAt ? new Date(a.lastLoginAt).toLocaleDateString() : t('adminUsers.never')}
+                        {a.lastLoginAt ? new Date(a.lastLoginAt).toLocaleDateString(dateLocale()) : t('adminUsers.never')}
                       </td>
                       <td className='px-4 py-3'>
                         <div className='flex gap-1'>

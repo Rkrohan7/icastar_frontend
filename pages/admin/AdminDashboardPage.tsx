@@ -14,7 +14,7 @@ import {
 import superAdminService, {
   SuperAdminDashboard,
 } from '../../services/superAdminService'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 interface KpiCardConfig {
   title: string
@@ -360,7 +360,7 @@ export const AdminDashboardPage: React.FC = () => {
 
       <div className='text-xs text-gray-400 text-right'>
         {t('adminDashboard.lastUpdated', {
-          date: data.generatedAt ? new Date(data.generatedAt).toLocaleString() : '—',
+          date: data.generatedAt ? new Date(data.generatedAt).toLocaleString(dateLocale()) : '—',
         })}
       </div>
     </div>

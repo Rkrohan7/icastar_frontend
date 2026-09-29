@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import notificationsService, { Notification } from '../services/notificationsService'
 import { toast } from 'react-toastify'
+import { dateLocale } from '@/i18n'
 
 interface NotificationPanelProps {
   isOpen: boolean
@@ -116,7 +117,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     if (diffMins < 60) return `${diffMins}m ago`
     if (diffHours < 24) return `${diffHours}h ago`
     if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return date.toLocaleDateString(dateLocale('en-US'), { month: 'short', day: 'numeric' })
   }
 
   const getNotificationIcon = (type: string) => {

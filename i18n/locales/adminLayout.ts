@@ -12,6 +12,8 @@ export default defineMessages({
     loggedOut: 'You have been logged out successfully',
     headerSubtitle: 'Manage and monitor your platform',
     quickAction: 'Quick Action',
+    openMenu: 'Open menu',
+    toggleMenu: 'Toggle menu',
     nav: {
       userManagement: 'User Management',
       recruiters: 'Recruiters',
@@ -50,6 +52,8 @@ export default defineMessages({
     loggedOut: 'तुम्ही यशस्वीरित्या लॉग आउट झाला आहात',
     headerSubtitle: 'तुमचा प्लॅटफॉर्म व्यवस्थापित करा आणि त्यावर लक्ष ठेवा',
     quickAction: 'जलद क्रिया',
+    openMenu: 'मेनू उघडा',
+    toggleMenu: 'मेनू उघडा / बंद करा',
     nav: {
       userManagement: 'वापरकर्ता व्यवस्थापन',
       recruiters: 'रिक्रूटर्स',

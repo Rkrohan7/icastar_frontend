@@ -16,7 +16,7 @@ import superAdminService, {
 } from '../../services/superAdminService'
 import usePageParam from '../../hooks/usePageParam'
 import UserModerationActions from './UserModerationActions'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 // '' = no filter. Enum values are labelled with tEnum(value) at render time.
 const STATUS_OPTIONS: { labelKey?: string; value: AccountStatus | '' }[] = [
@@ -228,7 +228,7 @@ export const SuperAdminRecruitersPage: React.FC = () => {
                         )}
                       </td>
                       <td className='px-4 py-3 text-xs text-gray-500'>
-                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString(dateLocale()) : '—'}
                       </td>
                       <td className='px-4 py-3'>
                         <UserModerationActions

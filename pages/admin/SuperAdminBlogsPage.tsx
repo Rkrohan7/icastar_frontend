@@ -7,7 +7,7 @@ import {
   SearchIcon,
   XIcon,
 } from '../../components/icons/IconComponents'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const inputCls =
   'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'
@@ -18,7 +18,7 @@ const statusStyles: Record<BlogStatus, string> = {
 }
 
 const formatDate = (iso?: string) =>
-  iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+  iso ? new Date(iso).toLocaleDateString(dateLocale('en-IN'), { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const emptyDraft: BlogInput & { tagsText: string } = {
   title: '',

@@ -87,6 +87,17 @@ export const translateEnumIn = (language: Language, value?: string | null): stri
   return lookup(dictionaries[language], key) ?? lookup(dictionaries.en, key) ?? prettifyEnum(value)
 }
 
+// Marathi month/day names with Western digits, matching the digits used everywhere else in the UI.
+const MARATHI_DATE_LOCALE = 'mr-IN-u-nu-latn'
+
+/**
+ * Locale for Date#toLocaleDateString / toLocaleTimeString / toLocaleString:
+ * the screen's own English locale, or Marathi while the UI is in Marathi.
+ *   date.toLocaleDateString(dateLocale('en-US'), { month: 'short', day: 'numeric' })
+ */
+export const dateLocale = (englishLocale?: string): string | undefined =>
+  currentLanguage === 'mr' ? MARATHI_DATE_LOCALE : englishLocale
+
 /** Translate outside React components (services, plain helpers). Components should use `useTranslation`. */
 export const translate = (key: string, vars?: TranslateVars) => translateIn(currentLanguage, key, vars)
 export const translateEnum = (value?: string | null) => translateEnumIn(currentLanguage, value)

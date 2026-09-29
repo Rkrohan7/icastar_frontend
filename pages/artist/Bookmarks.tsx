@@ -15,7 +15,7 @@ import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { Switch } from '@/components/ui/switch'
 import usePageParam from '@/hooks/usePageParam'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const BookmarkCard: React.FC<{
   bookmark: BookmarkedJobDto
@@ -39,7 +39,7 @@ const BookmarkCard: React.FC<{
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return t('common.status.notAvailable')
-    return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    return new Date(dateString).toLocaleDateString(dateLocale('en-GB'), { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
   return (

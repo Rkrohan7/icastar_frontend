@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import { translate } from '@/i18n'
 
 // Base API configuration
 // const API_BASE_URL = 'https://api.icastar.com/api'
@@ -51,6 +52,16 @@ apiClient.interceptors.response.use(
     if (error.response?.status >= 500) {
       // Server errors
       console.error('Server error:', error.response.data)
+    }
+
+    // Several screens show error.message directly; replace axios' English
+    // "Network Error" / "timeout of …ms exceeded" with text in the UI language.
+    if (!error.response) {
+      if (error.code === 'ERR_NETWORK') {
+        error.message = translate('common.status.networkError')
+      } else if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+        error.message = translate('common.status.timeout')
+      }
     }
 
     return Promise.reject(error)

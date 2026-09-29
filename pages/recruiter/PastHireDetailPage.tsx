@@ -9,10 +9,10 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Artist } from '../../types'
 import { getArtistProfileById } from '@/services/artistProfileService'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 
 const formatDate = (iso?: string) =>
-  iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—'
+  iso ? new Date(iso).toLocaleDateString(dateLocale(), { year: 'numeric', month: 'long', day: 'numeric' }) : '—'
 
 export const PastHireDetailPage = () => {
   const { t } = useTranslation()

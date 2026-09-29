@@ -18,7 +18,7 @@ import { recruiterJobsService } from '../../services/recruiterJobsService'
 import authService from '../../services/userService'
 import { toast } from 'react-toastify'
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
-import { useTranslation } from '@/i18n'
+import { dateLocale, useTranslation } from '@/i18n'
 const initialJobs: Job[] = [
   {
     id: 1,
@@ -620,7 +620,7 @@ export const ArtistProfilePage = () => {
                   {artist.lastActive && (
                     <div>
                       <p className='text-xs text-gray-500 mb-0.5'>{t('recruiterArtistProfile.fields.lastActive')}</p>
-                      <p className='font-medium text-gray-800'>{new Date(artist.lastActive).toLocaleDateString()}</p>
+                      <p className='font-medium text-gray-800'>{new Date(artist.lastActive).toLocaleDateString(dateLocale())}</p>
                     </div>
                   )}
                   {artist.hasPassport !== undefined && (
