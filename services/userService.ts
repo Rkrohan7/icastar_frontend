@@ -62,6 +62,8 @@ export interface RegisterRequest extends LoginRequest {
   lastName: string
   mobile?: string
   role: string
+  // Must be true — the backend rejects sign-ups without Terms & Conditions consent
+  acceptedTerms: boolean
 }
 
 // ----- In-memory cache for /auth/me -----

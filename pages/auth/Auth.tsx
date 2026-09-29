@@ -39,6 +39,15 @@ import 'react-toastify/dist/ReactToastify.css'
 import { UserRole } from '@/types/types'
 import { useTranslation } from '@/i18n'
 
+// Backend errors arrive as { error: 'text' }, { message: 'text' } or, for
+// validation failures, { message, error: { code, message, details } }.
+const getApiErrorMessage = (data: any): string | undefined => {
+  if (typeof data?.error === 'string') return data.error
+  if (typeof data?.message === 'string') return data.message
+  if (typeof data?.error?.message === 'string') return data.error.message
+  return undefined
+}
+
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
@@ -141,8 +150,7 @@ const Auth = () => {
       }
     } catch (error: any) {
       console.error('Sign in failed:', error)
-      const resData = error?.response?.data
-      const apiMsg = resData?.error || resData?.message
+      const apiMsg = getApiErrorMessage(error?.response?.data)
 
       if (error?.code === 'ERR_NETWORK') {
         toast.error(t('auth.toast.networkError'))
@@ -221,6 +229,7 @@ const Auth = () => {
         lastName,
         mobile: normalizedMobile,
         role,
+        acceptedTerms,
       }
       await authService.register(userData)
       toast.success(t('auth.toast.signUpSuccess'))
@@ -228,8 +237,7 @@ const Auth = () => {
       setActiveTab('signin')
     } catch (error: any) {
       console.error('Sign up failed:', error)
-      const resData = error?.response?.data
-      const apiMsg = resData?.error || resData?.message
+      const apiMsg = getApiErrorMessage(error?.response?.data)
 
       if (error?.code === 'ERR_NETWORK') {
         toast.error(t('auth.toast.networkError'))
