@@ -97,6 +97,7 @@ const Profile: React.FC = () => {
   const [editedProfile, setEditedProfile] = useState<ArtistProfile | null>(null)
   const [saving, setSaving] = useState(false)
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState<{ src: string; alt: string } | null>(null)
   const navigate = useNavigate()
   const { t, tEnum } = useTranslation()
 
@@ -1078,7 +1079,10 @@ const Profile: React.FC = () => {
                     currentProfile?.profilePhoto ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
                   }`}
                   onClick={() => {
-                    if (currentProfile?.profilePhoto) setPhotoPreviewOpen(true)
+                    if (currentProfile?.profilePhoto) {
+                      setPhotoPreview({ src: currentProfile.profilePhoto, alt: currentProfile.fullName || 'Profile photo' })
+                      setPhotoPreviewOpen(true)
+                    }
                   }}
                   role={currentProfile?.profilePhoto ? 'button' : undefined}
                   aria-label={currentProfile?.profilePhoto ? t('artistProfile.card.viewProfilePhoto') : undefined}>
@@ -1106,7 +1110,17 @@ const Profile: React.FC = () => {
                       const url = currentProfile?.[item.key as keyof ArtistProfile] as string | undefined
                       return (
                         <div key={item.key} className='space-y-1'>
-                          <div className='aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50'>
+                          <div
+                            className='aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity'
+                            onClick={() => {
+                              if (url) {
+                                setPhotoPreview({ src: url, alt: `${item.label} profile photo` })
+                                setPhotoPreviewOpen(true)
+                              }
+                            }}
+                            role={url ? 'button' : undefined}
+                            aria-label={url ? `${item.label} profile photo` : undefined}
+                          >
                             {url ? (
                               <img src={url} alt={`${item.label} profile`} className='h-full w-full object-cover' />
                             ) : (
@@ -1121,10 +1135,13 @@ const Profile: React.FC = () => {
                 </div>
               )}
 
-              {photoPreviewOpen && currentProfile?.profilePhoto && (
+              {photoPreviewOpen && photoPreview && (
                 <div
                   className='fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4'
-                  onClick={() => setPhotoPreviewOpen(false)}
+                  onClick={() => {
+                    setPhotoPreviewOpen(false)
+                    setPhotoPreview(null)
+                  }}
                   role='dialog'
                   aria-modal='true'>
                   <button
@@ -1132,17 +1149,23 @@ const Profile: React.FC = () => {
                     onClick={(e) => {
                       e.stopPropagation()
                       setPhotoPreviewOpen(false)
+                      setPhotoPreview(null)
                     }}
                     className='absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors'
                     aria-label={t('artistProfile.card.closePreview')}>
                     <Icon name='X' size={24} />
                   </button>
-                  <img
-                    src={currentProfile.profilePhoto}
-                    alt={currentProfile?.fullName}
-                    className='max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl'
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  <div className='relative max-h-[90vh] max-w-[90vw]'>
+                    <img
+                      src={photoPreview.src}
+                      alt={photoPreview.alt}
+                      className='max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl'
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className='absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white'>
+                      {photoPreview.alt}
+                    </div>
+                  </div>
                 </div>
               )}
 
