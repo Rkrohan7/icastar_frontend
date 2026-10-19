@@ -2,12 +2,14 @@ import apiClient, { uploadFile as apiUploadFile } from './apiClient'
 import { translate } from '@/i18n'
 
 export type UploadType = 'PROFILE_PHOTO' | 'COVER_PHOTO' | 'ID_PROOF' | 'AUDITION_VIDEO' | 'AUDITION_THUMBNAIL' | 'PORTFOLIO_IMAGE' | 'PORTFOLIO_VIDEO' | 'FACE_VERIFICATION' | 'DANCE_SHOWREEL' | 'BLOG_IMAGE'
+export type ProfilePhotoType = 'FRONT' | 'LEFT' | 'RIGHT'
 
 export interface PresignedUrlRequest {
   fileName: string
   fileType: string
   uploadType: UploadType
   auditionId?: number // Required for audition uploads
+  photoType?: ProfilePhotoType
 }
 
 export interface PresignedUrlResponse {
@@ -125,11 +127,28 @@ export const uploadService = {
    */
   async uploadArtistProfilePhoto(
     file: File,
-    onProgress?: UploadProgressCallback
+    onProgress?: UploadProgressCallback,
+    photoType: ProfilePhotoType = 'FRONT'
   ): Promise<string> {
-    const response = await apiUploadFile('/upload/artist-profile-photo', file, onProgress)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('photoType', photoType)
+
+    const response = await apiClient.post('/upload/artist-profile-photo', formData, {
+      timeout: 300000,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: progressEvent => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          onProgress(progress)
+        }
+      },
+    })
+
     const data = response.data.data || response.data
-    return data.profileUrl
+    return data.profileUrl || data.fileUrl || data.url
   },
 
   /**

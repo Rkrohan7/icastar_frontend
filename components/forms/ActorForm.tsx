@@ -1,5 +1,5 @@
 import React from 'react'
-import FileUpload from '../FileUpload'
+import { ImageUpload } from '../FileUpload'
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
@@ -98,13 +98,41 @@ const ActorForm: React.FC<FormProps> = ({
         </div>
       </div>
 
-      <div>
-        <FileUpload
-          label='Profile Images (Front, Left, Right)'
-          note='No filters, no cap/headphones.'
-          multiple
-          onFilesUploaded={files => updateFormData({ profileImages: files })}
-        />
+      <div className='space-y-4'>
+        <div>
+          <p className='text-sm font-semibold text-gray-700 mb-3'>Profile Photos</p>
+          <p className='text-xs text-gray-500 mb-3'>Upload a clear front, left, and right profile image. Keep the face visible and avoid filters, caps, or headphones.</p>
+        </div>
+
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <ImageUpload
+            label='Front profile'
+            uploadType='PROFILE_PHOTO'
+            photoType='FRONT'
+            aspectRatio='square'
+            currentImageUrl={formData.frontProfilePhoto || ''}
+            onUploadSuccess={fileUrl => updateFormData({ frontProfilePhoto: fileUrl })}
+          />
+
+          <ImageUpload
+            label='Left side profile'
+            uploadType='PROFILE_PHOTO'
+            photoType='LEFT'
+            aspectRatio='square'
+            currentImageUrl={formData.leftProfilePhoto || ''}
+            onUploadSuccess={fileUrl => updateFormData({ leftProfilePhoto: fileUrl })}
+          />
+
+          <ImageUpload
+            label='Right side profile'
+            uploadType='PROFILE_PHOTO'
+            photoType='RIGHT'
+            aspectRatio='square'
+            currentImageUrl={formData.rightProfilePhoto || ''}
+            onUploadSuccess={fileUrl => updateFormData({ rightProfilePhoto: fileUrl })}
+          />
+        </div>
+
         {errors?.profileImages && (
           <p className='text-red-500 text-sm mt-1'>{errors.profileImages}</p>
         )}

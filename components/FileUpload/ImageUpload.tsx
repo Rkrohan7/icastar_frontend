@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
-import uploadService, { UploadType, UPLOAD_LIMITS_MB } from '@/services/uploadService'
+import uploadService, { UploadType, UPLOAD_LIMITS_MB, ProfilePhotoType } from '@/services/uploadService'
 import Icon from '@/components/Icon'
 import { useTranslation } from '@/i18n'
 
@@ -11,6 +11,7 @@ interface ImageUploadProps {
   onUploadSuccess: (fileUrl: string) => void
   aspectRatio?: 'square' | 'circle' | 'wide' // square = 1:1, circle = 1:1 rounded, wide = 16:9
   maxSizeMB?: number
+  photoType?: ProfilePhotoType
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -20,6 +21,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   onUploadSuccess,
   aspectRatio = 'square',
   maxSizeMB = UPLOAD_LIMITS_MB.image,
+  photoType = 'FRONT',
 }) => {
   const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
@@ -53,7 +55,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       if (uploadType === 'PROFILE_PHOTO') {
         fileUrl = await uploadService.uploadArtistProfilePhoto(
           file,
-          (progressPercent) => setProgress(progressPercent)
+          (progressPercent) => setProgress(progressPercent),
+          photoType,
         )
       } else if (uploadType === 'COVER_PHOTO') {
         fileUrl = await uploadService.uploadCoverPhoto(

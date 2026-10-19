@@ -34,6 +34,9 @@ export interface ArtistProfile {
   languagesSpoken?: string[] | string
   bio?: string
   profilePhoto?: string
+  frontProfilePhoto?: string
+  leftProfilePhoto?: string
+  rightProfilePhoto?: string
   coverPhoto?: string
   idProof?: string
   idProofVerified?: boolean
