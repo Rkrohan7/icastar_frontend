@@ -29,6 +29,9 @@ interface ArtistProfile {
   languages: string
   bio: string
   profilePhoto?: string
+  frontProfilePhoto?: string
+  leftProfilePhoto?: string
+  rightProfilePhoto?: string
   coverPhoto?: string
   idProof?: string
   idProofVerified?: boolean
@@ -185,6 +188,9 @@ const Profile: React.FC = () => {
         })(),
         bio: data.bio ?? '',
         profilePhoto: data.profilePhoto ?? data.profileUrl ?? data.avatarUrl ?? undefined,
+        frontProfilePhoto: data.frontProfilePhoto ?? data.frontProfileUrl ?? undefined,
+        leftProfilePhoto: data.leftProfilePhoto ?? data.leftProfileUrl ?? undefined,
+        rightProfilePhoto: data.rightProfilePhoto ?? data.rightProfileUrl ?? undefined,
         coverPhoto: data.coverPhoto ?? undefined,
         idProof: data.idProof ?? undefined,
         idProofVerified: data.idProofVerified ?? false,
@@ -313,6 +319,9 @@ const Profile: React.FC = () => {
         gender: editedProfile.gender,
         dateOfBirth: editedProfile.dateOfBirth,
         profilePhoto: editedProfile.profilePhoto,
+        frontProfilePhoto: editedProfile.frontProfilePhoto,
+        leftProfilePhoto: editedProfile.leftProfilePhoto,
+        rightProfilePhoto: editedProfile.rightProfilePhoto,
         coverPhoto: editedProfile.coverPhoto,
         idProof: editedProfile.idProof,
         height: editedProfile.height,
@@ -1022,7 +1031,7 @@ const Profile: React.FC = () => {
             <div className='bg-white rounded-xl p-6 shadow-sm text-center'>
               {/* Profile Photo Upload in Edit Mode */}
               {isEditing ? (
-                <div className="mb-6">
+                <div className="mb-6 space-y-4">
                   <ImageUpload
                     currentImageUrl={currentProfile?.profilePhoto}
                     uploadType="PROFILE_PHOTO"
@@ -1030,6 +1039,38 @@ const Profile: React.FC = () => {
                     aspectRatio="circle"
                     onUploadSuccess={(fileUrl) => handleInputChange('profilePhoto', fileUrl)}
                   />
+
+                  <div className='border-t border-gray-100 pt-4'>
+                    <h3 className='text-sm font-semibold text-gray-700 mb-3'>Profile Photos</h3>
+                    <div className='grid grid-cols-1 gap-3'>
+                      <ImageUpload
+                        currentImageUrl={currentProfile?.frontProfilePhoto}
+                        uploadType='PROFILE_PHOTO'
+                        label='Front profile'
+                        photoType='FRONT'
+                        aspectRatio='square'
+                        onUploadSuccess={(fileUrl) => handleInputChange('frontProfilePhoto', fileUrl)}
+                      />
+
+                      <ImageUpload
+                        currentImageUrl={currentProfile?.leftProfilePhoto}
+                        uploadType='PROFILE_PHOTO'
+                        label='Left side profile'
+                        photoType='LEFT'
+                        aspectRatio='square'
+                        onUploadSuccess={(fileUrl) => handleInputChange('leftProfilePhoto', fileUrl)}
+                      />
+
+                      <ImageUpload
+                        currentImageUrl={currentProfile?.rightProfilePhoto}
+                        uploadType='PROFILE_PHOTO'
+                        label='Right side profile'
+                        photoType='RIGHT'
+                        aspectRatio='square'
+                        onUploadSuccess={(fileUrl) => handleInputChange('rightProfilePhoto', fileUrl)}
+                      />
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div
@@ -1054,6 +1095,29 @@ const Profile: React.FC = () => {
                   ) : (
                     <Icon name='User' size={48} className='text-amber-400' />
                   )}
+                </div>
+              )}
+
+              {!isEditing && (
+                <div className='mt-6 border-t border-gray-100 pt-4'>
+                  <h3 className='text-sm font-semibold text-gray-700 mb-3'>Profile Photos</h3>
+                  <div className='grid grid-cols-3 gap-2'>
+                    {[{ key: 'frontProfilePhoto', label: 'Front' }, { key: 'leftProfilePhoto', label: 'Left' }, { key: 'rightProfilePhoto', label: 'Right' }].map((item) => {
+                      const url = currentProfile?.[item.key as keyof ArtistProfile] as string | undefined
+                      return (
+                        <div key={item.key} className='space-y-1'>
+                          <div className='aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-50'>
+                            {url ? (
+                              <img src={url} alt={`${item.label} profile`} className='h-full w-full object-cover' />
+                            ) : (
+                              <div className='flex h-full items-center justify-center text-[10px] text-gray-400'>{item.label}</div>
+                            )}
+                          </div>
+                          <p className='text-center text-[10px] font-medium text-gray-500'>{item.label}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 
