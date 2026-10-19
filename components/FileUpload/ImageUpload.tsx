@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import uploadService, { UploadType, UPLOAD_LIMITS_MB, ProfilePhotoType } from '@/services/uploadService'
 import Icon from '@/components/Icon'
@@ -28,6 +28,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [progress, setProgress] = useState(0)
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImageUrl)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setPreviewUrl(currentImageUrl)
+  }, [currentImageUrl])
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
