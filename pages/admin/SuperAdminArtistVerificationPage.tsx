@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import superAdminService, { SuperAdminArtist } from '@/services/superAdminService'
 
 const statusLabel = (artist: SuperAdminArtist): string => {
@@ -34,8 +35,12 @@ const SuperAdminArtistVerificationPage: React.FC = () => {
   }, [])
 
   const handleReview = async (artistId: number, decision: 'APPROVED' | 'REJECTED') => {
+    const reason = decision === 'APPROVED'
+      ? 'Face verification approved by admin.'
+      : 'Face verification rejected by admin.'
+
     try {
-      await superAdminService.reviewArtistVerification(artistId, decision, decision === 'APPROVED' ? 'Face verification approved by admin.' : 'Face verification rejected by admin.')
+      await superAdminService.reviewArtistVerification(artistId, decision, reason)
       setArtists((prev) => prev.map((artist) => {
         if (artist.id !== artistId) return artist
         return {
@@ -44,9 +49,17 @@ const SuperAdminArtistVerificationPage: React.FC = () => {
           faceVerificationStatus: decision,
         }
       }))
+
+      if (decision === 'APPROVED') {
+        toast.success('Artist face verification approved. Artist is now verified.')
+      } else {
+        toast.error('Artist face verification rejected. Artist remains unverified.')
+      }
     } catch (err: any) {
       console.error('Failed to review artist verification:', err)
-      setError(err?.response?.data?.message || err?.message || 'Review action failed.')
+      const message = err?.response?.data?.message || err?.message || 'Review action failed.'
+      setError(message)
+      toast.error(message)
     }
   }
 
