@@ -856,6 +856,19 @@ const Profile: React.FC = () => {
 
   const currentProfile = isEditing ? editedProfile : profile
 
+  const getProfilePhotoUrl = (key: 'frontProfilePhoto' | 'leftProfilePhoto' | 'rightProfilePhoto') => {
+    const value = currentProfile?.[key] ?? currentProfile?.[`${key.replace('ProfilePhoto', 'ProfileUrl')}` as keyof ArtistProfile]
+    if (typeof value !== 'string') return undefined
+    const trimmed = value.trim()
+    return trimmed || undefined
+  }
+
+  const profilePhotoSlots = [
+    { key: 'frontProfilePhoto', label: 'Front', altKey: 'frontProfileUrl' },
+    { key: 'leftProfilePhoto', label: 'Left', altKey: 'leftProfileUrl' },
+    { key: 'rightProfilePhoto', label: 'Right', altKey: 'rightProfileUrl' },
+  ] as const
+
   const handleAddSkill = (skill: string) => {
     const trimmed = skill.trim()
     if (!trimmed) return
@@ -1106,8 +1119,8 @@ const Profile: React.FC = () => {
                 <div className='mt-6 border-t border-gray-100 pt-4'>
                   <h3 className='text-sm font-semibold text-gray-700 mb-3'>Profile Photos</h3>
                   <div className='grid grid-cols-3 gap-2'>
-                    {[{ key: 'frontProfilePhoto', label: 'Front' }, { key: 'leftProfilePhoto', label: 'Left' }, { key: 'rightProfilePhoto', label: 'Right' }].map((item) => {
-                      const url = currentProfile?.[item.key as keyof ArtistProfile] as string | undefined
+                    {profilePhotoSlots.map((item) => {
+                      const url = getProfilePhotoUrl(item.key)
                       return (
                         <div key={item.key} className='space-y-1'>
                           <div
@@ -1122,9 +1135,21 @@ const Profile: React.FC = () => {
                             aria-label={url ? `${item.label} profile photo` : undefined}
                           >
                             {url ? (
-                              <img src={url} alt={`${item.label} profile`} className='h-full w-full object-cover' />
-                            ) : (
-                              <div className='flex h-full items-center justify-center text-[10px] text-gray-400'>{item.label}</div>
+                              <img
+                                src={url}
+                                alt={`${item.label} profile`}
+                                className='h-full w-full object-cover'
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                  const fallback = e.currentTarget.parentElement?.querySelector('[data-fallback]') as HTMLElement | null
+                                  if (fallback) fallback.style.display = 'flex'
+                                }}
+                              />
+                            ) : null}
+                            {!url && (
+                              <div className='flex h-full items-center justify-center text-[10px] text-gray-400' data-fallback>
+                                {item.label}
+                              </div>
                             )}
                           </div>
                           <p className='text-center text-[10px] font-medium text-gray-500'>{item.label}</p>
