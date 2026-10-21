@@ -37,6 +37,7 @@ import SuperAdminJobApplicationsPage from '@/pages/admin/SuperAdminJobApplicatio
 import SuperAdminAuditionApplicationsPage from '@/pages/admin/SuperAdminAuditionApplicationsPage'
 import SuperAdminInterviewsPage from '@/pages/admin/SuperAdminInterviewsPage'
 import SuperAdminPortfolioPage from '@/pages/admin/SuperAdminPortfolioPage'
+import SuperAdminArtistVerificationPage from '@/pages/admin/SuperAdminArtistVerificationPage'
 import SuperAdminReportContentPage from '@/pages/admin/SuperAdminReportContentPage'
 import DashboardIndex from '@/pages/DashboardIndex'
 import Jobs from '@/pages/artist/Jobs'
@@ -272,6 +273,10 @@ const AppRouter = () =>
         {
           path: '/admin/artists/:id/portfolio',
           element: <SuperAdminPortfolioPage />,
+        },
+        {
+          path: '/admin/artists/verification',
+          element: <SuperAdminArtistVerificationPage />,
         },
         {
           path: '/admin/content/reports',

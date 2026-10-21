@@ -228,11 +228,34 @@ export const SuperAdminArtistsPage: React.FC = () => {
                     </td>
                     <td className='px-4 py-3'>
                       {a.accountStatus && <StatusBadge status={a.accountStatus} />}
-                      {a.isVerified && (
-                        <div className='flex items-center gap-1 text-xs text-green-600 mt-1'>
-                          <CheckCircleIcon className='h-3 w-3' /> {t('adminArtists.verified')}
-                        </div>
-                      )}
+                      {(() => {
+                        const verificationStatus = String(a.faceVerificationStatus ?? '').toUpperCase()
+                        const hasFaceUpload = Boolean(a.faceVerificationUrl)
+                        const isApproved = a.isFaceVerified === true || verificationStatus === 'APPROVED'
+                        const isPending = verificationStatus === 'PENDING' || (hasFaceUpload && !isApproved)
+
+                        if (isApproved || a.isVerified) {
+                          return (
+                            <div className='flex items-center gap-1 text-xs text-green-600 mt-1'>
+                              <CheckCircleIcon className='h-3 w-3' /> {t('adminArtists.verified')}
+                            </div>
+                          )
+                        }
+
+                        if (isPending) {
+                          return (
+                            <div className='flex items-center gap-1 text-xs text-amber-600 mt-1'>
+                              <EyeIcon className='h-3 w-3' /> Pending review
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <div className='flex items-center gap-1 text-xs text-gray-500 mt-1'>
+                            <EyeIcon className='h-3 w-3' /> Not verified
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className='px-4 py-3 text-xs text-gray-500'>
                       {a.createdAt ? new Date(a.createdAt).toLocaleDateString(dateLocale()) : '—'}
@@ -243,6 +266,13 @@ export const SuperAdminArtistsPage: React.FC = () => {
                         className='text-xs text-[#E36A3A] hover:underline whitespace-nowrap'>
                         {t('adminArtists.viewPortfolio')}
                       </button>
+                      {(Boolean(a.faceVerificationUrl) || String(a.faceVerificationStatus ?? '').toUpperCase() === 'PENDING') && (
+                        <button
+                          onClick={() => navigate('/admin/artists/verification')}
+                          className='mt-2 block text-xs text-amber-700 hover:underline whitespace-nowrap'>
+                          Review verification
+                        </button>
+                      )}
                       <div className='mt-2'>
                         <UserModerationActions
                           kind='artist'

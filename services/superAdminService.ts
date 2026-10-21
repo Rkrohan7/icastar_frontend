@@ -210,6 +210,9 @@ export interface SuperAdminArtist {
   isVerified: boolean
   isEmailVerified: boolean
   isMobileVerified: boolean
+  isFaceVerified?: boolean
+  faceVerificationUrl?: string | null
+  faceVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
   isProfileComplete: boolean
   accountStatus: AccountStatus
   isActive: boolean
@@ -767,6 +770,58 @@ const superAdminService = {
       const resp = await apiClient.get(`/super-admin/artists/${id}`)
       return unwrap<SuperAdminArtist>(resp)
     }, { ttl: 60_000 })
+  },
+
+  async getArtistVerificationQueue(): Promise<SuperAdminArtist[]> {
+    const candidateUrls = [
+      '/super-admin/artists/verification-queue',
+      '/super-admin/artists/verification',
+      '/super-admin/artist-verifications',
+      '/super-admin/artists/pending-verification',
+    ]
+
+    for (const url of candidateUrls) {
+      try {
+        const resp = await apiClient.get(url)
+        const list = Array.isArray(resp.data?.data) ? resp.data.data : Array.isArray(resp.data) ? resp.data : []
+        if (list.length || url === candidateUrls[candidateUrls.length - 1]) {
+          return list as SuperAdminArtist[]
+        }
+      } catch {
+        // Fallback to the next candidate endpoint.
+      }
+    }
+
+    const fallback = await this.getArtists({ page: 0, size: 200 })
+    return fallback.data.filter((artist) => {
+      const normalized = String(artist.faceVerificationStatus ?? '').toUpperCase()
+      return Boolean(artist.faceVerificationUrl) || normalized === 'PENDING' || normalized === 'APPROVED' || normalized === 'REJECTED' || artist.isFaceVerified === true
+    })
+  },
+
+  async reviewArtistVerification(id: number, decision: 'APPROVED' | 'REJECTED', reason?: string): Promise<SuperAdminArtist> {
+    const payload = { status: decision, decision, reason }
+    const endpoints = [
+      `/super-admin/artists/${id}/verification`,
+      `/super-admin/artists/${id}/face-verification`,
+      `/super-admin/artist-verifications/${id}/review`,
+    ]
+
+    for (const url of endpoints) {
+      try {
+        const resp = await apiClient.patch(url, payload)
+        invalidateCache('admin:artists')
+        invalidateCache(`admin:artist:${id}`)
+        return unwrap<SuperAdminArtist>(resp)
+      } catch {
+        // Fall through to the next endpoint pattern.
+      }
+    }
+
+    const resp = await apiClient.post(`/super-admin/artists/${id}/verification/review`, payload)
+    invalidateCache('admin:artists')
+    invalidateCache(`admin:artist:${id}`)
+    return unwrap<SuperAdminArtist>(resp)
   },
 
   // Artist / recruiter moderation — deactivate, reactivate or delete an account

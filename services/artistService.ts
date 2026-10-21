@@ -40,6 +40,8 @@ export interface ArtistProfile {
   coverPhoto?: string
   idProof?: string
   idProofVerified?: boolean
+  faceVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
+  isFaceVerified?: boolean
   actorType?: 'skilled' | 'known'
   age?: number
   dateOfBirth?: string
@@ -254,7 +256,9 @@ const mapResponseToProfile = (responseData: any): ArtistProfile => ({
   idProof: responseData.idProofUrl ?? responseData.idProof,
   idProofVerified: responseData.idProofVerified ?? false,
   videoUrl: responseData.videoUrl,
-  faceVerification: responseData.faceVerificationUrl ?? responseData.faceVerification,
+  faceVerification: responseData.faceVerificationUrl ?? responseData.faceVerification ?? responseData.faceVerificationImageUrl,
+  faceVerificationStatus: responseData.faceVerificationStatus ?? (responseData.isFaceVerified ? 'APPROVED' : (responseData.faceVerificationUrl || responseData.faceVerification ? 'PENDING' : 'NOT_SUBMITTED')),
+  isFaceVerified: responseData.isFaceVerified ?? responseData.faceVerificationStatus === 'APPROVED',
   danceVideo: responseData.danceShowreelUrl ?? responseData.danceVideo,
   portfolioUrls: (() => {
     const raw = responseData.portfolioUrls ?? responseData.portfolioItems ?? responseData.portfolioUrl
@@ -415,9 +419,19 @@ export const artistService = {
   },
 
   async submitFaceVerification(faceImageUrl: string): Promise<void> {
-    // TODO: uncomment when backend is ready
-    // await api.post('/artist/face-verification', { faceImageUrl })
-    console.log('Face verification submitted:', faceImageUrl)
+    const payload = { faceImageUrl, imageUrl: faceImageUrl }
+    try {
+      await api.post('/artists/face-verification', payload)
+    } catch (error) {
+      try {
+        await api.post('/artist/face-verification', payload)
+      } catch (fallbackError) {
+        console.error('Face verification submission failed:', fallbackError)
+        throw fallbackError
+      }
+    }
+    invalidateArtistProfileCache()
+    invalidateCache('artist:profile:')
   },
 }
 
