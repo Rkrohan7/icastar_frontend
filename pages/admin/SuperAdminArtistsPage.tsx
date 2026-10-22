@@ -230,11 +230,16 @@ export const SuperAdminArtistsPage: React.FC = () => {
                       {a.accountStatus && <StatusBadge status={a.accountStatus} />}
                       {(() => {
                         const verificationStatus = String(a.faceVerificationStatus ?? '').toUpperCase()
+                        const idProofStatus = String(a.idProofVerificationStatus ?? '').toUpperCase()
                         const hasFaceUpload = Boolean(a.faceVerificationUrl)
-                        const isApproved = a.isFaceVerified === true || verificationStatus === 'APPROVED'
-                        const isPending = verificationStatus === 'PENDING' || (hasFaceUpload && !isApproved)
+                        const hasIdProofUpload = Boolean(a.idProofUrl || a.idProof)
+                        const isFaceApproved = a.isFaceVerified === true || verificationStatus === 'APPROVED'
+                        const isIdProofApproved = a.idProofVerified === true || idProofStatus === 'APPROVED'
+                        const isApproved = isFaceApproved && isIdProofApproved
+                        const isPending = verificationStatus === 'PENDING' || idProofStatus === 'PENDING' ||
+                          (hasFaceUpload && !isFaceApproved) || (hasIdProofUpload && !isIdProofApproved)
 
-                        if (isApproved || a.isVerified) {
+                        if (isApproved) {
                           return (
                             <div className='flex items-center gap-1 text-xs text-green-600 mt-1'>
                               <CheckCircleIcon className='h-3 w-3' /> {t('adminArtists.verified')}
@@ -266,7 +271,9 @@ export const SuperAdminArtistsPage: React.FC = () => {
                         className='text-xs text-[#E36A3A] hover:underline whitespace-nowrap'>
                         {t('adminArtists.viewPortfolio')}
                       </button>
-                      {(Boolean(a.faceVerificationUrl) || String(a.faceVerificationStatus ?? '').toUpperCase() === 'PENDING') && (
+                      {(Boolean(a.faceVerificationUrl) || Boolean(a.idProofUrl || a.idProof) ||
+                        String(a.faceVerificationStatus ?? '').toUpperCase() === 'PENDING' ||
+                        String(a.idProofVerificationStatus ?? '').toUpperCase() === 'PENDING') && (
                         <button
                           onClick={() => navigate('/admin/artists/verification')}
                           className='mt-2 block text-xs text-amber-700 hover:underline whitespace-nowrap'>

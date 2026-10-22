@@ -69,7 +69,12 @@ function mapPublicProfile(data: any): ArtistProfile {
     danceVideo: na(data.danceShowreelUrl) ?? na(data.danceVideo),
     // portfolioUrls comes as JSON string from backend
     portfolioUrls: parseArr(data.portfolioUrls ?? data.portfolioItems),
-    isVerifiedBadge: data.isVerifiedBadge ?? data.isVerified ?? false,
+    isFaceVerified: data.isFaceVerified,
+    faceVerificationStatus: data.faceVerificationStatus,
+    idProofVerified: data.idProofVerified,
+    idProofVerificationStatus: data.idProofVerificationStatus,
+    isVerifiedBadge: (data.isFaceVerified === true || String(data.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED') &&
+      (data.idProofVerified === true || String(data.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED'),
     isProfileComplete: data.isProfileComplete,
     totalApplications: data.totalApplications,
     successfulHires: data.successfulHires,

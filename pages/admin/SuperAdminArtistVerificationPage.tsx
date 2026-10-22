@@ -3,11 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import superAdminService, { SuperAdminArtist } from '@/services/superAdminService'
 
-const statusLabel = (artist: SuperAdminArtist): string => {
-  const raw = String(artist.faceVerificationStatus ?? '').toUpperCase()
-  if (artist.isFaceVerified || raw === 'APPROVED') return 'Approved'
-  if (raw === 'PENDING' || Boolean(artist.faceVerificationUrl)) return 'Pending review'
+type VerificationType = 'FACE' | 'ID_PROOF'
+
+const statusLabel = (artist: SuperAdminArtist, type: VerificationType): string => {
+  const raw = String(type === 'FACE' ? artist.faceVerificationStatus : artist.idProofVerificationStatus ?? '').toUpperCase()
+  const isApproved = type === 'FACE'
+    ? artist.isFaceVerified || raw === 'APPROVED'
+    : artist.idProofVerified || raw === 'APPROVED'
+  const documentUrl = type === 'FACE' ? artist.faceVerificationUrl : artist.idProofUrl ?? artist.idProof
+  if (isApproved) return 'Approved'
   if (raw === 'REJECTED') return 'Rejected'
+  if (raw === 'PENDING' || Boolean(documentUrl)) return 'Pending review'
   return 'Not submitted'
 }
 
@@ -16,6 +22,7 @@ const SuperAdminArtistVerificationPage: React.FC = () => {
   const [artists, setArtists] = useState<SuperAdminArtist[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<VerificationType>('FACE')
 
   const load = async () => {
     try {
@@ -34,26 +41,25 @@ const SuperAdminArtistVerificationPage: React.FC = () => {
     void load()
   }, [])
 
-  const handleReview = async (artistId: number, decision: 'APPROVED' | 'REJECTED') => {
+  const handleReview = async (artistId: number, decision: 'APPROVED' | 'REJECTED', type: VerificationType) => {
+    const verificationName = type === 'FACE' ? 'Face' : 'ID proof'
     const reason = decision === 'APPROVED'
-      ? 'Face verification approved by admin.'
-      : 'Face verification rejected by admin.'
+      ? `${verificationName} verification approved by admin.`
+      : `${verificationName} verification rejected by admin.`
 
     try {
-      await superAdminService.reviewArtistVerification(artistId, decision, reason)
+      await superAdminService.reviewArtistVerification(artistId, decision, reason, type)
       setArtists((prev) => prev.map((artist) => {
         if (artist.id !== artistId) return artist
-        return {
-          ...artist,
-          isFaceVerified: decision === 'APPROVED',
-          faceVerificationStatus: decision,
-        }
+        return type === 'FACE'
+          ? { ...artist, isFaceVerified: decision === 'APPROVED', faceVerificationStatus: decision }
+          : { ...artist, idProofVerified: decision === 'APPROVED', idProofVerificationStatus: decision }
       }))
 
       if (decision === 'APPROVED') {
-        toast.success('Artist face verification approved. Artist is now verified.')
+        toast.success(`Artist ${verificationName.toLowerCase()} verification approved.`)
       } else {
-        toast.error('Artist face verification rejected. Artist remains unverified.')
+        toast.error(`Artist ${verificationName.toLowerCase()} verification rejected.`)
       }
     } catch (err: any) {
       console.error('Failed to review artist verification:', err)
@@ -64,9 +70,8 @@ const SuperAdminArtistVerificationPage: React.FC = () => {
   }
 
   const pendingArtists = artists.filter((artist) => {
-    const raw = String(artist.faceVerificationStatus ?? '').toUpperCase()
-    const isPending = raw === 'PENDING' || (Boolean(artist.faceVerificationUrl) && !artist.isFaceVerified)
-    return isPending || raw === 'REJECTED'
+    const status = statusLabel(artist, activeTab)
+    return status === 'Pending review' || status === 'Rejected'
   })
 
   return (
@@ -83,17 +88,39 @@ const SuperAdminArtistVerificationPage: React.FC = () => {
         </button>
       </div>
 
+      <div className='flex gap-2 border-b border-gray-200' role='tablist' aria-label='Artist verification type'>
+        {([
+          ['FACE', 'Face verification'],
+          ['ID_PROOF', 'ID proof verification'],
+        ] as const).map(([type, label]) => (
+          <button
+            key={type}
+            type='button'
+            role='tab'
+            aria-selected={activeTab === type}
+            onClick={() => setActiveTab(type)}
+            className={`border-b-2 px-4 py-3 text-sm font-medium transition ${
+              activeTab === type ? 'border-[#E36A3A] text-[#E36A3A]' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className='rounded-xl border border-gray-200 bg-white p-10 text-center text-gray-500 shadow-sm'>Loading verification queue...</div>
       ) : error ? (
         <div className='rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm'>{error}</div>
       ) : pendingArtists.length === 0 ? (
-        <div className='rounded-xl border border-gray-200 bg-white p-10 text-center text-gray-500 shadow-sm'>No pending artist verification requests.</div>
+        <div className='rounded-xl border border-gray-200 bg-white p-10 text-center text-gray-500 shadow-sm'>No pending {activeTab === 'FACE' ? 'face' : 'ID proof'} verification requests.</div>
       ) : (
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 2xl:grid-cols-6 gap-4'>
           {pendingArtists.map((artist) => {
-            const imageUrl = artist.faceVerificationUrl || artist.profileImage
-            const status = statusLabel(artist)
+            const documentUrl = activeTab === 'FACE'
+              ? artist.faceVerificationUrl || artist.profileImage
+              : artist.idProofUrl || artist.idProof
+            const isImage = activeTab === 'FACE' || Boolean(documentUrl && /\.(?:jpe?g|png|gif|webp|bmp)(?:$|[?#])/i.test(documentUrl))
+            const status = statusLabel(artist, activeTab)
 
             return (
               <div key={artist.id} className='flex h-full min-h-[320px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md'>
@@ -124,25 +151,32 @@ const SuperAdminArtistVerificationPage: React.FC = () => {
                 </div>
 
                 <div className='px-3 pt-3'>
-                  {imageUrl ? (
-                    <a href={imageUrl} target='_blank' rel='noreferrer' className='block overflow-hidden rounded-xl border border-gray-200 bg-gray-50'>
-                      <img src={imageUrl} alt='Face verification upload' className='h-40 w-full object-cover transition duration-200 hover:scale-[1.02]' />
+                  {documentUrl ? (
+                    <a href={documentUrl} target='_blank' rel='noreferrer' className='block overflow-hidden rounded-xl border border-gray-200 bg-gray-50'>
+                      {isImage ? (
+                        <img src={documentUrl} alt={activeTab === 'FACE' ? 'Face verification upload' : 'ID proof upload'} className='h-40 w-full object-cover transition duration-200 hover:scale-[1.02]' />
+                      ) : (
+                        <div className='flex h-40 flex-col items-center justify-center gap-2 px-3 text-center text-sm font-medium text-[#E36A3A]'>
+                          <span className='text-3xl' aria-hidden='true'>▤</span>
+                          Open submitted ID proof
+                        </div>
+                      )}
                     </a>
                   ) : (
                     <div className='flex h-40 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-3 text-center text-xs text-gray-500'>
-                      No face verification image submitted.
+                      No {activeTab === 'FACE' ? 'face verification image' : 'ID proof'} submitted.
                     </div>
                   )}
                 </div>
 
                 <div className='mt-auto flex flex-col gap-2 px-3 py-3'>
                   <button
-                    onClick={() => handleReview(artist.id, 'APPROVED')}
+                    onClick={() => handleReview(artist.id, 'APPROVED', activeTab)}
                     className='rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700'>
                     Approve
                   </button>
                   <button
-                    onClick={() => handleReview(artist.id, 'REJECTED')}
+                    onClick={() => handleReview(artist.id, 'REJECTED', activeTab)}
                     className='rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100'>
                     Reject
                   </button>

@@ -40,6 +40,7 @@ export interface ArtistProfile {
   coverPhoto?: string
   idProof?: string
   idProofVerified?: boolean
+  idProofVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
   faceVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
   isFaceVerified?: boolean
   actorType?: 'skilled' | 'known'
@@ -255,6 +256,7 @@ const mapResponseToProfile = (responseData: any): ArtistProfile => ({
   coverPhoto: responseData.coverPhotoUrl ?? responseData.coverPhoto,
   idProof: responseData.idProofUrl ?? responseData.idProof,
   idProofVerified: responseData.idProofVerified ?? false,
+  idProofVerificationStatus: responseData.idProofVerificationStatus ?? (responseData.idProofVerified ? 'APPROVED' : (responseData.idProofUrl || responseData.idProof ? 'PENDING' : 'NOT_SUBMITTED')),
   videoUrl: responseData.videoUrl,
   faceVerification: responseData.faceVerificationUrl ?? responseData.faceVerification ?? responseData.faceVerificationImageUrl,
   faceVerificationStatus: responseData.faceVerificationStatus ?? (responseData.isFaceVerified ? 'APPROVED' : (responseData.faceVerificationUrl || responseData.faceVerification ? 'PENDING' : 'NOT_SUBMITTED')),
@@ -277,7 +279,8 @@ const mapResponseToProfile = (responseData: any): ArtistProfile => ({
     }
     return []
   })(),
-  isVerifiedBadge: responseData.isVerifiedBadge,
+  isVerifiedBadge: (responseData.isFaceVerified === true || String(responseData.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED') &&
+    (responseData.idProofVerified === true || String(responseData.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED'),
   isProfileComplete: responseData.isProfileComplete,
   isOnboardingComplete: responseData.isOnboardingComplete,
   totalApplications: responseData.totalApplications,

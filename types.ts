@@ -77,6 +77,10 @@ export interface Artist {
   experienceYears?: number
   experienceLevel?: string
   isVerified?: boolean
+  isFaceVerified?: boolean
+  faceVerificationStatus?: string
+  idProofVerified?: boolean
+  idProofVerificationStatus?: string
   verificationStatus?: string
   isPremium?: boolean
   recruiterId?: number

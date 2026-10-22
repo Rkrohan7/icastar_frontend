@@ -213,6 +213,10 @@ export interface SuperAdminArtist {
   isFaceVerified?: boolean
   faceVerificationUrl?: string | null
   faceVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
+  idProof?: string | null
+  idProofUrl?: string | null
+  idProofVerified?: boolean
+  idProofVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
   isProfileComplete: boolean
   accountStatus: AccountStatus
   isActive: boolean
@@ -773,34 +777,28 @@ const superAdminService = {
   },
 
   async getArtistVerificationQueue(): Promise<SuperAdminArtist[]> {
-    const candidateUrls = [
-      '/super-admin/artists/verification-queue',
-      '/super-admin/artists/verification',
-      '/super-admin/artist-verifications',
-      '/super-admin/artists/pending-verification',
-    ]
-
-    for (const url of candidateUrls) {
-      try {
-        const resp = await apiClient.get(url)
-        const list = Array.isArray(resp.data?.data) ? resp.data.data : Array.isArray(resp.data) ? resp.data : []
-        if (list.length || url === candidateUrls[candidateUrls.length - 1]) {
-          return list as SuperAdminArtist[]
-        }
-      } catch {
-        // Fallback to the next candidate endpoint.
-      }
-    }
-
-    const fallback = await this.getArtists({ page: 0, size: 200 })
-    return fallback.data.filter((artist) => {
-      const normalized = String(artist.faceVerificationStatus ?? '').toUpperCase()
-      return Boolean(artist.faceVerificationUrl) || normalized === 'PENDING' || normalized === 'APPROVED' || normalized === 'REJECTED' || artist.isFaceVerified === true
-    })
+    const resp = await apiClient.get('/super-admin/artists/verification-queue')
+    const list = Array.isArray(resp.data?.data) ? resp.data.data : Array.isArray(resp.data) ? resp.data : []
+    return list.map((artist: SuperAdminArtist) => ({
+      ...artist,
+      idProof: artist.idProofUrl ?? artist.idProof,
+    }))
   },
 
-  async reviewArtistVerification(id: number, decision: 'APPROVED' | 'REJECTED', reason?: string): Promise<SuperAdminArtist> {
-    const payload = { status: decision, decision, reason }
+  async reviewArtistVerification(
+    id: number,
+    decision: 'APPROVED' | 'REJECTED',
+    reason?: string,
+    verificationType: 'FACE' | 'ID_PROOF' = 'FACE',
+  ): Promise<SuperAdminArtist> {
+    const payload = { status: decision, reason }
+    if (verificationType === 'ID_PROOF') {
+      const resp = await apiClient.patch(`/super-admin/artists/${id}/id-proof-verification`, payload)
+      invalidateCache('admin:artists')
+      invalidateCache(`admin:artist:${id}`)
+      return unwrap<SuperAdminArtist>(resp)
+    }
+
     const endpoints = [
       `/super-admin/artists/${id}/verification`,
       `/super-admin/artists/${id}/face-verification`,

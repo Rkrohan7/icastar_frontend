@@ -41,6 +41,10 @@ export interface ArtistSuggestionDto {
   workSchedule?: string
   profileCompletionPercentage?: number
   isVerified?: boolean
+  isFaceVerified?: boolean
+  faceVerificationStatus?: string
+  idProofVerified?: boolean
+  idProofVerificationStatus?: string
   verificationStatus?: string
   isPremium?: boolean
   recruiterId?: number
@@ -129,7 +133,12 @@ const toArtist = (dto: ArtistSuggestionDto): Artist => ({
   experienceYears: dto.experienceYears,
   experienceLevel: na(dto.experienceLevel),
   recruiterId: dto.recruiterId,
-  isVerified: dto.isVerified,
+  isVerified: (dto.isFaceVerified === true || String(dto.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED') &&
+    (dto.idProofVerified === true || String(dto.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED'),
+  isFaceVerified: dto.isFaceVerified,
+  faceVerificationStatus: dto.faceVerificationStatus,
+  idProofVerified: dto.idProofVerified,
+  idProofVerificationStatus: dto.idProofVerificationStatus,
   verificationStatus: dto.verificationStatus,
   isPremium: dto.isPremium,
   genres: Array.isArray(dto.genres) ? dto.genres : [],
