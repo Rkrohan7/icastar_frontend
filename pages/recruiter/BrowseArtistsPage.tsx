@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Card } from '../../components/Card'
 import { Artist, Page } from '../../types'
-import { SearchIcon, CheckCircleIcon, MapPinIcon, BriefcaseIcon, FilterIcon } from '../../components/icons/IconComponents'
+import { SearchIcon, CheckCircleIcon, XCircleIcon, MapPinIcon, BriefcaseIcon, FilterIcon } from '../../components/icons/IconComponents'
 import { ArtistCategory } from '../../types'
 import { Pagination } from '../../components/Pagination'
 import { useNavigate } from 'react-router-dom'
@@ -24,9 +24,18 @@ const ArtistCard: React.FC<{ artist: Artist; onViewProfile: () => void }> = ({
         src={artist.avatarUrl}
         alt={artist.name}
       />
-      <div className="flex items-center gap-1">
-        <h3 className='text-lg font-bold text-gray-900'>{artist.name}</h3>
-        {artist.isVerified && <CheckCircleIcon className="h-4 w-4 text-blue-500" />}
+      <div className="flex w-full min-w-0 items-center justify-center gap-1.5">
+        <h3 className='truncate text-base font-bold text-gray-900'>{artist.name}</h3>
+      </div>
+      <div className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+        artist.isVerified
+          ? 'bg-blue-50 text-blue-700'
+          : 'bg-gray-100 text-gray-600'
+      }`}>
+        {artist.isVerified
+          ? <CheckCircleIcon className="h-3.5 w-3.5" />
+          : <XCircleIcon className="h-3.5 w-3.5" />}
+        {artist.isVerified ? 'Verified' : 'Unverified'}
       </div>
       <p className="text-sm font-medium text-primary mt-1">{artist.category || t('browseArtists.card.artistFallback')}</p>
 
@@ -213,7 +222,7 @@ export const BrowseArtistsPage = () => {
       {error && (
         <div className='text-red-600 text-sm mb-4'>{t(error)}</div>
       )}
-      <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'>
         {artists.map(artist => (
           <ArtistCard
             key={artist.id}

@@ -111,6 +111,20 @@ export interface PagedArtistsResult {
 const na = (val: string | null | undefined): string | undefined =>
   val && val !== 'N/A' ? val : undefined
 
+const isArtistVerified = (dto: ArtistSuggestionDto): boolean => {
+  const hasVerificationDetails =
+    dto.isFaceVerified !== undefined ||
+    dto.faceVerificationStatus !== undefined ||
+    dto.idProofVerified !== undefined ||
+    dto.idProofVerificationStatus !== undefined
+
+  if (!hasVerificationDetails) return dto.isVerified === true
+
+  const faceVerified = dto.isFaceVerified === true || String(dto.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED'
+  const idProofVerified = dto.idProofVerified === true || String(dto.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED'
+  return faceVerified && idProofVerified
+}
+
 const toArtist = (dto: ArtistSuggestionDto): Artist => ({
   id: dto.artistId,
   name: dto.artistName,
@@ -133,8 +147,7 @@ const toArtist = (dto: ArtistSuggestionDto): Artist => ({
   experienceYears: dto.experienceYears,
   experienceLevel: na(dto.experienceLevel),
   recruiterId: dto.recruiterId,
-  isVerified: (dto.isFaceVerified === true || String(dto.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED') &&
-    (dto.idProofVerified === true || String(dto.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED'),
+  isVerified: isArtistVerified(dto),
   isFaceVerified: dto.isFaceVerified,
   faceVerificationStatus: dto.faceVerificationStatus,
   idProofVerified: dto.idProofVerified,
