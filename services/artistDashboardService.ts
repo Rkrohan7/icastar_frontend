@@ -180,7 +180,8 @@ const artistDashboardService = {
     }, { ttl: DASH_TTL })
   },
 
-  async getProfileCompletion(): Promise<ProfileCompletion> {
+  async getProfileCompletion(forceRefresh: boolean = false): Promise<ProfileCompletion> {
+    if (forceRefresh) invalidateCache('artist:profile-completion')
     return cachedGet('artist:profile-completion', async () => {
       const response = await apiClient.get('/artist/profile/completion')
       return response.data.data

@@ -10,6 +10,7 @@ import DashLayout from '@/layouts/DashLayout'
 import AdminLayout from '@/layouts/AdminLayout'
 import { PostJobPage } from '@/pages/recruiter/PostJobPage'
 import { BrowseArtistsPage } from '@/pages/recruiter/BrowseArtistsPage'
+import RecruiterArtistDataGate from '@/components/RecruiterArtistDataGate'
 import CandidatesPage from '@/pages/recruiter/CandidatesPage'
 import { PastHiresPage } from '@/pages/recruiter/PastHiresPage'
 import { ApplicantProfilePage } from '@/pages/recruiter/ApplicantProfilePage'
@@ -142,31 +143,31 @@ const AppRouter = () =>
         },
         {
           path: '/artists',
-          element: <BrowseArtistsPage />,
+          element: <RecruiterArtistDataGate><BrowseArtistsPage /></RecruiterArtistDataGate>,
         },
         {
           path: '/candidates',
-          element: <CandidatesPage />,
+          element: <RecruiterArtistDataGate><CandidatesPage /></RecruiterArtistDataGate>,
         },
         {
           path: '/hires',
-          element: <PastHiresPage />,
+          element: <RecruiterArtistDataGate><PastHiresPage /></RecruiterArtistDataGate>,
         },
         {
           path: '/applicant-profile',
-          element: <ApplicantProfilePage />,
+          element: <RecruiterArtistDataGate><ApplicantProfilePage /></RecruiterArtistDataGate>,
         },
         {
           path: '/applicants',
-          element: <ApplicantsPage />,
+          element: <RecruiterArtistDataGate><ApplicantsPage /></RecruiterArtistDataGate>,
         },
         {
           path: '/artist-profile',
-          element: <ArtistProfilePage />,
+          element: <RecruiterArtistDataGate><ArtistProfilePage /></RecruiterArtistDataGate>,
         },
         {
           path: '/past-hires',
-          element: <PastHireDetailPage />,
+          element: <RecruiterArtistDataGate><PastHireDetailPage /></RecruiterArtistDataGate>,
         },
         {
           path: '/notifications',
@@ -195,7 +196,7 @@ const AppRouter = () =>
         },
         {
           path: '/recruiter/auditions/:auditionId/applications',
-          element: <AuditionApplicationsPage />,
+          element: <RecruiterArtistDataGate><AuditionApplicationsPage /></RecruiterArtistDataGate>,
         },
       ],
     },

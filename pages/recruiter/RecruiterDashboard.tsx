@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from '../../components/Card'
+import RecruiterArtistDataGate from '@/components/RecruiterArtistDataGate'
 import { Applicant, Page } from '../../types'
 import {
   XAxis,
@@ -491,6 +492,7 @@ export const RecruiterDashboard = () => {
       </Card>
 
       {/* Latest Applicants Table */}
+      <RecruiterArtistDataGate>
       <Card>
         <div className='flex items-center justify-between mb-6 px-6 pt-4'>
           <div>
@@ -577,6 +579,7 @@ export const RecruiterDashboard = () => {
           </table>
         </div>
       </Card>
+      </RecruiterArtistDataGate>
     </div>
   )
 }
