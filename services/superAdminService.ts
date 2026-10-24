@@ -133,6 +133,12 @@ export interface SuperAdminRecruiter {
   linkedIn: string | null
   bio: string | null
   isVerified: boolean
+  isFaceVerified?: boolean
+  faceVerificationUrl?: string | null
+  faceVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
+  idProofUrl?: string | null
+  idProofVerified?: boolean
+  idProofVerificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_SUBMITTED' | string
   isEmailVerified: boolean
   isMobileVerified: boolean
   isDocumentVerified: boolean
@@ -759,6 +765,25 @@ const superAdminService = {
       const resp = await apiClient.get(`/super-admin/recruiters/${id}`)
       return unwrap<SuperAdminRecruiter>(resp)
     }, { ttl: 60_000 })
+  },
+
+  async getRecruiterVerificationQueue(): Promise<SuperAdminRecruiter[]> {
+    const resp = await apiClient.get('/super-admin/recruiters/verification-queue')
+    const list = Array.isArray(resp.data?.data) ? resp.data.data : Array.isArray(resp.data) ? resp.data : []
+    return list
+  },
+
+  async reviewRecruiterVerification(
+    id: number,
+    decision: 'APPROVED' | 'REJECTED',
+    verificationType: 'FACE' | 'ID_PROOF',
+    reason?: string,
+  ): Promise<SuperAdminRecruiter> {
+    const path = verificationType === 'FACE' ? 'face-verification' : 'id-proof-verification'
+    const resp = await apiClient.patch(`/super-admin/recruiters/${id}/${path}`, { status: decision, reason })
+    invalidateCache('admin:recruiters')
+    invalidateCache(`admin:recruiter:${id}`)
+    return unwrap<SuperAdminRecruiter>(resp)
   },
 
   // Artists

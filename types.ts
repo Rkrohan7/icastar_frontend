@@ -31,6 +31,13 @@ export interface Recruiter {
   companyWebsite?: string
   companyBio?: string
   verificationStatus?: VerificationStatus
+  isVerified?: boolean
+  faceVerificationUrl?: string
+  faceVerificationStatus?: string
+  isFaceVerified?: boolean
+  idProofUrl?: string
+  idProofVerificationStatus?: string
+  idProofVerified?: boolean
   recruiterType?: RecruiterType
 }
 

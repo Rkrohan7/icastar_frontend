@@ -21,7 +21,7 @@ const initialRecruiterData: Recruiter = {
   companyWebsite: 'https://creativ.com',
   companyBio:
     "Creativ is a platform connecting the world's best artists with innovative companies. We believe in the power of creativity to drive progress.",
-  verificationStatus: 'Verified',
+  verificationStatus: 'Not Verified',
   recruiterType: 'In-house',
 }
 
@@ -126,13 +126,6 @@ const VerificationStatusCard: React.FC<{ status: VerificationStatus }> = ({
         <p className={`font-semibold text-sm`}>{config.text}</p>
         <p className='text-sm opacity-80'>{config.description}</p>
       </div>
-      {status !== 'Verified' && (
-        <button className='ml-4 flex-shrink-0 text-sm font-semibold text-white bg-primary hover:bg-primary-hover px-3 py-1.5 rounded-lg'>
-          {status === 'Pending'
-            ? t('recruiterProfile.verification.checkStatus')
-            : t('recruiterProfile.verification.submitForVerification')}
-        </button>
-      )}
     </div>
   )
 }
@@ -146,6 +139,9 @@ export const RecruiterProfilePage = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const faceProofInputRef = useRef<HTMLInputElement>(null)
+  const idProofInputRef = useRef<HTMLInputElement>(null)
+  const [verificationUpload, setVerificationUpload] = useState<'FACE' | 'ID_PROOF' | null>(null)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -208,6 +204,44 @@ export const RecruiterProfilePage = () => {
     setFormData(prev => ({ ...prev, avatarUrl: '' }))
   }
 
+  const handleVerificationUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'FACE' | 'ID_PROOF',
+  ) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const fileKind = type === 'FACE' ? 'image' : 'document'
+    const validation = uploadService.validateFile(file, fileKind)
+    if (!validation.valid) {
+      toast.error(validation.error)
+      event.target.value = ''
+      return
+    }
+
+    try {
+      setVerificationUpload(type)
+      const fileUrl = await uploadService.uploadFile(
+        file,
+        type === 'FACE' ? 'FACE_VERIFICATION' : 'ID_PROOF',
+        setUploadProgress,
+      )
+      const updated = await updateRecruiterProfile(
+        type === 'FACE'
+          ? { faceVerificationUrl: fileUrl }
+          : { idProofUrl: fileUrl },
+      )
+      setRecruiter(updated)
+      setFormData(updated)
+      toast.success(`${type === 'FACE' ? 'Face verification' : 'ID proof'} submitted for review.`)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Verification document upload failed.')
+    } finally {
+      setVerificationUpload(null)
+      setUploadProgress(0)
+      event.target.value = ''
+    }
+  }
+
   const handleSave = async () => {
     try {
       setLoading(true)
@@ -252,6 +286,81 @@ export const RecruiterProfilePage = () => {
         <VerificationStatusCard
           status={formData.verificationStatus || 'Not Verified'}
         />
+
+        <Card>
+          <h3 className='text-lg font-semibold text-gray-800 mb-2'>Identity verification</h3>
+          <p className='text-sm text-gray-500 mb-5'>
+            Your recruiter account is verified only after both your face and government ID are approved.
+          </p>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <input
+              ref={faceProofInputRef}
+              type='file'
+              accept='image/jpeg,image/jpg,image/png,image/webp'
+              className='hidden'
+              onChange={event => void handleVerificationUpload(event, 'FACE')}
+            />
+            <input
+              ref={idProofInputRef}
+              type='file'
+              accept='application/pdf,image/jpeg,image/jpg,image/png'
+              className='hidden'
+              onChange={event => void handleVerificationUpload(event, 'ID_PROOF')}
+            />
+            {([
+              {
+                type: 'FACE' as const,
+                label: 'Face verification',
+                status: formData.faceVerificationStatus,
+                verified: formData.isFaceVerified,
+                url: formData.faceVerificationUrl,
+                input: faceProofInputRef,
+              },
+              {
+                type: 'ID_PROOF' as const,
+                label: 'ID proof',
+                status: formData.idProofVerificationStatus,
+                verified: formData.idProofVerified,
+                url: formData.idProofUrl,
+                input: idProofInputRef,
+              },
+            ]).map(item => {
+              const approved = item.verified === true || item.status?.toUpperCase() === 'APPROVED'
+              const rejected = item.status?.toUpperCase() === 'REJECTED'
+              const pending = item.status?.toUpperCase() === 'PENDING' || (Boolean(item.url) && !rejected)
+              return (
+                <div key={item.type} className='rounded-xl border border-gray-200 p-4'>
+                  <div className='flex items-start justify-between gap-3'>
+                    <div>
+                      <p className='font-semibold text-gray-900'>{item.label}</p>
+                      <p className={`mt-1 text-sm ${approved ? 'text-green-700' : pending ? 'text-amber-700' : 'text-gray-500'}`}>
+                        {approved
+                          ? `${item.type === 'FACE' ? 'Face' : 'ID'} Verified`
+                          : rejected ? 'Rejected — please submit again' : pending ? 'Pending verification' : 'Not submitted'}
+                      </p>
+                    </div>
+                    {item.url && (
+                      <a href={item.url} target='_blank' rel='noreferrer' className='text-sm font-medium text-primary hover:underline'>
+                        View
+                      </a>
+                    )}
+                  </div>
+                  {!approved && (
+                    <button
+                      type='button'
+                      disabled={verificationUpload !== null}
+                      onClick={() => item.input.current?.click()}
+                      className='mt-4 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50'>
+                      {verificationUpload === item.type
+                        ? `Uploading ${uploadProgress}%`
+                        : pending ? 'Replace submission' : `Submit ${item.type === 'FACE' ? 'face photo' : 'ID proof'}`}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </Card>
 
         <Card>
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>

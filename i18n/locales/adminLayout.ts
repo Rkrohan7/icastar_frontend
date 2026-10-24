@@ -17,6 +17,7 @@ export default defineMessages({
     nav: {
       userManagement: 'User Management',
       recruiters: 'Recruiters',
+      recruiterVerification: 'Recruiter verification',
       artistVerification: 'Artist verification',
       artists: 'Artists',
       jobsManagement: 'Jobs Management',
@@ -58,6 +59,7 @@ export default defineMessages({
     nav: {
       userManagement: 'वापरकर्ता व्यवस्थापन',
       recruiters: 'रिक्रूटर्स',
+      recruiterVerification: 'रिक्रूटर सत्यापन',
       artistVerification: 'कलाकार सत्यापन',
       artists: 'कलाकार',
       jobsManagement: 'नोकरी व्यवस्थापन',

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   SearchIcon,
   CheckCircleIcon,
@@ -38,6 +39,7 @@ const PAGE_SIZE = 20
 
 export const SuperAdminRecruitersPage: React.FC = () => {
   const { t, tEnum } = useTranslation()
+  const navigate = useNavigate()
   const [recruiters, setRecruiters] = useState<SuperAdminRecruiter[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -221,16 +223,31 @@ export const SuperAdminRecruitersPage: React.FC = () => {
                       </td>
                       <td className='px-4 py-3'>
                         {r.accountStatus && <StatusBadge status={r.accountStatus} />}
-                        {r.isVerified && (
+                        {(r.isFaceVerified === true || r.faceVerificationStatus?.toUpperCase() === 'APPROVED') &&
+                          (r.idProofVerified === true || r.idProofVerificationStatus?.toUpperCase() === 'APPROVED') && (
                           <div className='flex items-center gap-1 text-xs text-green-600 mt-1'>
                             <CheckCircleIcon className='h-3 w-3' /> {t('adminRecruiters.verified')}
                           </div>
                         )}
+                        {((r.faceVerificationStatus && r.faceVerificationStatus.toUpperCase() !== 'NOT_SUBMITTED') ||
+                          (r.idProofVerificationStatus && r.idProofVerificationStatus.toUpperCase() !== 'NOT_SUBMITTED')) &&
+                          !((r.isFaceVerified === true || r.faceVerificationStatus?.toUpperCase() === 'APPROVED') &&
+                            (r.idProofVerified === true || r.idProofVerificationStatus?.toUpperCase() === 'APPROVED')) && (
+                            <div className='mt-1 text-xs text-amber-700'>Verification pending</div>
+                          )}
                       </td>
                       <td className='px-4 py-3 text-xs text-gray-500'>
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString(dateLocale()) : '—'}
                       </td>
                       <td className='px-4 py-3'>
+                        {(Boolean(r.faceVerificationUrl) || Boolean(r.idProofUrl) ||
+                          r.faceVerificationStatus?.toUpperCase() === 'PENDING' || r.idProofVerificationStatus?.toUpperCase() === 'PENDING') && (
+                          <button
+                            onClick={() => navigate('/admin/recruiters/verification')}
+                            className='mb-2 block whitespace-nowrap text-xs text-amber-700 hover:underline'>
+                            Review verification
+                          </button>
+                        )}
                         <UserModerationActions
                           kind='recruiter'
                           name={r.companyName || `${firstName} ${lastName}`.trim() || t('adminRecruiters.thisRecruiter')}

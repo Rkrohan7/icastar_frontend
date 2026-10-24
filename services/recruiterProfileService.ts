@@ -8,6 +8,12 @@ export interface RecruiterProfileDto {
   firstName?: string;
   lastName?: string;
   isVerified?: boolean;
+  isFaceVerified?: boolean;
+  faceVerificationUrl?: string;
+  faceVerificationStatus?: string;
+  idProofVerified?: boolean;
+  idProofUrl?: string;
+  idProofVerificationStatus?: string;
   contactPersonName?: string;
   designation?: string;
   companyName?: string;
@@ -34,7 +40,14 @@ function mapDtoToRecruiter(dto: RecruiterProfileDto): Recruiter {
   const companyName = dto.companyName || '';
   const companyWebsite = dto.companyWebsite || '';
   const companyBio = dto.companyDescription || '';
-  const verificationStatus = dto.isVerified ? 'Verified' : 'Not Verified';
+  const isFaceVerified = dto.isFaceVerified === true || dto.faceVerificationStatus?.toUpperCase() === 'APPROVED'
+  const isIdProofVerified = dto.idProofVerified === true || dto.idProofVerificationStatus?.toUpperCase() === 'APPROVED'
+  const isVerified = isFaceVerified && isIdProofVerified
+  const verificationStatus = isVerified
+    ? 'Verified'
+    : [dto.faceVerificationStatus, dto.idProofVerificationStatus].some(status => status?.toUpperCase() === 'PENDING')
+      ? 'Pending'
+      : 'Not Verified'
 
   return {
     name,
@@ -45,6 +58,13 @@ function mapDtoToRecruiter(dto: RecruiterProfileDto): Recruiter {
     companyWebsite,
     companyBio,
     verificationStatus,
+    isVerified,
+    isFaceVerified,
+    faceVerificationUrl: dto.faceVerificationUrl,
+    faceVerificationStatus: dto.faceVerificationStatus,
+    idProofVerified: isIdProofVerified,
+    idProofUrl: dto.idProofUrl,
+    idProofVerificationStatus: dto.idProofVerificationStatus,
     recruiterType: undefined,
   } as Recruiter;
 }

@@ -38,6 +38,7 @@ import SuperAdminAuditionApplicationsPage from '@/pages/admin/SuperAdminAudition
 import SuperAdminInterviewsPage from '@/pages/admin/SuperAdminInterviewsPage'
 import SuperAdminPortfolioPage from '@/pages/admin/SuperAdminPortfolioPage'
 import SuperAdminArtistVerificationPage from '@/pages/admin/SuperAdminArtistVerificationPage'
+import SuperAdminRecruiterVerificationPage from '@/pages/admin/SuperAdminRecruiterVerificationPage'
 import SuperAdminReportContentPage from '@/pages/admin/SuperAdminReportContentPage'
 import DashboardIndex from '@/pages/DashboardIndex'
 import Jobs from '@/pages/artist/Jobs'
@@ -209,6 +210,10 @@ const AppRouter = () =>
         {
           path: '/admin/recruiters',
           element: <SuperAdminRecruitersPage />,
+        },
+        {
+          path: '/admin/recruiters/verification',
+          element: <SuperAdminRecruiterVerificationPage />,
         },
         {
           path: '/admin/artists',
