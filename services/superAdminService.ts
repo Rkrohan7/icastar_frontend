@@ -446,6 +446,7 @@ export interface SystemConfig {
   platformEmail: string
   supportEmail: string
   supportPhone: string
+  incompleteProfilePopupEnabled: boolean
   allowNewRegistrations: boolean
   requireEmailVerification: boolean
   requireMobileVerification: boolean
@@ -984,7 +985,11 @@ const superAdminService = {
   async getConfig(): Promise<SystemConfig> {
     return cachedGet('admin:config', async () => {
       const resp = await apiClient.get('/super-admin/config')
-      return unwrap<SystemConfig>(resp)
+      const config = unwrap<SystemConfig>(resp)
+      return {
+        ...config,
+        incompleteProfilePopupEnabled: String(config.incompleteProfilePopupEnabled).toLowerCase() === 'true',
+      }
     }, { ttl: CONFIG_TTL, persist: true })
   },
 

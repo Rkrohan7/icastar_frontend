@@ -30,6 +30,7 @@ const SECTIONS: { titleKey: string; icon: React.ComponentType<{ className?: stri
       { key: 'platformEmail', labelKey: 'adminConfig.fields.platformEmail', type: 'text', category: 'PLATFORM' },
       { key: 'supportEmail', labelKey: 'adminConfig.fields.supportEmail', type: 'text', category: 'PLATFORM' },
       { key: 'supportPhone', labelKey: 'adminConfig.fields.supportPhone', type: 'text', category: 'PLATFORM' },
+      { key: 'incompleteProfilePopupEnabled', labelKey: 'adminConfig.fields.incompleteProfilePopupEnabled', type: 'boolean', category: 'PLATFORM', descriptionKey: 'adminConfig.descriptions.incompleteProfilePopupEnabled' },
     ],
   },
   {

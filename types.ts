@@ -39,6 +39,7 @@ export interface Recruiter {
   idProofVerificationStatus?: string
   idProofVerified?: boolean
   recruiterType?: RecruiterType
+  profileCompletionPercentage?: number
 }
 
 export interface Applicant {

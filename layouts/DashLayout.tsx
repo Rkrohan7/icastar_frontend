@@ -5,6 +5,7 @@ import { Header } from '@/components/Header'
 import { UserRole } from '@/types/types'
 import authService from '@/services/userService'
 import { useTranslation } from '@/i18n'
+import ProfileCompletionReminder from '@/components/ProfileCompletionReminder'
 
 const DashLayout: React.FC = () => {
   const { t } = useTranslation()
@@ -97,6 +98,7 @@ const DashLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        <ProfileCompletionReminder />
         {/* Header */}
         <Header
           recruiter={recruiterData}

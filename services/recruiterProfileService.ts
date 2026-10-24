@@ -25,6 +25,7 @@ export interface RecruiterProfileDto {
   companySize?: string;
   location?: string;
   isVerifiedCompany?: boolean;
+  profileCompletionPercentage?: number;
   totalJobsPosted?: number;
   successfulHires?: number;
   chatCredits?: number;
@@ -57,6 +58,7 @@ function mapDtoToRecruiter(dto: RecruiterProfileDto): Recruiter {
     companyName,
     companyWebsite,
     companyBio,
+    profileCompletionPercentage: dto.profileCompletionPercentage,
     verificationStatus,
     isVerified,
     isFaceVerified,

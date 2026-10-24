@@ -20,6 +20,7 @@ export interface User {
   status?: string
   isVerified?: boolean
   isOnboardingComplete?: boolean
+  profileCompletionPercentage?: number
   artistProfile?: {
     artistProfileId: number
     stageName?: string
@@ -91,6 +92,7 @@ export const authService = {
 
       // Store tokens and user data
       localStorage.setItem('authToken', token)
+      localStorage.setItem('loginSessionId', `${Date.now()}-${Math.random().toString(36).slice(2)}`)
       localStorage.setItem('user', JSON.stringify({ email, mobile, role, status, isVerified, firstName, lastName, fullName }))
 
       // Set default auth header for future requests
@@ -152,6 +154,8 @@ export const authService = {
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
     localStorage.removeItem('isOnboardingComplete')
+    localStorage.removeItem('loginSessionId')
+    localStorage.removeItem('profileCompletionPopupDismissedSession')
     invalidateUserCache()
     // Wipe the entire client-side response cache so the next session starts fresh
     clearCache()

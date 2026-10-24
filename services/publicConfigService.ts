@@ -51,4 +51,15 @@ export async function getLandingStats(): Promise<LandingStats> {
   }
 }
 
-export default { getLandingStats }
+export async function getProfileCompletionPopupEnabled(): Promise<boolean> {
+  const res = await fetch(`${BASE_URL}/public/config/profile-completion-popup`)
+  if (!res.ok) {
+    throw new Error(`Failed to load profile completion popup setting (${res.status}).`)
+  }
+  const body = await res.json()
+  const data = body?.data ?? body
+  const value = data?.enabled ?? data?.incompleteProfilePopupEnabled ?? data?.value
+  return value === true || value === 'true'
+}
+
+export default { getLandingStats, getProfileCompletionPopupEnabled }
