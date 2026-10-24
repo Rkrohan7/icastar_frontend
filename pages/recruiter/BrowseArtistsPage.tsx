@@ -10,7 +10,7 @@ import usePageParam from '../../hooks/usePageParam'
 import { useTranslation } from '@/i18n'
 
 // Remote data
-const ITEMS_PER_PAGE = 6
+const ITEMS_PER_PAGE = 18
 
 const ArtistCard: React.FC<{ artist: Artist; onViewProfile: () => void }> = ({
   artist,
