@@ -207,6 +207,16 @@ export const PublicArtistProfilePage: React.FC = () => {
                   {t('publicArtistProfile.verified')}
                 </span>
               )}
+              {(profile.isFaceVerified === true || String(profile.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED') && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+                  Face Verified
+                </span>
+              )}
+              {(profile.idProofVerified === true || String(profile.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED') && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+                  ID Verified
+                </span>
+              )}
             </div>
             <p className="text-primary font-semibold text-sm mt-0.5">{category}</p>
             {profile.location && (

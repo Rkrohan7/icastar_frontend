@@ -512,6 +512,16 @@ export const ArtistProfilePage = () => {
                             <CheckCircleIcon className='h-3.5 w-3.5' /> {t('recruiterArtistProfile.hero.verified')}
                           </span>
                         )}
+                        {(artist.isFaceVerified === true || String(artist.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED') && (
+                          <span className='inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700'>
+                            Face Verified
+                          </span>
+                        )}
+                        {(artist.idProofVerified === true || String(artist.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED') && (
+                          <span className='inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700'>
+                            ID Verified
+                          </span>
+                        )}
                         {artist.isPremium && (
                           <span className='px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 rounded-full'>{t('recruiterArtistProfile.hero.premium')}</span>
                         )}

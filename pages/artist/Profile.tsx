@@ -35,7 +35,10 @@ interface ArtistProfile {
   coverPhoto?: string
   idProof?: string
   idProofVerified?: boolean
+  idProofVerificationStatus?: string
   faceVerification?: string
+  faceVerificationStatus?: string
+  isFaceVerified?: boolean
   isVerifiedBadge?: boolean
   isProfileComplete?: boolean
   // Actor specific
@@ -195,7 +198,10 @@ const Profile: React.FC = () => {
         coverPhoto: data.coverPhoto ?? undefined,
         idProof: data.idProof ?? undefined,
         idProofVerified: data.idProofVerified ?? false,
+        idProofVerificationStatus: data.idProofVerificationStatus,
         faceVerification: data.faceVerification ?? undefined,
+        faceVerificationStatus: data.faceVerificationStatus,
+        isFaceVerified: data.isFaceVerified,
         isVerifiedBadge: data.isVerifiedBadge,
         isProfileComplete: data.isProfileComplete,
         actorType: data.actorType,
@@ -993,6 +999,11 @@ const Profile: React.FC = () => {
   }
 
   const profileCompletion = calculateProfileCompletion()
+  const isIdProofVerified = profile.idProofVerified === true ||
+    String(profile.idProofVerificationStatus ?? '').toUpperCase() === 'APPROVED'
+  const isFaceVerified = profile.isFaceVerified === true ||
+    String(profile.faceVerificationStatus ?? '').toUpperCase() === 'APPROVED'
+  const isArtistVerified = isIdProofVerified && isFaceVerified
 
   return (
     <>
@@ -1434,7 +1445,7 @@ const Profile: React.FC = () => {
                     <div>
                       <p className='text-sm font-medium text-gray-900'>{t('artistProfile.idProof.document')}</p>
                       <p className='text-xs text-gray-500'>
-                        {currentProfile.idProofVerified ? t('artistProfile.verification.verified') : t('artistProfile.verification.pendingVerification')}
+                        {isIdProofVerified ? 'ID Verified' : t('artistProfile.verification.pendingVerification')}
                       </p>
                     </div>
                   </div>
@@ -1454,33 +1465,51 @@ const Profile: React.FC = () => {
 
             {/* Verification Badge */}
             <div className='bg-white rounded-xl p-6 shadow-sm'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-4'>{t('artistProfile.verification.title')}</h3>
+              <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
+                <h3 className='text-lg font-semibold text-gray-800'>{t('artistProfile.verification.title')}</h3>
+                {isArtistVerified && (
+                  <span className='inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700'>
+                    <Icon name='CheckCircle' size={14} />
+                    {t('artistProfile.verification.verified')}
+                  </span>
+                )}
+              </div>
               <div className='space-y-4'>
-                <div className={`flex items-center p-3 rounded-lg ${profile.idProof ? (profile.idProofVerified ? 'bg-green-50' : 'bg-yellow-50') : 'bg-amber-50'}`}>
-                  <div className={`p-2 rounded-full ${profile.idProof ? (profile.idProofVerified ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600') : 'bg-amber-100 text-amber-600'}`}>
-                    <Icon name={profile.idProof ? (profile.idProofVerified ? 'CheckCircle' : 'Clock') : 'AlertCircle'} size={20} />
+                <div className={`flex items-center p-3 rounded-lg ${isIdProofVerified ? 'bg-green-50' : 'bg-amber-50'}`}>
+                  <div className={`p-2 rounded-full ${isIdProofVerified ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+                    <Icon name={isIdProofVerified ? 'CheckCircle' : 'Clock'} size={20} />
                   </div>
-                  <div className='ml-3'>
+                  <div className='ml-3 flex-1'>
                     <p className='text-sm font-medium text-gray-900'>{t('artistProfile.idProof.title')}</p>
                     <p className='text-xs text-gray-500'>
-                      {profile.idProof
-                        ? profile.idProofVerified
-                          ? t('artistProfile.verification.verified')
-                          : t('artistProfile.verification.pendingVerification')
-                        : t('artistProfile.verification.notUploaded')}
+                      {isIdProofVerified
+                        ? 'ID Verified'
+                        : profile.idProof
+                          ? t('artistProfile.verification.pendingVerification')
+                          : t('artistProfile.verification.notUploaded')}
                     </p>
                   </div>
+                  {isIdProofVerified && (
+                    <span className='rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700'>ID Verified</span>
+                  )}
                 </div>
-                <div className={`flex items-center p-3 rounded-lg ${(profile.faceVerification || localFaceVerified) ? 'bg-green-50' : 'bg-amber-50'}`}>
-                  <div className={`p-2 rounded-full ${(profile.faceVerification || localFaceVerified) ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
-                    <Icon name={(profile.faceVerification || localFaceVerified) ? 'CheckCircle' : 'AlertCircle'} size={20} />
+                <div className={`flex items-center p-3 rounded-lg ${isFaceVerified ? 'bg-green-50' : 'bg-amber-50'}`}>
+                  <div className={`p-2 rounded-full ${isFaceVerified ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+                    <Icon name={isFaceVerified ? 'CheckCircle' : 'AlertCircle'} size={20} />
                   </div>
                   <div className='ml-3 flex-1'>
                     <p className='text-sm font-medium text-gray-900'>{t('artistProfile.verification.faceVerification')}</p>
                     <p className='text-xs text-gray-500'>
-                      {profile.faceVerification ? t('artistProfile.verification.verified') : localFaceVerified ? t('artistProfile.verification.pendingReview') : t('artistProfile.verification.notVerified')}
+                      {isFaceVerified
+                        ? 'Face Verified'
+                        : profile.faceVerification || localFaceVerified
+                          ? t('artistProfile.verification.pendingReview')
+                          : t('artistProfile.verification.notVerified')}
                     </p>
                   </div>
+                  {isFaceVerified && (
+                    <span className='rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700'>Face Verified</span>
+                  )}
                   {profile.faceVerification ? (
                     <a
                       href={profile.faceVerification}
