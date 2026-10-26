@@ -14,6 +14,7 @@ export interface RecruiterProfileDto {
   idProofVerified?: boolean;
   idProofUrl?: string;
   idProofVerificationStatus?: string;
+  recruiterType?: Recruiter['recruiterType'];
   contactPersonName?: string;
   designation?: string;
   companyName?: string;
@@ -67,7 +68,7 @@ function mapDtoToRecruiter(dto: RecruiterProfileDto): Recruiter {
     idProofVerified: isIdProofVerified,
     idProofUrl: dto.idProofUrl,
     idProofVerificationStatus: dto.idProofVerificationStatus,
-    recruiterType: undefined,
+    recruiterType: dto.recruiterType,
   } as Recruiter;
 }
 

@@ -13,16 +13,14 @@ import { Info } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 
 const initialRecruiterData: Recruiter = {
-  name: 'Alex Morgan',
-  title: 'Recruiter',
-  email: 'alex.morgan@creativ.com',
-  avatarUrl: 'https://picsum.photos/seed/recruiter/100/100',
-  companyName: 'Creativ Inc.',
-  companyWebsite: 'https://creativ.com',
-  companyBio:
-    "Creativ is a platform connecting the world's best artists with innovative companies. We believe in the power of creativity to drive progress.",
+  name: '',
+  title: '',
+  email: '',
+  avatarUrl: '',
+  companyName: '',
+  companyWebsite: '',
+  companyBio: '',
   verificationStatus: 'Not Verified',
-  recruiterType: 'In-house',
 }
 
 interface InputFieldProps {
@@ -248,6 +246,7 @@ export const RecruiterProfilePage = () => {
       await updateRecruiterProfile({
         contactPersonName: formData.name,
         designation: formData.title,
+        recruiterType: formData.recruiterType,
         email: formData.email,
         companyName: formData.companyName,
         companyWebsite: formData.companyWebsite,
@@ -272,6 +271,19 @@ export const RecruiterProfilePage = () => {
     setFormData(recruiter)
   }
 
+  const completionItems = [
+    { label: t('recruiterProfile.completion.photo'), complete: Boolean(formData.avatarUrl?.trim()) },
+    { label: t('recruiterProfile.completion.name'), complete: Boolean(formData.name?.trim()) },
+    { label: t('recruiterProfile.completion.jobTitle'), complete: Boolean(formData.title?.trim()) },
+    { label: t('recruiterProfile.completion.email'), complete: Boolean(formData.email?.trim()) },
+    { label: t('recruiterProfile.completion.recruiterType'), complete: Boolean(formData.recruiterType) },
+    { label: t('recruiterProfile.completion.companyName'), complete: Boolean(formData.companyName?.trim()) },
+    { label: t('recruiterProfile.completion.companyWebsite'), complete: Boolean(formData.companyWebsite?.trim()) },
+    { label: t('recruiterProfile.completion.companyBio'), complete: Boolean(formData.companyBio?.trim()) },
+  ]
+  const completedItems = completionItems.filter(item => item.complete).length
+  const completionPercentage = Math.round((completedItems / completionItems.length) * 100)
+
   return (
     <div className='max-w-4xl mx-auto'>
       <h2 className='text-3xl font-bold text-gray-900 mb-6'>{t('common.nav.myProfile')}</h2>
@@ -283,6 +295,51 @@ export const RecruiterProfilePage = () => {
       )}
 
       <div className='space-y-8'>
+        <Card>
+          <div className='flex items-center justify-between gap-4'>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-800'>
+                {t('recruiterProfile.completion.heading')}
+              </h3>
+              <p className='mt-1 text-sm text-gray-500'>
+                {t('recruiterProfile.completion.summary', {
+                  completed: completedItems,
+                  total: completionItems.length,
+                })}
+              </p>
+            </div>
+            <span className='text-2xl font-bold text-primary'>{completionPercentage}%</span>
+          </div>
+          <div
+            className='mt-4 h-2.5 w-full overflow-hidden rounded-full bg-gray-200'
+            role='progressbar'
+            aria-label={t('recruiterProfile.completion.heading')}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={completionPercentage}
+          >
+            <div
+              className='h-full rounded-full bg-primary transition-all duration-300'
+              style={{ width: `${completionPercentage}%` }}
+            />
+          </div>
+          {completedItems < completionItems.length && (
+            <div className='mt-4'>
+              <p className='mb-2 text-sm font-medium text-gray-700'>
+                {t('recruiterProfile.completion.remaining')}
+              </p>
+              <ul className='grid grid-cols-1 gap-1 text-sm text-gray-600 sm:grid-cols-2'>
+                {completionItems.filter(item => !item.complete).map(item => (
+                  <li key={item.label} className='flex items-center gap-2'>
+                    <span aria-hidden='true' className='text-amber-600'>•</span>
+                    {item.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+
         <VerificationStatusCard
           status={formData.verificationStatus || 'Not Verified'}
         />

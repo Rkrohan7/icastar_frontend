@@ -58,6 +58,19 @@ export default defineMessages({
       title: 'Company Information',
       subtitle: 'Details about the company you represent.',
     },
+    completion: {
+      heading: 'Profile completion',
+      summary: '{{completed}} of {{total}} profile details completed',
+      remaining: 'Complete these details to reach 100%:',
+      photo: 'Profile photo',
+      name: 'Full name',
+      jobTitle: 'Job title',
+      email: 'Email address',
+      recruiterType: 'Recruiter type',
+      companyName: 'Company name',
+      companyWebsite: 'Company website',
+      companyBio: 'Company bio',
+    },
   },
   mr: {
     verification: {
@@ -114,6 +127,19 @@ export default defineMessages({
     company: {
       title: 'कंपनीची माहिती',
       subtitle: 'तुम्ही प्रतिनिधित्व करत असलेल्या कंपनीचा तपशील.',
+    },
+    completion: {
+      heading: 'प्रोफाइल पूर्णता',
+      summary: '{{total}} पैकी {{completed}} प्रोफाइल तपशील पूर्ण',
+      remaining: '१००% पूर्ण करण्यासाठी हे तपशील भरा:',
+      photo: 'प्रोफाइल फोटो',
+      name: 'पूर्ण नाव',
+      jobTitle: 'पद',
+      email: 'ईमेल पत्ता',
+      recruiterType: 'रिक्रूटरचा प्रकार',
+      companyName: 'कंपनीचे नाव',
+      companyWebsite: 'कंपनीची वेबसाइट',
+      companyBio: 'कंपनीचा परिचय',
     },
   },
 })
