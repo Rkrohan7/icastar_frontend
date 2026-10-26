@@ -45,6 +45,7 @@ export default defineMessages({
     fields: {
       recruiterType: 'Recruiter Type',
       email: 'Email Address',
+      emailAccountNote: 'This is your account email and cannot be changed here.',
       companyName: 'Company Name',
       companyWebsite: 'Company Website',
       companyBio: 'Company Bio',
@@ -115,6 +116,7 @@ export default defineMessages({
     fields: {
       recruiterType: 'रिक्रूटरचा प्रकार',
       email: 'ईमेल पत्ता',
+      emailAccountNote: 'हा तुमच्या खात्याचा ईमेल आहे; तो येथे बदलता येणार नाही.',
       companyName: 'कंपनीचे नाव',
       companyWebsite: 'कंपनीची वेबसाइट',
       companyBio: 'कंपनीचा परिचय',

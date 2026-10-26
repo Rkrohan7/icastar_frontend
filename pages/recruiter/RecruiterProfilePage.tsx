@@ -30,6 +30,7 @@ interface InputFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   type?: string
   autoComplete?: string
+  readOnly?: boolean
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -39,6 +40,7 @@ const InputField: React.FC<InputFieldProps> = ({
   onChange,
   type = 'text',
   autoComplete = 'off',
+  readOnly = false,
 }) => (
   <div>
     <label htmlFor={id} className='block text-sm font-medium text-gray-700'>
@@ -51,7 +53,8 @@ const InputField: React.FC<InputFieldProps> = ({
       value={value}
       onChange={onChange}
       autoComplete={autoComplete}
-      className='mt-1 block w-full rounded-lg border-gray-300 bg-white shadow-sm transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5'
+      readOnly={readOnly}
+      className={`mt-1 block w-full rounded-lg border-gray-300 shadow-sm transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:text-sm px-3 py-2.5 ${readOnly ? 'bg-gray-100 text-gray-500' : 'bg-white'}`}
     />
   </div>
 )
@@ -247,7 +250,6 @@ export const RecruiterProfilePage = () => {
         contactPersonName: formData.name,
         designation: formData.title,
         recruiterType: formData.recruiterType,
-        email: formData.email,
         companyName: formData.companyName,
         companyWebsite: formData.companyWebsite,
         companyDescription: formData.companyBio,
@@ -282,7 +284,24 @@ export const RecruiterProfilePage = () => {
     { label: t('recruiterProfile.completion.companyBio'), complete: Boolean(formData.companyBio?.trim()) },
   ]
   const completedItems = completionItems.filter(item => item.complete).length
-  const completionPercentage = Math.round((completedItems / completionItems.length) * 100)
+  const calculatedCompletionPercentage = Math.round((completedItems / completionItems.length) * 100)
+  const completionFields: (keyof Recruiter)[] = [
+    'avatarUrl',
+    'name',
+    'title',
+    'email',
+    'recruiterType',
+    'companyName',
+    'companyWebsite',
+    'companyBio',
+  ]
+  const hasCompletionChanges = completionFields.some(field => formData[field] !== recruiter[field])
+  const serverCompletionPercentage = formData.profileCompletionPercentage
+  const completionPercentage = hasCompletionChanges
+    ? calculatedCompletionPercentage
+    : typeof serverCompletionPercentage === 'number' && Number.isFinite(serverCompletionPercentage)
+      ? Math.min(100, Math.max(0, Math.round(serverCompletionPercentage)))
+      : calculatedCompletionPercentage
 
   return (
     <div className='max-w-4xl mx-auto'>
@@ -546,7 +565,11 @@ export const RecruiterProfilePage = () => {
                 type='email'
                 value={formData.email || ''}
                 onChange={handleChange}
+                readOnly
               />
+              <p className='mt-1 text-xs text-gray-500'>
+                {t('recruiterProfile.fields.emailAccountNote')}
+              </p>
             </div>
           </div>
         </Card>
