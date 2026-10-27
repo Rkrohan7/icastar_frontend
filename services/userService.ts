@@ -58,10 +58,16 @@ export interface LoginRequest {
   password: string
 }
 
+export interface OtpChallengeResponse {
+  data: {
+    challengeId: string
+  }
+}
+
 export interface RegisterRequest extends LoginRequest {
   firstName: string
   lastName: string
-  mobile?: string
+  mobile: string
   role: string
   // Must be true — the backend rejects sign-ups without Terms & Conditions consent
   acceptedTerms: boolean
@@ -82,40 +88,81 @@ export const invalidateUserCache = () => {
 }
 
 // Auth functions
+const storeAuthResponse = (response: AuthResponse): void => {
+  const { token, email, mobile, role, status, isVerified, firstName, lastName, fullName } = response.data
+
+  localStorage.setItem('authToken', token)
+  localStorage.setItem('loginSessionId', `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+  localStorage.setItem('user', JSON.stringify({ email, mobile, role, status, isVerified, firstName, lastName, fullName }))
+}
+
 export const authService = {
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
+  async requestLoginOtp(credentials: LoginRequest): Promise<string> {
     try {
-      const response = await api.post<AuthResponse>('/auth/login', credentials)
-      console.log('Login response:', response.data.data)
-
-      const { token, email, mobile, role, status, isVerified, firstName, lastName, fullName } = response.data.data
-
-      // Store tokens and user data
-      localStorage.setItem('authToken', token)
-      localStorage.setItem('loginSessionId', `${Date.now()}-${Math.random().toString(36).slice(2)}`)
-      localStorage.setItem('user', JSON.stringify({ email, mobile, role, status, isVerified, firstName, lastName, fullName }))
-
-      // Set default auth header for future requests
-      api.interceptors.request.use(config => {
-        if (config.headers) {
-          config.headers.Authorization = `Bearer ${token}`
-        }
-        return config
-      })
-
-      return response.data
+      const response = await api.post<OtpChallengeResponse>('/auth/login/otp/request', credentials)
+      const challengeId = response.data?.data?.challengeId
+      if (!challengeId) throw new Error('Login OTP request did not return a challenge ID')
+      return challengeId
     } catch (error) {
-      console.error('Login failed:', error)
+      console.error('Login OTP request failed:', error)
       throw error
     }
   },
 
-  async register(userData: RegisterRequest): Promise<AuthResponse> {
+  async verifyLoginOtp(challengeId: string, otp: string): Promise<AuthResponse> {
     try {
-      const response = await api.post<AuthResponse>('/auth/register', userData)
+      const response = await api.post<AuthResponse>('/auth/login/otp/verify', { challengeId, otp })
+      if (!response.data?.data?.token) throw new Error('Login OTP verification did not return an auth token')
+      storeAuthResponse(response.data)
       return response.data
     } catch (error) {
-      console.error('Registration failed:', error)
+      console.error('Login OTP verification failed:', error)
+      throw error
+    }
+  },
+
+  async resendLoginOtp(challengeId: string): Promise<void> {
+    try {
+      await api.post('/auth/login/otp/resend', { challengeId })
+    } catch (error) {
+      console.error('Login OTP resend failed:', error)
+      throw error
+    }
+  },
+
+  async requestRegistrationVerification(userData: RegisterRequest): Promise<string> {
+    try {
+      const response = await api.post<OtpChallengeResponse>(
+        '/auth/register/verification/request',
+        userData,
+      )
+      const challengeId = response.data?.data?.challengeId
+      if (!challengeId) throw new Error('Registration verification request did not return a challenge ID')
+      return challengeId
+    } catch (error) {
+      console.error('Registration verification request failed:', error)
+      throw error
+    }
+  },
+
+  async verifyRegistration(
+    challengeId: string,
+    emailOtp: string,
+    mobileOtp: string,
+  ): Promise<void> {
+    try {
+      await api.post('/auth/register/verification/verify', { challengeId, emailOtp, mobileOtp })
+    } catch (error) {
+      console.error('Registration verification failed:', error)
+      throw error
+    }
+  },
+
+  async resendRegistrationOtp(challengeId: string, channel: 'email' | 'mobile'): Promise<void> {
+    try {
+      await api.post('/auth/register/verification/resend', { challengeId, channel })
+    } catch (error) {
+      console.error('Registration OTP resend failed:', error)
       throw error
     }
   },

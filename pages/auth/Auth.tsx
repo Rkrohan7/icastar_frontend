@@ -61,6 +61,11 @@ const Auth = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [loginChallengeId, setLoginChallengeId] = useState('')
+  const [loginOtp, setLoginOtp] = useState('')
+  const [registrationChallengeId, setRegistrationChallengeId] = useState('')
+  const [emailOtp, setEmailOtp] = useState('')
+  const [mobileOtp, setMobileOtp] = useState('')
   const [activeTab, setActiveTab] = useState('signin')
   const navigate = useNavigate()
   const location = useLocation()
@@ -101,11 +106,25 @@ const Auth = () => {
 
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault()
-    if (!validateSignIn()) return
+    if (!loginChallengeId && !validateSignIn()) return
+    if (loginChallengeId && !/^\d{6}$/.test(loginOtp)) {
+      setErrors({ otp: t('auth.validation.otpInvalid') })
+      return
+    }
     setIsLoading(true)
     try {
-      const credentials: LoginRequest = { email, password }
-      const { data } = await authService.login(credentials)
+      if (!loginChallengeId) {
+        const credentials: LoginRequest = { email: email.trim(), password }
+        const challengeId = await authService.requestLoginOtp(credentials)
+        setLoginChallengeId(challengeId)
+        setLoginOtp('')
+        toast.success(t('auth.toast.loginOtpSent'))
+        return
+      }
+
+      const { data } = await authService.verifyLoginOtp(loginChallengeId, loginOtp)
+      setLoginChallengeId('')
+      setLoginOtp('')
 
       const userRole = data?.role as UserRole
       localStorage.setItem('role', userRole)
@@ -155,9 +174,13 @@ const Auth = () => {
       if (error?.code === 'ERR_NETWORK') {
         toast.error(t('auth.toast.networkError'))
       } else if (apiMsg) {
-        const msg = apiMsg.toLowerCase()
-        if (msg.includes('email') || msg.includes('password') || msg.includes('invalid') || msg.includes('credential')) {
-          setErrors({ email: ' ', password: apiMsg })
+        if (loginChallengeId) {
+          setErrors({ otp: apiMsg })
+        } else {
+          const msg = apiMsg.toLowerCase()
+          if (msg.includes('email') || msg.includes('password') || msg.includes('invalid') || msg.includes('credential')) {
+            setErrors({ email: ' ', password: apiMsg })
+          }
         }
         toast.error(apiMsg)
       } else {
@@ -215,45 +238,95 @@ const Auth = () => {
 
   const handleSignUp = async (e: FormEvent) => {
     e.preventDefault()
-    // The submit button is disabled until terms are accepted; this also covers other submit paths.
-    if (!acceptedTerms) return
-    if (!validateSignUp()) return
+    if (registrationChallengeId) {
+      if (!/^\d{6}$/.test(emailOtp) || !/^\d{6}$/.test(mobileOtp)) {
+        setErrors({ otp: t('auth.validation.otpInvalid') })
+        return
+      }
+    } else {
+      // The submit button is disabled until terms are accepted; this also covers other submit paths.
+      if (!acceptedTerms) return
+      if (!validateSignUp()) return
+      if (!role) return
+    }
     setIsLoading(true)
     try {
-      const rawMobile = mobile.trim()
-      const normalizedMobile = rawMobile.replace(/[\s\-().]/g, '')
+      if (registrationChallengeId) {
+        await authService.verifyRegistration(registrationChallengeId, emailOtp, mobileOtp)
+        setRegistrationChallengeId('')
+        setEmailOtp('')
+        setMobileOtp('')
+        setAcceptedTerms(false)
+        toast.success(t('auth.toast.signUpSuccess'))
+        setActiveTab('signin')
+        return
+      }
+
+      const normalizedMobile = mobile.trim().replace(/[\s\-().]/g, '')
       const userData: RegisterRequest = {
-        email,
+        email: email.trim(),
         password,
-        firstName,
-        lastName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         mobile: normalizedMobile,
         role,
         acceptedTerms,
       }
-      await authService.register(userData)
-      toast.success(t('auth.toast.signUpSuccess'))
-      setAcceptedTerms(false)
-      setActiveTab('signin')
+      const challengeId = await authService.requestRegistrationVerification(userData)
+      setRegistrationChallengeId(challengeId)
+      setEmailOtp('')
+      setMobileOtp('')
+      setErrors({})
+      toast.success(t('auth.toast.registrationOtpSent'))
     } catch (error: any) {
-      console.error('Sign up failed:', error)
+      console.error(registrationChallengeId ? 'Registration verification failed:' : 'Sign up verification request failed:', error)
       const apiMsg = getApiErrorMessage(error?.response?.data)
 
       if (error?.code === 'ERR_NETWORK') {
         toast.error(t('auth.toast.networkError'))
       } else if (apiMsg) {
-        const msg = apiMsg.toLowerCase()
-        const fieldErrors: Record<string, string> = {}
-        if (msg.includes('email')) fieldErrors.email = apiMsg
-        if (msg.includes('mobile') || msg.includes('phone')) fieldErrors.mobile = apiMsg
-        if (msg.includes('password')) fieldErrors.password = apiMsg
-        if (msg.includes('first name') || msg.includes('firstname')) fieldErrors.firstName = apiMsg
-        if (msg.includes('last name') || msg.includes('lastname')) fieldErrors.lastName = apiMsg
-        if (Object.keys(fieldErrors).length > 0) setErrors(prev => ({ ...prev, ...fieldErrors }))
+        if (registrationChallengeId) {
+          setErrors({ otp: apiMsg })
+        } else {
+          const msg = apiMsg.toLowerCase()
+          const fieldErrors: Record<string, string> = {}
+          if (msg.includes('email')) fieldErrors.email = apiMsg
+          if (msg.includes('mobile') || msg.includes('phone')) fieldErrors.mobile = apiMsg
+          if (msg.includes('password')) fieldErrors.password = apiMsg
+          if (msg.includes('first name') || msg.includes('firstname')) fieldErrors.firstName = apiMsg
+          if (msg.includes('last name') || msg.includes('lastname')) fieldErrors.lastName = apiMsg
+          if (Object.keys(fieldErrors).length > 0) setErrors(prev => ({ ...prev, ...fieldErrors }))
+        }
         toast.error(apiMsg)
       } else {
         toast.error(t('auth.toast.signUpFailed'))
       }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResendLoginOtp = async () => {
+    if (!loginChallengeId) return
+    setIsLoading(true)
+    try {
+      await authService.resendLoginOtp(loginChallengeId)
+      toast.success(t('auth.toast.loginOtpSent'))
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error?.response?.data) || t('auth.toast.signInFailed'))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResendRegistrationOtp = async (channel: 'email' | 'mobile') => {
+    if (!registrationChallengeId) return
+    setIsLoading(true)
+    try {
+      await authService.resendRegistrationOtp(registrationChallengeId, channel)
+      toast.success(t('auth.toast.registrationOtpSent'))
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error?.response?.data) || t('auth.toast.signUpFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -303,6 +376,11 @@ const Auth = () => {
                 setLastName('')
                 setMobile('')
                 setAcceptedTerms(false)
+                setLoginChallengeId('')
+                setLoginOtp('')
+                setRegistrationChallengeId('')
+                setEmailOtp('')
+                setMobileOtp('')
                 setErrors({})
               }}
               defaultValue='signin'
@@ -323,6 +401,8 @@ const Auth = () => {
               {/* Sign In Form */}
               <TabsContent value='signin'>
                 <form onSubmit={handleSignIn} className='space-y-4'>
+                  {!loginChallengeId ? (
+                    <>
                   <div className='space-y-2'>
                     <Label htmlFor='signin-email' className='text-white/90'>{t('common.labels.email')}</Label>
                     <Input
@@ -376,6 +456,51 @@ const Auth = () => {
                       </Link>
                     </div>
                   </div>
+                    </>
+                  ) : (
+                    <div className='space-y-3'>
+                      <p className='text-sm text-white/80'>
+                        {t('auth.otp.loginInstructions', { email })}
+                      </p>
+                      <div className='space-y-2'>
+                        <Label htmlFor='login-otp' className='text-white/90'>
+                          {t('auth.otp.code')}
+                        </Label>
+                        <Input
+                          id='login-otp'
+                          inputMode='numeric'
+                          autoComplete='one-time-code'
+                          maxLength={6}
+                          value={loginOtp}
+                          onChange={event => {
+                            setLoginOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
+                            if (errors.otp) setErrors(prev => ({ ...prev, otp: '' }))
+                          }}
+                          className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 tracking-[0.4em] text-center ${errors.otp ? 'border-red-500' : ''}`}
+                        />
+                        {errors.otp && <p className='text-xs text-red-400'>{errors.otp}</p>}
+                      </div>
+                      <div className='flex justify-between text-sm'>
+                        <button
+                          type='button'
+                          className='text-orange-300 hover:text-orange-200 disabled:opacity-50'
+                          disabled={isLoading}
+                          onClick={handleResendLoginOtp}>
+                          {t('auth.otp.resend')}
+                        </button>
+                        <button
+                          type='button'
+                          className='text-white/60 hover:text-white'
+                          onClick={() => {
+                            setLoginChallengeId('')
+                            setLoginOtp('')
+                            setErrors({})
+                          }}>
+                          {t('auth.otp.changeDetails')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <Button
                     type='submit'
@@ -387,7 +512,7 @@ const Auth = () => {
                         {t('auth.signingIn')}
                       </>
                     ) : (
-                      t('common.actions.signIn')
+                      loginChallengeId ? t('auth.otp.verifyAndSignIn') : t('auth.otp.sendCode')
                     )}
                   </Button>
                   <div className='mt-6 pt-4 border-t border-white/10 text-center'>
@@ -404,6 +529,73 @@ const Auth = () => {
               {/* Sign Up Form */}
               <TabsContent value='signup'>
                 <form onSubmit={handleSignUp} className='space-y-4'>
+                  {registrationChallengeId ? (
+                    <div className='space-y-4'>
+                      <p className='text-sm text-white/80'>
+                        {t('auth.otp.registrationInstructions', { email, mobile })}
+                      </p>
+                      <div className='space-y-2'>
+                        <Label htmlFor='signup-email-otp' className='text-white/90'>
+                          {t('auth.otp.emailCode')}
+                        </Label>
+                        <Input
+                          id='signup-email-otp'
+                          inputMode='numeric'
+                          autoComplete='one-time-code'
+                          maxLength={6}
+                          value={emailOtp}
+                          onChange={event => {
+                            setEmailOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
+                            if (errors.otp) setErrors(prev => ({ ...prev, otp: '' }))
+                          }}
+                          className={`bg-white/10 border-white/20 text-white tracking-[0.4em] text-center ${errors.otp ? 'border-red-500' : ''}`}
+                        />
+                        <button
+                          type='button'
+                          className='text-sm text-orange-300 hover:text-orange-200 disabled:opacity-50'
+                          disabled={isLoading}
+                          onClick={() => handleResendRegistrationOtp('email')}>
+                          {t('auth.otp.resendEmail')}
+                        </button>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='signup-mobile-otp' className='text-white/90'>
+                          {t('auth.otp.mobileCode')}
+                        </Label>
+                        <Input
+                          id='signup-mobile-otp'
+                          inputMode='numeric'
+                          autoComplete='one-time-code'
+                          maxLength={6}
+                          value={mobileOtp}
+                          onChange={event => {
+                            setMobileOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
+                            if (errors.otp) setErrors(prev => ({ ...prev, otp: '' }))
+                          }}
+                          className={`bg-white/10 border-white/20 text-white tracking-[0.4em] text-center ${errors.otp ? 'border-red-500' : ''}`}
+                        />
+                        <button
+                          type='button'
+                          className='text-sm text-orange-300 hover:text-orange-200 disabled:opacity-50'
+                          disabled={isLoading}
+                          onClick={() => handleResendRegistrationOtp('mobile')}>
+                          {t('auth.otp.resendMobile')}
+                        </button>
+                      </div>
+                      {errors.otp && <p className='text-xs text-red-400'>{errors.otp}</p>}
+                      <button
+                        type='button'
+                        className='text-sm text-white/60 hover:text-white'
+                        onClick={() => {
+                          setRegistrationChallengeId('')
+                          setEmailOtp('')
+                          setMobileOtp('')
+                          setErrors({})
+                        }}>
+                        {t('auth.otp.changeDetails')}
+                      </button>
+                    </div>
+                  ) : (
                   <div className='space-y-4'>
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       {/* first Name Field */}
@@ -626,21 +818,22 @@ const Auth = () => {
                       </span>
                     </label>
                   </div>
+                  )}
 
                   <Button
                     type='submit'
                     className='w-full bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 transition-all duration-300'
-                    disabled={isLoading || !acceptedTerms}>
+                    disabled={isLoading || (!registrationChallengeId && !acceptedTerms)}>
                     {isLoading ? (
                       <>
                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                        {t('auth.creatingAccount')}
+                        {registrationChallengeId ? t('auth.otp.verifying') : t('auth.creatingAccount')}
                       </>
                     ) : (
-                      t('common.actions.signUp')
+                      registrationChallengeId ? t('auth.otp.verifyAndCreate') : t('auth.otp.verifyContact')
                     )}
                   </Button>
-                  {!acceptedTerms && (
+                  {!registrationChallengeId && !acceptedTerms && (
                     <p className='-mt-2 text-center text-xs text-white/50'>{t('auth.terms.hint')}</p>
                   )}
                   <div className='mt-6 pt-4 border-t border-white/10 text-center'>
