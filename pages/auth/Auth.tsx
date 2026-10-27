@@ -65,7 +65,6 @@ const Auth = () => {
   const [loginOtp, setLoginOtp] = useState('')
   const [registrationChallengeId, setRegistrationChallengeId] = useState('')
   const [emailOtp, setEmailOtp] = useState('')
-  const [mobileOtp, setMobileOtp] = useState('')
   const [activeTab, setActiveTab] = useState('signin')
   const navigate = useNavigate()
   const location = useLocation()
@@ -245,7 +244,7 @@ const Auth = () => {
   const handleSignUp = async (e: FormEvent) => {
     e.preventDefault()
     if (registrationChallengeId) {
-      if (!/^\d{6}$/.test(emailOtp) || !/^\d{6}$/.test(mobileOtp)) {
+      if (!/^\d{6}$/.test(emailOtp)) {
         setErrors({ otp: t('auth.validation.otpInvalid') })
         return
       }
@@ -258,10 +257,9 @@ const Auth = () => {
     setIsLoading(true)
     try {
       if (registrationChallengeId) {
-        await authService.verifyRegistration(registrationChallengeId, emailOtp, mobileOtp)
+        await authService.verifyRegistration(registrationChallengeId, emailOtp)
         setRegistrationChallengeId('')
         setEmailOtp('')
-        setMobileOtp('')
         setAcceptedTerms(false)
         toast.success(t('auth.toast.signUpSuccess'))
         setActiveTab('signin')
@@ -281,7 +279,6 @@ const Auth = () => {
       const challengeId = await authService.requestRegistrationVerification(userData)
       setRegistrationChallengeId(challengeId)
       setEmailOtp('')
-      setMobileOtp('')
       setErrors({})
       toast.success(t('auth.toast.registrationOtpSent'))
     } catch (error: any) {
@@ -325,11 +322,11 @@ const Auth = () => {
     }
   }
 
-  const handleResendRegistrationOtp = async (channel: 'email' | 'mobile') => {
+  const handleResendRegistrationOtp = async () => {
     if (!registrationChallengeId) return
     setIsLoading(true)
     try {
-      await authService.resendRegistrationOtp(registrationChallengeId, channel)
+      await authService.resendRegistrationOtp(registrationChallengeId)
       toast.success(t('auth.toast.registrationOtpSent'))
     } catch (error: any) {
       toast.error(getApiErrorMessage(error?.response?.data) || t('auth.toast.signUpFailed'))
@@ -538,7 +535,7 @@ const Auth = () => {
                   {registrationChallengeId ? (
                     <div className='space-y-4'>
                       <p className='text-sm text-white/80'>
-                        {t('auth.otp.registrationInstructions', { email, mobile })}
+                        {t('auth.otp.registrationInstructions', { email })}
                       </p>
                       <div className='space-y-2'>
                         <Label htmlFor='signup-email-otp' className='text-white/90'>
@@ -560,32 +557,8 @@ const Auth = () => {
                           type='button'
                           className='text-sm text-orange-300 hover:text-orange-200 disabled:opacity-50'
                           disabled={isLoading}
-                          onClick={() => handleResendRegistrationOtp('email')}>
+                          onClick={handleResendRegistrationOtp}>
                           {t('auth.otp.resendEmail')}
-                        </button>
-                      </div>
-                      <div className='space-y-2'>
-                        <Label htmlFor='signup-mobile-otp' className='text-white/90'>
-                          {t('auth.otp.mobileCode')}
-                        </Label>
-                        <Input
-                          id='signup-mobile-otp'
-                          inputMode='numeric'
-                          autoComplete='one-time-code'
-                          maxLength={6}
-                          value={mobileOtp}
-                          onChange={event => {
-                            setMobileOtp(event.target.value.replace(/\D/g, '').slice(0, 6))
-                            if (errors.otp) setErrors(prev => ({ ...prev, otp: '' }))
-                          }}
-                          className={`bg-white/10 border-white/20 text-white tracking-[0.4em] text-center ${errors.otp ? 'border-red-500' : ''}`}
-                        />
-                        <button
-                          type='button'
-                          className='text-sm text-orange-300 hover:text-orange-200 disabled:opacity-50'
-                          disabled={isLoading}
-                          onClick={() => handleResendRegistrationOtp('mobile')}>
-                          {t('auth.otp.resendMobile')}
                         </button>
                       </div>
                       {errors.otp && <p className='text-xs text-red-400'>{errors.otp}</p>}
@@ -595,7 +568,6 @@ const Auth = () => {
                         onClick={() => {
                           setRegistrationChallengeId('')
                           setEmailOtp('')
-                          setMobileOtp('')
                           setErrors({})
                         }}>
                         {t('auth.otp.changeDetails')}
@@ -840,7 +812,7 @@ const Auth = () => {
                         {registrationChallengeId ? t('auth.otp.verifying') : t('auth.creatingAccount')}
                       </>
                     ) : (
-                      registrationChallengeId ? t('auth.otp.verifyAndCreate') : t('auth.otp.verifyContact')
+                      registrationChallengeId ? t('auth.otp.verifyAndCreate') : t('auth.otp.sendCode')
                     )}
                   </Button>
                   {!registrationChallengeId && !acceptedTerms && (

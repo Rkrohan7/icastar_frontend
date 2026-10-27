@@ -145,22 +145,18 @@ export const authService = {
     }
   },
 
-  async verifyRegistration(
-    challengeId: string,
-    emailOtp: string,
-    mobileOtp: string,
-  ): Promise<void> {
+  async verifyRegistration(challengeId: string, emailOtp: string): Promise<void> {
     try {
-      await api.post('/auth/register/verification/verify', { challengeId, emailOtp, mobileOtp })
+      await api.post('/auth/register/verification/verify', { challengeId, emailOtp })
     } catch (error) {
       console.error('Registration verification failed:', error)
       throw error
     }
   },
 
-  async resendRegistrationOtp(challengeId: string, channel: 'email' | 'mobile'): Promise<void> {
+  async resendRegistrationOtp(challengeId: string): Promise<void> {
     try {
-      await api.post('/auth/register/verification/resend', { challengeId, channel })
+      await api.post('/auth/register/verification/resend', { challengeId, channel: 'email' })
     } catch (error) {
       console.error('Registration OTP resend failed:', error)
       throw error
