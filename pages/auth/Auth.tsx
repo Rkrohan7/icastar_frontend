@@ -220,8 +220,14 @@ const Auth = () => {
     }
     if (!password) {
       newErrors.password = t('auth.validation.passwordRequired')
-    } else if (password.length < 6) {
-      newErrors.password = t('auth.validation.passwordMin')
+    } else if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/\d/.test(password) ||
+      !/[^A-Za-z0-9\s]/.test(password)
+    ) {
+      newErrors.password = t('auth.validation.passwordRequirements')
     }
     if (!confirmPassword) {
       newErrors.confirmPassword = t('auth.validation.confirmPasswordRequired')
@@ -712,11 +718,6 @@ const Auth = () => {
                           className='text-white/90'>
                           {t('common.labels.password')}
                         </Label>
-                        {errors.password && (
-                          <span className='text-xs text-red-400'>
-                            {errors.password}
-                          </span>
-                        )}
                       </div>
                       <div className='relative'>
                         <Input
@@ -724,7 +725,10 @@ const Auth = () => {
                           type={showPassword ? 'text' : 'password'}
                           placeholder={t('auth.placeholders.createPassword')}
                           value={password}
-                          onChange={e => setPassword(e.target.value)}
+                          onChange={e => {
+                            setPassword(e.target.value)
+                            if (errors.password) setErrors(prev => ({ ...prev, password: '' }))
+                          }}
                           className={`bg-white/10 border-white/20 text-white placeholder:text-white/50 pr-10 w-full ${errors.password ? 'border-red-500' : ''
                             }`}
                         />
@@ -741,6 +745,12 @@ const Auth = () => {
                           )}
                         </Button>
                       </div>
+                      <p className='text-xs text-white/60'>
+                        {t('auth.validation.passwordRequirements')}
+                      </p>
+                      {errors.password && (
+                        <p className='text-xs text-red-400'>{errors.password}</p>
+                      )}
                     </div>
 
                     {/* Confirm Password Field - Full Width */}
