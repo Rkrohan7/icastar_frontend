@@ -484,7 +484,7 @@ export interface AdminUser {
   lastName: string
   email: string
   mobile: string | null
-  role: string
+  role: 'ADMIN'
   permissions: string[]
   accountStatus: AccountStatus
   lastLoginAt: string | null
@@ -497,12 +497,14 @@ export interface AdminUserCreatePayload {
   lastName: string
   email: string
   mobile?: string
-  role: string
+  role: 'ADMIN'
   permissions?: string[]
   password?: string
 }
 
-export type AdminUserUpdatePayload = Partial<AdminUserCreatePayload>
+export type AdminUserUpdatePayload = Partial<Omit<AdminUserCreatePayload, 'role'>> & {
+  role: 'ADMIN'
+}
 
 // ============ Auditions ============
 
@@ -1014,13 +1016,13 @@ const superAdminService = {
   },
 
   async createAdminUser(payload: AdminUserCreatePayload): Promise<AdminUser> {
-    const resp = await apiClient.post('/super-admin/admins', payload)
+    const resp = await apiClient.post('/super-admin/admins', { ...payload, role: 'ADMIN' })
     invalidateCache('admin:admins')
     return unwrap(resp)
   },
 
   async updateAdminUser(id: number, payload: AdminUserUpdatePayload): Promise<AdminUser> {
-    const resp = await apiClient.put(`/super-admin/admins/${id}`, payload)
+    const resp = await apiClient.put(`/super-admin/admins/${id}`, { ...payload, role: 'ADMIN' })
     invalidateCache('admin:admins')
     invalidateCache(`admin:admin:${id}`)
     return unwrap(resp)

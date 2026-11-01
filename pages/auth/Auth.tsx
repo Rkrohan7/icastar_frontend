@@ -383,7 +383,6 @@ const Auth = () => {
                 setLoginOtp('')
                 setRegistrationChallengeId('')
                 setEmailOtp('')
-                setMobileOtp('')
                 setErrors({})
               }}
               defaultValue='signin'

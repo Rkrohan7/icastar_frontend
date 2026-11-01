@@ -65,7 +65,7 @@ Query: `page`, `size`, `sortBy`, `sortDir`, `search`, `status`
       "lastName": "Verma",
       "email": "ankit@icastar.com",
       "mobile": "+919876500000",
-      "role": "SUPER_ADMIN",
+      "role": "ADMIN",
       "permissions": ["MANAGE_USERS", "MANAGE_JOBS", "MANAGE_CONFIG"],
       "accountStatus": "ACTIVE",
       "lastLoginAt": "2026-05-29T09:00:00",
@@ -78,9 +78,11 @@ Query: `page`, `size`, `sortBy`, `sortDir`, `search`, `status`
 ```
 
 #### `POST /super-admin/admins`
-Body: `{ firstName, lastName, email, mobile, role, permissions[] }` → returns created admin.
+Body: `{ firstName, lastName, email, mobile, role: "ADMIN", permissions[] }` → returns created admin.
 
-#### `PUT /super-admin/admins/{id}` → update admin
+#### `PUT /super-admin/admins/{id}` → update admin; send `role: "ADMIN"` in the request body.
+
+`ADMIN` is the admin role for both Super Admin and Admin accounts; `SUPER_ADMIN` is not a separate role.
 #### `PATCH /super-admin/admins/{id}/status` body: `{ status }`
 #### `DELETE /super-admin/admins/{id}`
 
@@ -437,7 +439,7 @@ Query: `page`, `size`, `status`, `userId`, `dateFrom`, `dateTo`
   "success": true,
   "data": [
     {
-      "id": 1, "name": "SUPER_ADMIN", "label": "Super Admin",
+      "id": 1, "name": "ADMIN", "label": "Admin",
       "description": "Full access",
       "permissions": ["*"],
       "userCount": 2,

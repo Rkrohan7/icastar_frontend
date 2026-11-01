@@ -28,8 +28,6 @@ const STATUS_OPTIONS: { labelKey?: string; value: AccountStatus | '' }[] = [
   { value: 'BANNED' },
 ]
 
-const ROLE_OPTIONS = ['ADMIN', 'SUPER_ADMIN', 'MODERATOR', 'SUPPORT']
-
 const errMsg = (err: any, fallback: string): string => {
   const s = err?.response?.status
   const m = err?.response?.data?.message
@@ -277,8 +275,6 @@ const AdminUserModal: React.FC<{
   const [lastName, setLastName] = useState(admin?.lastName || '')
   const [email, setEmail] = useState(admin?.email || '')
   const [mobile, setMobile] = useState(admin?.mobile || '')
-  const [role, setRole] = useState(admin?.role || 'ADMIN')
-  const roleOptions = admin ? ROLE_OPTIONS : ['ADMIN']
   const [password, setPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -288,7 +284,7 @@ const AdminUserModal: React.FC<{
       setSaving(true)
       setErr(null)
       const payload: AdminUserCreatePayload = {
-        firstName, lastName, email, mobile: mobile || undefined, role,
+        firstName, lastName, email, mobile: mobile || undefined, role: 'ADMIN',
       }
       if (!admin) payload.password = password || undefined
       if (admin) {
@@ -348,13 +344,9 @@ const AdminUserModal: React.FC<{
           </div>
           <div>
             <label className='text-xs font-medium text-gray-600'>{t('common.labels.role')}</label>
-            <select
-              value={role} onChange={(e) => setRole(e.target.value)}
-              className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
-              {roleOptions.map((r) => (
-                <option key={r} value={r}>{tEnum(r)}</option>
-              ))}
-            </select>
+            <p className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700'>
+              {tEnum('ADMIN')}
+            </p>
           </div>
           {!admin && (
             <div>

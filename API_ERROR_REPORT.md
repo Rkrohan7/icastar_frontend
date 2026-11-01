@@ -152,7 +152,7 @@ curl 'https://api.icastar.com/api/super-admin/dashboard' -H 'Authorization: Bear
 curl 'https://api.icastar.com/api/super-admin/config' -H 'Authorization: Bearer <ARTIST_TOKEN>'
 # -> 200  platform config (emails, settings) leaked to non-admins
 ```
-**Fix required on backend:** enforce `SUPER_ADMIN` role on all `/super-admin/**` routes.
+**Fix required on backend:** enforce the authenticated `ADMIN` role on all `/super-admin/**` routes.
 
 ### Super-admin endpoints (all return 200 with any token today)
 `GET /super-admin/dashboard` · `/dashboard/summary` · `/artists` · `/recruiters` · `/jobs` · `/categories` · `/skills` · `/config` · `/stats/users` — **all `200`**.
@@ -269,7 +269,7 @@ curl $BASE/super-admin/reports/overview   -H "Authorization: Bearer <TOKEN>"  # 
 ## 7. Recommended fix order
 
 1. **Backend — fix `isPresent()` SpEL bug** (unblocks ~40 endpoints; the whole Artist/Recruiter app depends on it).
-2. **Backend — enforce `SUPER_ADMIN` role** on `/super-admin/**` (security).
+2. **Backend — enforce `ADMIN` role** on `/super-admin/**` (security).
 3. **Backend — fix 500s**: `/notifications/unread-count`, `/recruiter/open-auditions`, `/super-admin/reports/overview`.
 4. **Frontend — remove double `/api`** in `services/onboardingService.ts` (lines 40, 104, 114, 131).
 5. **Frontend — align payloads**: add `confirmPassword` to change-password; send `fileUrl` + required fields to upload endpoints; include `firstName`/`lastName` on profile PUT.
