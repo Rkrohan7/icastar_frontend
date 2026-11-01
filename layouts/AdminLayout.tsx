@@ -54,6 +54,7 @@ export const AdminLayout: React.FC = () => {
       path: '/admin/users',
       icon: UsersIcon,
       children: [
+        { labelKey: 'adminLayout.nav.adminUsers', path: '/admin/users/admins', icon: ShieldCheckIcon },
         { labelKey: 'adminLayout.nav.recruiters', path: '/admin/recruiters', icon: BriefcaseIcon },
         { labelKey: 'adminLayout.nav.recruiterVerification', path: '/admin/recruiters/verification', icon: ShieldCheckIcon },
         { labelKey: 'adminLayout.nav.artistVerification', path: '/admin/artists/verification', icon: ShieldCheckIcon },

@@ -278,6 +278,7 @@ const AdminUserModal: React.FC<{
   const [email, setEmail] = useState(admin?.email || '')
   const [mobile, setMobile] = useState(admin?.mobile || '')
   const [role, setRole] = useState(admin?.role || 'ADMIN')
+  const roleOptions = admin ? ROLE_OPTIONS : ['ADMIN']
   const [password, setPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -350,7 +351,7 @@ const AdminUserModal: React.FC<{
             <select
               value={role} onChange={(e) => setRole(e.target.value)}
               className='w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E36A3A]'>
-              {ROLE_OPTIONS.map((r) => (
+              {roleOptions.map((r) => (
                 <option key={r} value={r}>{tEnum(r)}</option>
               ))}
             </select>

@@ -16,6 +16,7 @@ export default defineMessages({
     toggleMenu: 'Toggle menu',
     nav: {
       userManagement: 'User Management',
+      adminUsers: 'Admin Users',
       recruiters: 'Recruiters',
       recruiterVerification: 'Recruiter verification',
       artistVerification: 'Artist verification',
@@ -58,6 +59,7 @@ export default defineMessages({
     toggleMenu: 'मेनू उघडा / बंद करा',
     nav: {
       userManagement: 'वापरकर्ता व्यवस्थापन',
+      adminUsers: 'ॲडमिन वापरकर्ते',
       recruiters: 'रिक्रूटर्स',
       recruiterVerification: 'रिक्रूटर सत्यापन',
       artistVerification: 'कलाकार सत्यापन',
